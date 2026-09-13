@@ -92,28 +92,70 @@ distinguish one release from another — `release_month` does that.
 2. `zone` on a state row comes from `ref_state_zone` — never guessed from the data.
 3. `DISCO` never populates `state`.
 
-### `ref_state_zone` *(reference table)*
+### `ref_state_zone` *(reference table — LOOKUP)* · **built**
 
-| alias_normalised | alias_raw | state | zone |
-|---|---|---|---|
-| `abia` | Abia | Abia | South East |
-| `abia` *(same key)* | ABIA | Abia | South East |
-| `akwaibom` | AKWA IBOM | Akwa Ibom | South South |
-| `fct` | FCT | Abuja | North Central |
-| `abuja` | Abuja | Abuja | North Central |
+`data/reference/ref_state_zone.csv` — **39 rows, 39 unique keys, 37 canonical entities.**
 
-**Primary key:** `alias_normalised`
+| alias_normalised | state | zone | observed_aliases | alias_variant_count | alias_source |
+|---|---|---|---|---|---|
+| `abia` | Abia | South East | `ABIA \| Abia` | 2 | observed |
+| `akwa ibom` | Akwa Ibom | South South | `AKWA IBOM \| Akwa Ibom` | 2 | observed |
+| `abuja` | Abuja | North Central | `ABUJA \| Abuja` | 2 | observed |
+| `fct` | Abuja | North Central | `FCT` | 1 | **design_not_observed** |
+| `nasarawa` | Nasarawa | North Central | `NASARAWA \| Nasarawa` | 2 | observed |
+| `nassarawa` | Nasarawa | North Central | `NASSARAWA \| Nassarawa` | 2 | observed |
 
-`alias_normalised` is produced by lower-casing and removing all whitespace, punctuation and hyphens.
-Making it the key enforces the rule that matters: **one normalised alias resolves to exactly one
-state.** `ABIA` and `Abia` normalise to the same key and therefore must agree on the state — they do.
-`FCT` and `Abuja` normalise to different keys that both point to the state `Abuja`, which is allowed:
-many aliases may share a state, but an alias may never be ambiguous.
+**Primary key:** `alias_normalised` — **exactly one row per key.**
 
-`alias_raw` is a display attribute, not part of identity. Several raw spellings can collapse to one
-normalised key; only the key is enforced unique.
+`alias_normalised` is the label trimmed, internal whitespace collapsed, and casefolded. **One row per
+key is the property that matters:** cleaning joins source geography to this table on
+`alias_normalised`, and a duplicate key would silently multiply every joined observation.
 
-**Validation:** loading fails if any `alias_normalised` appears twice with different `state` values.
+Many keys may share a state — `abuja` and `fct` both → `Abuja`; `nasarawa` and `nassarawa` both →
+`Nasarawa`. **No key may resolve to two states.**
+
+`FCT` is the one key **not observed anywhere in the sources**. It is retained because the design
+requires it, and flagged `design_not_observed` so the distinction stays visible.
+
+**Validation (all passing):** `alias_normalised` unique · row count equals unique-key count · every
+key resolves to exactly one state · all 37 entities present, 7/6/7/5/6/6 across the six zones · every
+observed state-like label resolves · **simulated join of all observed labels returns 3,823 rows from
+3,823 observations, max 1 row per label.**
+
+### `ref_state_alias_observed` *(reference table — PROVENANCE)* · **built**
+
+`data/reference/ref_state_alias_observed.csv` — **77 rows, one per raw spelling.**
+
+| alias_raw | alias_normalised | state | zone | alias_source | observed_in |
+|---|---|---|---|---|---|
+| `Nassarawa` | `nassarawa` | Nasarawa | North Central | observed | cpi,diesel,petrol |
+| `NASSARAWA` | `nassarawa` | Nasarawa | North Central | observed | transport |
+| `ABIA` | `abia` | Abia | South East | observed | transport |
+
+This table deliberately has **many rows per state** and is **never joined to observations** — it exists
+so every raw spelling remains traceable. Its `alias_normalised` is a foreign key into the lookup.
+
+Aliases were **harvested from the raw files, not authored from memory** — which is how `Nassarawa`
+(double-s, used in CPI, diesel and petrol) was discovered.
+
+### `ref_transport_mode` *(reference table)* · **built**
+
+`data/reference/ref_transport_mode.csv` — **6 raw labels across the 5 canonical modes.**
+
+| transport_mode | raw_label | match_prefix |
+|---|---|---|
+| `AIR` | `Air fare charg.for specified routes single journey` | `air fare` |
+| `BUS_INTERCITY` | `Bus journey intercity, state route, charg. per per` | `bus journey intercity` |
+| `BUS_INTRACITY` | `Bus journey within  city , per  drop constant  rou` | `bus journey within` |
+| `OKADA` | `Journey by motorcycle (okada) per drop` | `journey by motorcycle` |
+| `WATER` | `Water transport : water way passenger  transportat` | `water transport` |
+| `WATER` | `Water transport : water way passenger  transportation` | `water transport` |
+
+NBS truncates these headers at **exactly 50 characters**, cutting mid-word — which is why `WATER` has
+both a truncated and a full variant. Raw labels are stored verbatim.
+
+**Validation (all passing):** all five modes present · every label maps to exactly one mode · no prefix
+matches two modes · no prefix is a prefix of another.
 
 ---
 
@@ -213,6 +255,12 @@ heaviest load in the project: states, zones and `NATIONAL` all arrive in one unn
 
 `cylinder_size_kg` is essential: the two product blocks carry **identical column headers**, so without
 it the 5 kg and 12.5 kg prices for the same place and month collide directly.
+
+> **2025 12.5 kg rows carry a known source defect.** In all twelve 2025 releases the 12.5 kg block
+> prints `Taraba` in Kebbi's North West position, so Taraba appears twice and Kebbi is absent. Affected
+> rows resolve to `geography_name = 'Kebbi'` with `geography_raw_label = 'Taraba'` and
+> `source_anomaly = 'LPG_12_5KG_KEBBI_LABELLED_TARABA'` — applied **only** when all five fingerprint
+> conditions in `cleaning_rulebook.md` §4a match. There is no global Taraba→Kebbi substitution.
 
 ### `cooking_gas_extreme_callout`
 

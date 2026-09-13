@@ -63,19 +63,40 @@ state fails to join across datasets.
 
 **CLEANING RULE**
 
-1. Build `ref_state_zone`: 36 states plus FCT, each with its zone and its observed aliases
-   (`ABIA`/`Abia`, `FCT`/`Abuja`, etc.). This is an authored reference table, committed to the repo.
-   Its key is `alias_normalised` — the alias lower-cased with all whitespace, punctuation and hyphens
-   removed. **A normalised alias must resolve to exactly one state.** Loading fails if any
-   `alias_normalised` appears twice pointing at different states. Many aliases may share a state
-   (`FCT` and `Abuja` both → `Abuja`); no alias may be ambiguous.
+1. Use `data/reference/ref_state_zone.csv` — **the lookup table, one row per unique
+   `alias_normalised`.** `alias_normalised` is the alias trimmed, internal whitespace collapsed, and
+   casefolded. It is the join key and it is **unique**: 39 rows, 39 keys, covering 37 canonical
+   entities. Joining a source observation to it can never return more than one row, so a join can
+   never multiply observations.
+
+   Raw spellings are preserved two ways without creating duplicate keys: the `observed_aliases`
+   column lists every raw variant behind each key (`ABIA | Abia`), and
+   `data/reference/ref_state_alias_observed.csv` holds one row per raw spelling (77 rows) with the
+   dataset it was seen in.
+
+   Many keys may share a state — `abuja`, `fct` → `Abuja`; `nasarawa`, `nassarawa` → `Nasarawa` — but
+   **no key may resolve to two states.** Loading fails if one does.
+
+   The aliases were **harvested from the raw files**, not authored from memory. That is how
+   `Nassarawa` (double-s, used in CPI, diesel and petrol) was found.
 2. Preserve the original value in `geography_raw_label` **before** any change.
 3. Normalise for matching only: trim, collapse internal whitespace, casefold.
 4. Classify explicitly into `geography_type`:
-   - exact alias match to `ref_state_zone` → `STATE`
-   - exact match to one of the six zone names → `ZONE`
+   - exact `alias_normalised` match in `ref_state_zone` → `STATE`
+   - match to one of the six zone names, **after zone normalisation** → `ZONE`
    - `AVERAGE`, `NATIONAL`, `Grand Total`, `Nigeria` → `NATIONAL`
    - **anything else → `UNCLASSIFIED`**
+
+   **Zone normalisation.** Zone labels carry their own spelling variants and must be normalised by
+   the same trim → collapse-whitespace → casefold rule, then matched against the six controlled
+   values with internal spaces removed. One variant is already observed:
+
+   | Observed raw label | Source | Resolves to |
+   |---|---|---|
+   | `SouthWest` (no space) | `AGO JANUARY 2026.xlsx`, diesel | **South West** |
+
+   `SouthWest` is a **zone**, never a state. It must not enter `ref_state_zone`, and a check asserts
+   no zone label — in any spelling — ever appears as a state alias.
 5. `UNCLASSIFIED` rows are a hard failure. The run stops and the value is added to the reference
    table deliberately, or excluded deliberately. Silent dropping is not permitted.
 
@@ -440,11 +461,70 @@ are the same. Selecting by fixed position breaks in 2026.
 5. Parse the two extremes blocks into `cooking_gas_extreme_callout`, tagged by the banner above them.
 6. Split `Kebbi/Nasarawa` into two rows, both `is_shared_extreme = TRUE`.
 
+### 4a. LPG 12.5 kg block: Kebbi is published as "Taraba" (2025)
+
+**RAW PROBLEM** — In the **12.5 kg block of all twelve 2025 LPG releases**, the North West zone
+position that should hold **Kebbi** is labelled **`Taraba`**. Taraba therefore appears **twice** in
+that block — once correctly under North East, once in Kebbi's North West slot — and **Kebbi is absent
+from the 12.5 kg main table entirely**, surviving only in the "lowest prices" callout.
+
+**Evidence** (read-only inspection, `GAS_PRICE_WATCH_JAN_2025.xlsx`):
+
+| Position | 5 kg block (column 1) | 12.5 kg block (column 9) |
+|---|---|---|
+| North East, row 16 | Taraba | Taraba |
+| North West, row 23 | **Kebbi** | **Taraba** ← defect |
+
+The 5 kg block in the same workbook is correct. Each block still contains exactly 37 state rows, so a
+row-count check does not detect this. Confirmed in **12 files**: January through December 2025. The
+2026 releases are **not** affected — their North West lists read
+`Jigawa, Kaduna, Kano, Katsina, Kebbi, Sokoto, Zamfara`.
+
+**WHY IT MATTERS** — A naive load yields **two Taraba rows and no Kebbi** for 12.5 kg in every month
+of 2025. Both Taraba rows carry different prices, so any aggregation silently mixes two states'
+values under one name while a whole state disappears.
+
+**CLEANING RULE** — A narrowly-conditioned correction. **All** of the following must hold before a
+row is reinterpreted; if any fails, no correction is applied and the run raises:
+
+1. the dataset is cooking gas **and** `cylinder_size_kg = 12.5`;
+2. the `release_month` falls in **2025**;
+3. the row sits inside the **North West** zone block, in the position **between `Katsina` and
+   `Sokoto`**;
+4. the label `Taraba` **also** appears in its correct North East position in the same block;
+5. `Kebbi` is **absent** from that block's main table.
+
+Only then is the row's canonical geography set to `Kebbi`, with
+`source_anomaly = 'LPG_12_5KG_KEBBI_LABELLED_TARABA'`. The published text `Taraba` is preserved
+verbatim in `geography_raw_label`, so the correction is visible and reversible.
+
+> **There is no global Taraba→Kebbi rule, and there must never be one.** Taraba is a real state with
+> its own legitimate rows in every dataset, including the North East position of this very block. A
+> blanket substitution would destroy real Taraba data. The correction is keyed to the exact verified
+> fingerprint, not to the label.
+
 **EXPECTED CLEAN OUTPUT** — `cooking_gas_price_monthly` with one row per
-(geography × month × cylinder size), plus a separate callout table.
+(geography × month × cylinder size), plus a separate callout table. For 2025 12.5 kg months, 37
+distinct states including both Taraba and Kebbi exactly once each.
 
 **VALIDATION CHECK** — Every month yields both cylinder sizes. The number of geographies is identical
 between the two size blocks for a given month. No row has a NULL `cylinder_size_kg`.
+
+**Zone-block completeness check (new, and it is what would have caught this defect).** For every
+dataset that publishes states grouped under zone headers — cooking gas and diesel — each zone block
+must contain **exactly** its canonical state set from `ref_state_zone`, each state **exactly once**:
+
+| Zone | Expected states |
+|---|---|
+| North Central | 7 — Abuja, Benue, Kogi, Kwara, Nasarawa, Niger, Plateau |
+| North East | 6 — Adamawa, Bauchi, Borno, Gombe, Taraba, Yobe |
+| North West | 7 — Jigawa, Kaduna, Kano, Katsina, Kebbi, Sokoto, Zamfara |
+| South East | 5 — Abia, Anambra, Ebonyi, Enugu, Imo |
+| South South | 6 — Akwa Ibom, Bayelsa, Cross River, Delta, Edo, Rivers |
+| South West | 6 — Ekiti, Lagos, Ogun, Ondo, Osun, Oyo |
+
+A missing state, an extra state, or any state appearing twice **within or across blocks** fails the
+run. A total of 37 is not sufficient evidence of correctness — this defect keeps the total at 37.
 
 ---
 
@@ -674,6 +754,8 @@ clean row records what was done.
 | Member filename and title row say 2025 | `PMS_Report_JANUARY_2026.zip` → `PMS_JANUARY_2025.xlsx` | Period taken from datetime headers → 2026-01. `source_anomaly = 'MEMBER_FILENAME_YEAR_WRONG'` |
 | Title row says `AUGUST 2025 REPORT` | `PMS Report OCTOBER 2025.zip` | Period from headers → 2025-10. `source_anomaly = 'TITLE_ROW_MONTH_WRONG'` |
 | Duplicate period header, current month mislabelled | `TRANSPORT_COST_Watch_MAR_2025.xlsx` | Resolve by column position → 2025-03. `source_anomaly = 'DUPLICATE_PERIOD_HEADER_RESOLVED_BY_POSITION'` |
+| **Kebbi published as `Taraba` in the 12.5 kg block** | 12 files: all 2025 LPG releases | Corrected to `Kebbi` **only** when all five fingerprint conditions in §4a match. `source_anomaly = 'LPG_12_5KG_KEBBI_LABELLED_TARABA'`; published text kept in `geography_raw_label`. No global Taraba→Kebbi rule. |
+| **`SouthWest` zone label with no space** | `AGO JANUARY 2026.xlsx`, diesel | Normalised to the zone `South West`. Never treated as a state. |
 | Stale worksheet name `Selected Food Dec 2024` | `selected_food_table_Apr25.xlsx`, `selected_food_table_Mar_25.xlsx` | Sheet name ignored; period from column headers. `source_anomaly = 'STALE_SHEET_NAME'` |
 | Column renamed `Item Labels` | `selected_food_table_Feb_25.xlsx` | Accepted as an alias of `Item Label` |
 | Legacy `.xls` in a subfolder | `CPI_Report_March_2026.zip` | Requires `xlrd`; if unreadable, recorded MISSING |

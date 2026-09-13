@@ -1,0 +1,7 @@
+transport_mode,raw_label,normalised_label,match_prefix,observed_in
+AIR,Air fare charg.for specified routes single journey,air fare charg.for specified routes single journey,air fare,TRANSPORT COST Watch APR_2/State Transport;TRANSPORT COST Watch APR_2/Transport April 2026;TRANSPORT COST Watch AUG_2/St
+BUS_INTERCITY,"Bus journey intercity, state route, charg. per per","bus journey intercity, state route, charg. per per",bus journey intercity,TRANSPORT COST Watch APR_2/State Transport;TRANSPORT COST Watch APR_2/Transport April 2026;TRANSPORT COST Watch AUG_2/St
+BUS_INTRACITY,"Bus journey within  city , per  drop constant  rou","bus journey within city , per drop constant rou",bus journey within,TRANSPORT COST Watch APR_2/State Transport;TRANSPORT COST Watch APR_2/Transport April 2026;TRANSPORT COST Watch AUG_2/St
+OKADA,Journey by motorcycle (okada) per drop,journey by motorcycle (okada) per drop,journey by motorcycle,TRANSPORT COST Watch APR_2/State Transport;TRANSPORT COST Watch APR_2/Transport April 2026;TRANSPORT COST Watch AUG_2/St
+WATER,Water transport : water way passenger  transportat,water transport : water way passenger transportat,water transport,TRANSPORT COST Watch APR_2/State Transport;TRANSPORT COST Watch APR_2/Transport April 2026;TRANSPORT COST Watch AUG_2/St
+WATER,Water transport : water way passenger  transportation,water transport : water way passenger transportation,water transport,TRANSPORT COST Watch JUN_2/State Transport

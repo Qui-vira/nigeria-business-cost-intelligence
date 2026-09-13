@@ -398,17 +398,81 @@ anywhere else surfaces as a question instead of becoming invented data.
 
 ---
 
+## D-17 — The LPG 12.5 kg "Taraba" rows are corrected only on an exact fingerprint
+
+**Decision.** In the 12.5 kg block of the 2025 LPG releases, the row in Kebbi's North West position is
+reinterpreted as `Kebbi` — but **only** when five conditions all hold simultaneously. There is no
+global rule converting `Taraba` to `Kebbi`.
+
+**Evidence.** Read-only inspection of all 20 cooking-gas files found that in **12 files — every 2025
+monthly release — the 12.5 kg block prints `Taraba` where `Kebbi` belongs**. Taraba appears twice in
+that block (correctly under North East, incorrectly under North West between Katsina and Sokoto), and
+Kebbi is absent from the main table, appearing only in the "lowest prices" callout. The 5 kg block in
+the same workbooks is correct, and the 2026 releases are unaffected.
+
+**Why this needed a fingerprint rather than a substitution.** Taraba is a real state with legitimate
+rows everywhere, including the North East position of this same block. A blanket `Taraba → Kebbi`
+replacement would destroy real Taraba data across six datasets. The five conditions — 12.5 kg block,
+2025 release, North West position between Katsina and Sokoto, Taraba also present in North East,
+Kebbi absent — identify this specific defect and nothing else. If any condition fails, no correction
+is applied and the run raises.
+
+**Why a row count would not have caught it.** Each affected block still contains exactly 37 state
+rows. Only a per-zone completeness check reveals that North West holds Taraba instead of Kebbi. That
+check is now mandated in the rulebook for every zone-grouped dataset.
+
+**Consequence.** Without the rule, every 2025 month of 12.5 kg data would carry two differently-priced
+Taraba rows and no Kebbi. With it, the correction is conditional, auditable, and the published text
+survives in `geography_raw_label`.
+
+---
+
+## D-18 — The state reference is split into a unique lookup plus a provenance table
+
+**Decision.** `ref_state_zone.csv` holds **exactly one row per unique `alias_normalised`** (39 rows,
+39 keys, 37 canonical entities). Raw spellings live in an `observed_aliases` column and in a separate
+`ref_state_alias_observed.csv` (77 rows, one per raw spelling).
+
+**Problem this fixes.** The first build emitted one row per *raw* spelling — 77 rows over 39 distinct
+keys, because `ABIA` and `Abia` both normalise to `abia`. `alias_normalised` is the join key, so a
+lookup on it would have returned **two rows for most states**, silently doubling every joined
+observation. A correct-looking reference table would have corrupted every downstream count.
+
+**Proof.** A simulated join of all observed labels against the lookup: **3,823 source observations in,
+3,823 rows out**, with a maximum of **1** row returned for any single label.
+
+**Consequence.** Cleaning joins on `alias_normalised` with a guaranteed one-to-one result, while every
+raw spelling is still recoverable for audit. The general principle: a lookup table's key must be
+unique in the lookup, and provenance with many-to-one cardinality belongs in a separate table.
+
+---
+
+## D-19 — Zone labels are normalised, and never become state aliases
+
+**Decision.** Zone labels pass through the same trim → collapse-whitespace → casefold normalisation as
+states, then match the six controlled values with internal spaces removed.
+
+**Evidence.** `AGO JANUARY 2026.xlsx` prints **`SouthWest`** with no space, where every other file
+writes `South West`. Harvested from the data, not anticipated.
+
+**Consequence.** `SouthWest` resolves to the zone `South West`. It is explicitly excluded from
+`ref_state_zone`, and a validation asserts that no zone label in any spelling ever appears as a state
+alias — otherwise a zone aggregate could be counted as a 38th state.
+
+---
+
 ## Open items carried into Phase 6
 
 1. **`xlrd` is not installed**, so `CPI_Report_March_2026.zip` (legacy `.xls`) could not be read during
    profiling. It must be installed before cleaning, or March 2026 CPI is recorded MISSING.
-2. **`ref_state_zone` has not been authored yet.** It is specified here — keyed on
-   `alias_normalised`, one state per alias (D-15) — but must be written and committed as the single
-   source of truth for state spelling, aliases and zone membership. The full alias list has to be
-   harvested from the actual distinct geography values across all six NBS datasets, not assumed.
-3. **The transport mode lookup has not been authored yet.** Header sentences vary in spacing and
-   punctuation between months; the normalised-prefix matching rule is specified but the lookup table
-   itself is still to be written.
+2. ~~`ref_state_zone` has not been authored yet.~~ **DONE.** Built at
+   `data/reference/ref_state_zone.csv` (39 unique keys, 37 canonical entities) with provenance in
+   `data/reference/ref_state_alias_observed.csv` (77 raw spellings). Aliases were harvested from the
+   raw files, which is how `Nassarawa` was found. Not yet committed.
+3. ~~The transport mode lookup has not been authored yet.~~ **DONE.** Built at
+   `data/reference/ref_transport_mode.csv` — 6 observed raw labels mapping to the 5 canonical modes,
+   validated as unambiguous. NBS truncates these headers at exactly 50 characters, which is why
+   `WATER` has two variants (`...transportat` and `...transportation`). Not yet committed.
 4. **OCR engine not yet chosen**, and the numeric plausibility range for tariffs not yet agreed. Both
    are needed before NERC extraction begins.
 5. **No decision yet on whether the project repository will be made public**, which affects whether
