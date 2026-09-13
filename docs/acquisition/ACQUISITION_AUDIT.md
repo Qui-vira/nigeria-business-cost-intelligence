@@ -6,6 +6,19 @@ Sources used: **NBS microdata catalogue, NERC, CBN only.** No third-party source
 
 Files acquired: **296** (~1.20 GB). Integrity checks: **296 PASS / 0 FAIL.** Duplicate content: **none.**
 
+> **This document is the record of the FIRST acquisition round and its figures are historical.**
+> Every number below — 296 files, the 2025-01..2026-05 target period, 173 NERC orders, the 352-row CBN
+> extract, 22 missing weekdays — was true of that round and is deliberately preserved unchanged.
+>
+> The project was extended on **2026-09-13** (`acquisition_cutoff_date = 2026-09-13`), adding 46 files
+> for a total of **342**. The target period no longer ends at 2026-05; coverage is source-specific.
+> **For current coverage, current gaps and the current CBN figures, read
+> [`source_coverage_2026-09-13.md`](source_coverage_2026-09-13.md)**, and for the extension's hashes
+> read [`extension_2026-09-13_verification.csv`](extension_2026-09-13_verification.csv).
+>
+> The "MISSING" rows in §1 below remain open, except that they are now joined by ten further NBS
+> releases that fell due between the two rounds.
+
 ---
 
 ## 1. Missing months / files

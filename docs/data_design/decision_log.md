@@ -89,7 +89,7 @@ dashboard. A future analyst who never reads this file still cannot lose the rest
 cleaning phase.
 
 **Evidence.** NERC issues one MYTO supplementary order per **distribution company**, confirmed across
-all 173 acquired orders in `docs/acquisition/nerc_myto_coverage.csv`. DisCo licence areas do not
+all 217 acquired orders in `docs/acquisition/nerc_myto_coverage.csv`. DisCo licence areas do not
 align with state boundaries — several serve parts of multiple states.
 
 **Rejected alternative.** Assigning each DisCo to its "main" state to force electricity into a state
@@ -129,8 +129,9 @@ expected to **differ**, and an exact match is treated as a suspected mis-classif
 value forward.
 
 **Evidence.**
-- CBN publishes a **literal 0** in `noOfDeals` for 297 in-window rows, while turnover fields are
-  **blank** in 300. Two different absences in the same file, one of which is a real measurement.
+- CBN publishes a **literal 0** in `noOfDeals` for 298 in-window rows, while turnover fields are
+  **blank** in 300 (2026-09-13 snapshot; 297 and 300 under the earlier 2026-05-31 window). Two
+  different absences in the same file, one of which is a real measurement.
 - Food has exactly 15 items per month with no year-ago average, and therefore no YoY. These items were
   added to the basket; a year-ago price cannot exist.
 - CPI contains 69,411 `#REF!` cells — spreadsheet errors, not values.
@@ -254,7 +255,9 @@ documented derivative, never treated as authoritative.
 **Evidence.** CBN publishes no server-side historical download; the page's "Export to Excel" button
 builds a file client-side in the browser. The JSON captured from `cbn.gov.ng/api/GetAllNFEM_Rates` is
 the closest thing to an official file, holds all 445 records, and was preserved unmodified. The CSV
-covers only the 352 in-window rows and was produced by us.
+covers only the 352 rows that were in-window under the original 2026-05-31 cutoff and was produced by
+us; it was **not** regenerated when the cutoff moved to 2026-09-13, so it now understates the window
+by 73 records. That is another reason it is not authoritative.
 
 **Consequence.** If the two ever disagree, the JSON wins. The CSV remains for convenience and as
 evidence of what was extracted at acquisition time.
@@ -278,14 +281,14 @@ a real tariff — while silently changing a cost conclusion. Worse, a clean samp
 the unexamined remainder. The automated checks are **triage** that decides what to inspect first, not
 a filter that decides what can skip inspection.
 
-**Cost, acknowledged.** 173 orders each carry a tariff grid across customer classes and service bands.
+**Cost, acknowledged.** 217 orders each carry a tariff grid across customer classes and service bands.
 This is a substantial manual workload and is the main reason NERC is sequenced last. If it proves
 unaffordable, the correct response is to **narrow scope** — fewer DisCos or fewer months, fully
 validated — rather than to lower the bar. A smaller trustworthy dataset is worth more than a complete
 unverified one, particularly in a portfolio project whose value is its defensibility.
 
 **Evidence.**
-- 134 of 173 orders are image-only scans requiring OCR, including all 55 of the 2026 orders.
+- 178 of 217 orders are image-only scans requiring OCR, including every 2026 order.
 - Of the 39 text-based orders, several are themselves prior OCR output with errors already baked in:
   `IN THE MAilER OF`, `ORDER/NERC/2025/o03` (letter *o* for zero), `A- . roved Allowed Tariffs`.
 - Table extraction quality is uneven even among text-based files: `IE_July_2025_064.pdf` has clean
@@ -318,19 +321,23 @@ promoted, and validation raises).
 conflicting records must be investigated rather than discarded is a correctness rule, not a
 hypothetical.
 
-**Storage decision — records are marked, not deleted.** All **352** in-window records are physically
-retained in `fx_nfem_daily`: **346** `ACTIVE`, **6** `EXACT_DUPLICATE`, **0** `DATE_CONFLICT`.
-Analytical queries read the `ACTIVE` subset, giving **346** observations.
+**Storage decision — records are marked, not deleted.** All in-window records are physically retained
+in `fx_nfem_daily`. For the **2026-09-13 acquisition snapshot** that is **425** records: **419**
+`ACTIVE`, **6** `EXACT_DUPLICATE`, **0** `DATE_CONFLICT`. Analytical queries read the `ACTIVE` subset,
+giving **419** observations. These counts are regression expectations for this snapshot; the standing
+rules are structural — `ACTIVE` equals the number of distinct in-window dates, and `EXACT_DUPLICATE`
+equals in-window records minus distinct dates.
 
-**Rejected alternative.** Physically deleting the six redundant records to make the table 346 rows.
+**Rejected alternative.** Physically deleting the six redundant records to make the table 419 rows.
 Simpler to query, but it breaks the raw-to-clean audit trail: the clean table would no longer
 reconcile row-for-row against the raw API snapshot, and the fact that CBN published a given record
 twice would survive nowhere. Keeping the record and labelling it costs six rows and preserves the
 evidence.
 
 **Consequence.** Every record CBN published is stored and auditable; the analysis view still yields a
-clean one-row-per-day series of 346 in-window rows. Row-count reconciliation against the raw snapshot
-becomes a validation check rather than an impossibility. A future date conflict fails loudly instead of
+clean one-row-per-day series — **419** rows in the 2026-09-13 snapshot. Reconciliation against the raw
+snapshot becomes a validation check rather than an impossibility, and it is done by comparing the full
+**set** of in-window `source_id` values in both directions, not by comparing counts alone. A future date conflict fails loudly instead of
 being silently resolved by whichever record happened to sort first.
 
 ---
@@ -461,6 +468,50 @@ alias — otherwise a zone aggregate could be counted as a 38th state.
 
 ---
 
+## D-20 — The acquisition cutoff is a date sources were checked, not a dataset endpoint
+
+**Decision.** The project records a single `acquisition_cutoff_date = 2026-09-13`, and **separately**
+records a latest observation date per dataset family. The two are never conflated. No document may
+state or imply a shared end date across datasets.
+
+**Evidence.** Re-checking every official source on 2026-09-13 produced eight different endpoints from
+one cutoff: CBN NFEM to 2026-09-11 (daily), NERC to September 2026, CPI to July 2026, petrol, diesel,
+transport and food to May 2026, and LPG to April 2026. The spread is real and publisher-driven — NBS
+releases CPI around the 15th of the following month but the price watches around the 22nd–29th, so a
+mid-September cutoff catches more CPI than price-watch months. Full evidence in
+`docs/acquisition/source_coverage_2026-09-13.md`.
+
+**Consequence.** The earlier framing "January 2025 – May 2026" is retired as a project-wide statement;
+it was only ever true because the first acquisition happened to stop there. Any cross-dataset analysis
+must state the window it actually uses and handle families that end earlier, rather than assuming a
+rectangle. Row counts in the design documents are labelled as regression expectations for a named
+snapshot, and validation is written structurally so that a re-acquisition fails loudly rather than
+silently disagreeing with a hardcoded number.
+
+---
+
+## D-21 — Current NBS releases come from `microdata.nigerianstat.gov.ng`, not the main e-library
+
+**Decision.** NBS acquisition targets the NADA catalogue at `microdata.nigerianstat.gov.ng`. The main
+site's e-library at `nigerianstat.gov.ng/elibrary` is not sufficient for current releases and must not
+be used to conclude that a release does not exist.
+
+**Evidence.** On 2026-09-13 the e-library listing contained 1,695 entries whose newest item was
+*Foreign Trade in Goods Statistics Q3 2024*, published 2024-12-06. It lists **none** of the 2025–2026
+files the project already holds, so a "not found" there is meaningless. The same six datasets were
+found immediately in the microdata catalogue, which is also the host recorded in
+`docs/acquisition/source_inventory.csv` for every NBS file acquired. Catalogue ids:
+**154** CPI, **157** PMS (petrol), **158** AGO (diesel), **160** LPG (cooking gas), **161** transport
+fare, **162** selected food. Download URLs take the form
+`https://microdata.nigerianstat.gov.ng/index.php/catalog/<catalog_id>/download/<resource_id>`, and the
+filename comes from the `Content-Disposition` header rather than the URL.
+
+**Consequence.** A dataset is only declared missing after checking the relevant microdata catalogue
+page. This is recorded because a search of the wrong host returned a confident false negative for all
+six NBS datasets during the 2026-09-13 extension.
+
+---
+
 ## Open items carried into Phase 6
 
 1. **`xlrd` is not installed**, so `CPI_Report_March_2026.zip` (legacy `.xls`) could not be read during
@@ -477,3 +528,9 @@ alias — otherwise a zone aggregate could be counted as a 38th state.
    are needed before NERC extraction begins.
 5. **No decision yet on whether the project repository will be made public**, which affects whether
    raw source files are ever redistributed.
+6. **Eleven NBS releases were due before the 2026-09-13 cutoff but are not published** — LPG May,
+   June and July 2026, plus petrol, diesel, food and transport for June and July 2026. They are
+   recorded as *due but unpublished* in `docs/acquisition/source_coverage_2026-09-13.md`. They must be
+   re-checked before analysis, and never filled.
+7. **The 44 new NERC orders (June–September 2026) are image-only scans**, like the existing corpus, so
+   D-12 applies to them unchanged.

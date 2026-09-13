@@ -22,8 +22,13 @@ No third-party mirror, aggregator or republisher was used.
 - **Cleaning happens in a separate layer**, created later. Nothing in this directory is ever the
   output of a transformation.
 - **Documented missing periods must not be silently filled** - not by interpolation, not by
-  substitution, not from an unofficial source. Known gaps: NBS LPG 2026-05, NBS CPI 2025-01,
-  NERC 2025-03 (all DisCos), NERC 2025-06 (JED), NERC 2025-12 (EKEDP, JED, PHED).
+  substitution, not from an unofficial source. Known gaps as at `acquisition_cutoff_date =
+  2026-09-13`: NBS CPI 2025-01; NBS LPG 2026-05, 2026-06, 2026-07; NBS petrol, diesel, food and
+  transport 2026-06 and 2026-07; NERC 2025-03 (all DisCos), NERC 2025-06 (JED), NERC 2025-12
+  (EKEDP, JED, PHED), and Aba Power (APLE) in every month after 2025-02.
+- **"Not yet due" is not a gap.** The August 2026 NBS releases were scheduled after the cutoff
+  (2026-09-15 to 2026-09-29) and are correctly absent. Only a release whose scheduled date has passed
+  counts as missing. Full detail in `docs/acquisition/source_coverage_2026-09-13.md`.
 
 ## Known source anomaly - preserved deliberately
 

@@ -1,8 +1,8 @@
 # ---------------------------------------------------------------------------
 # Raw source data
 #
-# The 296 official NBS / NERC / CBN source files stay on disk but are NOT
-# committed: they are large binary artifacts (~1.2 GB) obtained from public
+# The 342 official NBS / NERC / CBN source files stay on disk but are NOT
+# committed: they are large binary artifacts (~1.6 GB) obtained from public
 # official sources. Their provenance, coverage and SHA-256 integrity are
 # documented under docs/acquisition/, which IS tracked.
 # ---------------------------------------------------------------------------

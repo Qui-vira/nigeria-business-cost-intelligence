@@ -16,6 +16,13 @@ specific observed defect, the evidence is cited.
 5. Every clean row keeps enough provenance (`source_file`, `source_sheet`, `source_row`,
    `source_period_label`) to be traced back to the exact cell it came from.
 6. Geography is never invented. A value published at zone level stays at zone level.
+7. `acquisition_cutoff_date = 2026-09-13` is the date sources were last checked. It is **not** an end
+   date for any dataset. Each family ends where its publisher ended, and those dates differ — see
+   [`docs/acquisition/source_coverage_2026-09-13.md`](../acquisition/source_coverage_2026-09-13.md).
+   No rule may assume a shared endpoint.
+8. Row counts quoted in this document are **regression expectations for the 2026-09-13 snapshot**, not
+   design invariants. Validation asserts structural rules first; frozen counts are an additional guard
+   so that a changed snapshot fails loudly instead of passing silently.
 
 ---
 
@@ -255,8 +262,10 @@ blank turnover is an absent one; treating them alike corrupts both.
 **EXPECTED CLEAN OUTPUT** — Every measure column is paired with a status, so absence is queryable.
 
 **VALIDATION CHECK** — In food, exactly 15 items per month carry a NULL year-ago average and a NULL
-YoY — matching the profiled count. In CBN, exactly 297 in-window rows carry `nfem_deal_count = 0`
-with status `OK`, and 300 carry NULL turnover with status `MISSING`.
+YoY — matching the profiled count. In CBN, exactly **298** in-window rows carry `nfem_deal_count = 0`
+with status `OK`, and **300** carry NULL turnover with status `MISSING` (2026-09-13 snapshot; both are
+regression expectations, and the rule they guard is that the two absences never convert into each
+other).
 
 ### 0.7 Numeric casting
 
@@ -621,7 +630,7 @@ March 2026 either parses or is explicitly MISSING.
 **RAW PROBLEM** — Values arrive as JSON **strings**, dates as text `Month-DD-YYYY`. **Six dates appear
 twice** (2025-02-03, 2025-02-07, 2025-02-18, 2025-05-12, 2025-05-23, 2025-06-19) — every field
 identical apart from CBN's internal `id`. Turnover and interbank deal counts are **absent** in 300 of
-352 in-window rows, while `noOfDeals` carries a **literal 0** in 297. 22 weekdays have no observation.
+425 in-window rows, while `noOfDeals` carries a **literal 0** in 298. 24 weekdays have no observation.
 
 **WHY IT MATTERS** — Duplicate dates break a date primary key. Confusing the blank turnover with the
 zero deal count would both invent data and destroy real data in the same step.
@@ -655,39 +664,60 @@ zero deal count would both invent data and destroy real data in the same step.
 7. **Blank stays NULL. Literal zero stays 0.** `nfem_deal_count = 0` is a reported count and is
    preserved as zero with status `OK`.
 
-8. **The 22 missing weekdays are not filled.** No interpolation, no carry-forward, no zero. Absence of
-   a row means no published observation for that date.
+8. **The missing weekdays are not filled.** No interpolation, no carry-forward, no zero. Absence of
+   a row means no published observation for that date. The count is snapshot-specific (**24** in the
+   2026-09-13 snapshot); validation compares the exact *set* of absent dates, never just the count.
 
 **EXPECTED CLEAN OUTPUT** — `fx_nfem_daily` **physically stores every published record**, keyed on
 `source_id`. Nothing is deleted. An analysis view filtered to `record_status = 'ACTIVE'` supplies the
 clean one-row-per-trading-day series.
 
+Counts are for the **2026-09-13 acquisition snapshot**, window 2025-01-01 to 2026-09-13. They are
+regression expectations for this snapshot, not design invariants.
+
 | Count | Value |
 |---|---|
-| Physical rows in `fx_nfem_daily` (in-window) | **352** |
-| `ACTIVE` | **346** |
+| Physical rows in `fx_nfem_daily` (in-window) | **425** |
+| `ACTIVE` | **419** |
 | `EXACT_DUPLICATE` | **6** |
 | `DATE_CONFLICT` | **0** |
-| Active analytical observations | **346** |
+| Active analytical observations | **419** |
+| Latest observation | **2026-09-11** |
 
 The six redundant records are **retained and marked**, never removed. "De-duplication" here means
 *labelling* the redundant record, not deleting it — the raw API published it, so the clean layer keeps
 it and records why it is excluded from analysis.
 
-**VALIDATION CHECK** — Physical in-window row count is **352** and equals the number of in-window
-records in the raw API snapshot: nothing was dropped in cleaning. Of these, exactly **346** are
-`ACTIVE`, exactly **6** are `EXACT_DUPLICATE`, and **0** are `DATE_CONFLICT` — any non-zero conflict
-count fails the run and requires human review. `observation_date` is unique **within `ACTIVE` rows**
-and is deliberately *not* unique across the whole table. Every `EXACT_DUPLICATE` row has a non-null
-`duplicate_of_source_id` pointing at an `ACTIVE` row with the same `observation_date`. Exactly 297 rows
-have `nfem_deal_count = 0`; exactly 300 have NULL turnover. No row exists for any of the 22 known
-missing weekdays. The five core rate columns are 100% non-null.
+**VALIDATION CHECK** — Validation is written **structurally first**, so it survives a re-acquisition:
+
+- physical in-window row count **equals** the number of in-window records in the raw API snapshot —
+  nothing dropped, nothing invented
+- the **set** of in-window raw `source_id` values equals the set of clean `source_id` values, compared
+  in both directions, with one physical row per id. Membership in the *whole* snapshot is not enough:
+  an out-of-window record must fail
+- `ACTIVE` **equals** the number of distinct in-window observation dates
+- `EXACT_DUPLICATE` **equals** in-window records − distinct dates
+- `DATE_CONFLICT` is **0**, or the run fails and no output is written
+- the **exact set** of absent weekdays matches the reference list, in both raw and clean. A matching
+  count is not sufficient — dropping one real trading day and inventing one holiday row preserves the
+  count
+- the raw JSON SHA-256 is identical before processing, after processing, after writing, and against
+  the digest recorded at acquisition
+- `observation_date` is unique **within `ACTIVE` rows** and deliberately *not* unique across the table
+- every `EXACT_DUPLICATE` row has a non-null `duplicate_of_source_id` pointing at an `ACTIVE` row with
+  the same `observation_date`
+- the five core rate columns are 100% non-null, and no published numeric text is altered
+
+Frozen counts for the 2026-09-13 snapshot are asserted **in addition**, as regression guards: **425**
+physical rows, **419** `ACTIVE`, **6** `EXACT_DUPLICATE`, **0** `DATE_CONFLICT`, **298** rows with
+`nfem_deal_count = 0`, **300** with NULL turnover, **24** absent weekdays. A changed snapshot fails
+loudly for review rather than passing silently.
 
 ---
 
 ## 8. NERC electricity tariffs — extraction design only
 
-**RAW PROBLEM** — **134 of 173 PDFs are image-only scans** with no text layer, including **all 55 of
+**RAW PROBLEM** — **178 of 217 PDFs are image-only scans** with no text layer, including **all 55 of
 the 2026 orders**. Of the 39 text-based files, some are themselves prior OCR output with errors baked
 in (`IN THE MAilER OF`, `ORDER/NERC/2025/o03` with a letter *o* for zero, `A- . roved`). Table
 extraction quality is uneven: `IE_July_2025_064.pdf` has clean vector tables, `AEDC_February_2025_003.pdf`
@@ -724,7 +754,7 @@ or `226.50` changes a cost conclusion with no visible sign of failure.
    The automated checks in step 4 are **triage, not substitutes for validation.** They decide what to
    look at first, not what can skip being looked at.
 
-   **Cost, stated honestly:** 173 orders, each with a tariff grid of roughly one row per customer class
+   **Cost, stated honestly:** 217 orders, each with a tariff grid of roughly one row per customer class
    and band. This is a large manual workload and it is the main reason NERC is sequenced last. If that
    workload proves unaffordable, the correct response is to **narrow the scope** — fewer DisCos, or
    fewer months, fully validated — not to lower the bar to sampling. A smaller trustworthy dataset is
@@ -740,7 +770,8 @@ class × band, with provenance, extraction method, confidence and validation sta
 without a recorded human check, and **no row enters analysis while `UNVALIDATED`** — the analysis view
 filters on `validation_status = 'VALIDATED'`, so an unchecked tariff is invisible to downstream work
 rather than quietly included. Coverage reconciles against `docs/acquisition/nerc_myto_coverage.csv`:
-173 orders, 12 DisCos, and the 15 known missing DisCo-months stay missing.
+217 orders, 12 DisCos, and the 15 known missing DisCo-months stay missing. Aba Power (APLE) has no
+order after February 2025 and is absent from every month of the 2026-09-13 extension.
 
 ---
 

@@ -3,6 +3,12 @@
 A plain-English tour of the 296 source files, written before any cleaning has started.
 Nothing here is a solution — this is just an honest description of what we are dealing with.
 
+> **Scope note (added 2026-09-13).** This is a Phase 2 profiling record of the **original 296-file
+> corpus**, and its figures are kept as the historical measurement. The project was later extended to
+> `acquisition_cutoff_date = 2026-09-13`, adding **46 files** (44 NERC MYTO orders, 2 NBS CPI
+> archives) that have **not** been profiled. For current coverage and current CBN figures see
+> [`docs/acquisition/source_coverage_2026-09-13.md`](../acquisition/source_coverage_2026-09-13.md).
+
 **A few words explained up front**, because they are used throughout:
 
 - **Row / column** — a spreadsheet line, and a spreadsheet field. A *row* is usually one thing you

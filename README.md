@@ -53,8 +53,14 @@ official file does not exist, the gap is recorded rather than filled.
 | **Central Bank of Nigeria (CBN)** | NFEM daily naira/US dollar exchange rate |
 | **Nigerian Electricity Regulatory Commission (NERC)** | MYTO supplementary electricity tariff orders |
 
-**296 source files, approximately 1.2 GB**, covering **January 2025 – May 2026**, each verified by
-SHA-256 hash.
+**342 source files, approximately 1.6 GB**, each verified by SHA-256 hash.
+
+The project's `acquisition_cutoff_date` is **2026-09-13** — the date every official source was last
+checked. That is **not** an end date for the data. Coverage is source-specific and the families
+legitimately stop at different points, from April 2026 (cooking gas) to September 2026 (electricity
+tariffs), with the daily exchange rate running to 2026-09-11. The full picture, including which
+absences are real gaps and which are simply not yet due, is in
+[`docs/acquisition/source_coverage_2026-09-13.md`](docs/acquisition/source_coverage_2026-09-13.md).
 
 ---
 
@@ -67,9 +73,9 @@ SHA-256 hash.
 | 3 | Diesel (AGO) Price Watch | NBS | 22 | State + zone + national |
 | 4 | Cooking Gas (LPG) Price Watch | NBS | 20 | State + zone + national |
 | 5 | Transport Fare Watch | NBS | 14 | State + zone + national |
-| 6 | Consumer Price Index (CPI) | NBS | 22 | National, urban, rural + state |
+| 6 | Consumer Price Index (CPI) | NBS | 24 | National, urban, rural + state |
 | 7 | NFEM exchange rate | CBN | 5 | National |
-| 8 | Electricity tariffs (MYTO) | NERC | 173 | DisCo |
+| 8 | Electricity tariffs (MYTO) | NERC | 217 | DisCo |
 
 ---
 
@@ -114,7 +120,7 @@ any transformation code. Each one would silently corrupt a naive pipeline.
 | **CPI state index levels cannot rank states by cost** | NBS prints the restriction directly beneath the table: market baskets differ state to state. |
 | **CPI contains 69,411 `#REF!` cells** | Almost all confined to rebasing working sheets; the presentation tables are clean. |
 | **CBN has six exact duplicate dates, and blanks that are not zeros** | One column is blank where data is absent; another holds a literal `0`. They mean different things. |
-| **134 of 173 NERC PDFs are image-only scans** | Including every 2026 order. Tariffs cannot be read without OCR, and OCR digit errors are silent. |
+| **178 of 217 NERC PDFs are image-only scans** | Including every 2026 order. Tariffs cannot be read without OCR, and OCR digit errors are silent. |
 | **DisCo territories are not states** | Licence areas cross state boundaries, so electricity cannot honestly be mapped to states without a separate verified approximation. |
 
 ---
@@ -195,8 +201,12 @@ Stated plainly, because they shape what the finished analysis can honestly claim
 - **Electricity tariffs are DisCo-level.** They are not converted to states.
 - **A DisCo-to-state mapping would require a separate verified approximation**, and even then would
   remain an approximation, because licence areas cross state boundaries.
-- **Source gaps are not interpolated or invented.** Known missing releases — LPG May 2026, CPI January
-  2025, NERC March 2025 (all DisCos), plus three DisCo-months — stay missing and are documented.
+- **Source gaps are not interpolated or invented.** Missing releases stay missing and are documented:
+  eleven NBS releases that were due before the cutoff but never published (LPG May–July 2026; petrol,
+  diesel, food and transport for June and July 2026), plus CPI January 2025, NERC March 2025 (all
+  DisCos), Aba Power since February 2025, and three further DisCo-months.
+- **"Not yet due" is not the same as "missing."** The August 2026 NBS releases were scheduled after the
+  2026-09-13 cutoff, so their absence is expected and is not counted as a gap.
 
 ---
 
@@ -207,7 +217,7 @@ Nigeria Business Cost Intelligence/
 ├── README.md
 ├── .gitignore
 ├── data/
-│   └── raw/                        # 296 official source files (not committed)
+│   └── raw/                        # 342 official source files (not committed)
 │       ├── README.md               # rules governing the raw layer (committed)
 │       ├── nbs/                    # food, petrol, diesel, cooking_gas, transport, cpi
 │       ├── nerc/                   # electricity_myto
@@ -253,7 +263,7 @@ What the repository provides in their place:
 |---|---|
 | Source inventory with official download URLs | Python cleaning code |
 | Provenance records for every file | SQL scripts |
-| SHA-256 hashes for all 296 files | Automated validation logic |
+| SHA-256 hashes for all 342 files | Automated validation logic |
 | Full methodology and profiling evidence | Step-by-step rerun instructions |
 | Cleaning rules and canonical schemas | Environment / dependency specification |
 
@@ -292,7 +302,7 @@ The finished repository is intended to include the following. Items marked ⬜ a
 
 **Already demonstrated in this repository**
 
-- **Data acquisition** — sourcing 296 files from three government agencies, including discovering a
+- **Data acquisition** — sourcing 342 files from three government agencies, including discovering a
   JSON API behind a JavaScript-rendered page and paging a document library to build a complete index
 - **Data profiling** — systematic structural analysis of 219 spreadsheet sheets and 173 PDFs
 - **Data validation** — SHA-256 verification of every file at download, transfer and after each phase
@@ -317,7 +327,7 @@ The finished repository is intended to include the following. Items marked ⬜ a
 
 **`data/raw/` is not committed to Git.**
 
-The 296 official government files are preserved locally and protected by SHA-256 verification recorded
+The 342 official government files are preserved locally and protected by SHA-256 verification recorded
 in `docs/acquisition/`. They are never edited, renamed, re-saved or extracted in place. ZIP archives
 stay zipped; the raw layer mirrors exactly what each agency published, including its errors.
 

@@ -7,6 +7,12 @@ ZIP members were read in memory and never unpacked to disk.
 Scope measured: **118 NBS files → 219 spreadsheet sheets** (218 readable, 1 not),
 **5 CBN files**, **173 NERC PDFs** (text-layer scan only, no OCR).
 
+> **Scope note (added 2026-09-13).** This is a Phase 2 profiling record of the **original 296-file
+> corpus**, and its figures are kept as the historical measurement. The project was later extended to
+> `acquisition_cutoff_date = 2026-09-13`, adding **46 files** (44 NERC MYTO orders, 2 NBS CPI
+> archives) that have **not** been profiled. For current coverage and current CBN figures see
+> [`docs/acquisition/source_coverage_2026-09-13.md`](../acquisition/source_coverage_2026-09-13.md).
+
 ---
 
 ## 1. NBS Selected Food Price Watch
@@ -238,6 +244,11 @@ One row = one trading day, nationally. **No state dimension at all.**
 3. The five core rate fields (NFEM, highest, lowest, closing, simple average) are **100% complete**.
 4. All values arrive as **strings**, not numbers; dates are text in `Month-DD-YYYY` form.
 5. 22 weekdays have no observation (listed at acquisition, deliberately not filled).
+
+> Items 2 and 5 were measured against the extracted CSV derivative, which holds the 352 rows that were
+> in-window under the original 2026-05-31 cutoff. Under the current 2026-09-13 cutoff the raw JSON
+> yields **425** in-window rows, **300** with empty turnover, **298** with a literal `0` deal count,
+> and **24** weekdays with no observation. The *kinds* of defect described here are unchanged.
 
 ---
 

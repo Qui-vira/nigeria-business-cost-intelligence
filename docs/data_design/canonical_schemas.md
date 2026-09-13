@@ -5,6 +5,12 @@
 Thirteen clean tables plus one reference table, grouped into the eight source dataset families.
 Every table is **long**: one row per observation, with the period in a column rather than a heading.
 
+> **Project scope.** `acquisition_cutoff_date = 2026-09-13`. That is the date sources were last
+> checked — it is **not** the end date of any dataset. Coverage is source-specific and each family
+> legitimately stops where its publisher stopped: see
+> [`docs/acquisition/source_coverage_2026-09-13.md`](../acquisition/source_coverage_2026-09-13.md).
+> No table should assume a shared end date.
+
 **On the example values below**
 
 Values marked **[real]** were read from the raw files during profiling and are reproduced unchanged.
@@ -397,26 +403,43 @@ are illustrative only, showing that such a case could be stored rather than sile
 
 **Storage: all records are kept. Nothing is deleted.**
 
+Counts below are for the **2026-09-13 acquisition snapshot**, window 2025-01-01 to 2026-09-13.
+They are regression expectations for this snapshot, not invariants of the design — see the
+structural rules beneath the table.
+
 | Count | Value |
 |---|---|
-| **Physical rows in `fx_nfem_daily`** (in-window) | **352** |
-| of which `record_status = 'ACTIVE'` | **346** |
+| **Physical rows in `fx_nfem_daily`** (in-window) | **425** |
+| of which `record_status = 'ACTIVE'` | **419** |
 | of which `record_status = 'EXACT_DUPLICATE'` | **6** |
 | of which `record_status = 'DATE_CONFLICT'` | **0** |
-| **Active analytical observations** | **346** |
+| **Active analytical observations** | **419** |
+| Latest observation | **2026-09-11** |
+
+**The rules that actually hold, whatever the snapshot:**
+
+- physical rows == the number of in-window records in the raw snapshot
+- `ACTIVE` == the number of *distinct* in-window observation dates
+- `EXACT_DUPLICATE` == in-window records − distinct dates
+- `DATE_CONFLICT` == 0, or the run fails and no output is written
+
+Validation asserts the structural rules *and* the frozen counts, so a changed snapshot fails loudly
+for review rather than passing silently.
 
 The six redundant records are **retained physically** and marked `EXACT_DUPLICATE`, not removed from
 the table. Every record CBN published stays in the clean layer for auditability; the analysis view
 supplies the clean daily series by filtering `record_status = 'ACTIVE'`.
 
-This is why `source_id` is the primary key and `observation_date` is not: all 352 rows coexist, and
-date uniqueness is enforced only across the 346 `ACTIVE` ones.
+This is why `source_id` is the primary key and `observation_date` is not: all 425 rows coexist, and
+date uniqueness is enforced only across the 419 `ACTIVE` ones.
 
 > Both kinds of absence appear on row 1: `interbank_turnover_usd` is `NULL` because nothing was
 > published, while `nfem_deal_count` is `0` because zero was published.
 >
-> No row exists for the 22 weekdays with no observation — those dates are absent from the source
-> entirely, which is different from being duplicated or conflicted.
+> No row exists for the 24 weekdays with no observation — those dates are absent from the source
+> entirely, which is different from being duplicated or conflicted. The exact 24 dates are listed in
+> `docs/validation/cbn_nfem_validation.md`; 22 of them are corroborated by the acquisition evidence,
+> the other 2 (2026-06-12, 2026-08-25) were derived from the snapshot when the cutoff was extended.
 
 ---
 
