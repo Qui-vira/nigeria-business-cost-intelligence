@@ -14,15 +14,45 @@ data/raw/**
 # ---------------------------------------------------------------------------
 .venv/
 venv/
+env/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 .ipynb_checkpoints/
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
 # ---------------------------------------------------------------------------
-# Environment and secrets
+# Environment, secrets and database credentials
 # ---------------------------------------------------------------------------
 .env
 .env.*
+.pgpass
+.psql_history
+credentials.json
+*.pem
+*.key
+
+# ---------------------------------------------------------------------------
+# Local database artifacts
+# (a .sql schema or query file IS tracked - only binary local DBs are ignored)
+# ---------------------------------------------------------------------------
+*.sqlite
+*.sqlite3
+*.db
+
+# ---------------------------------------------------------------------------
+# Editors and IDEs
+# ---------------------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*~
 
 # ---------------------------------------------------------------------------
 # Logs and temporary files
@@ -30,10 +60,30 @@ __pycache__/
 *.log
 *.tmp
 *.temp
+*.bak
+
+# ---------------------------------------------------------------------------
+# BI tool temporary and backup files only
+# The deliverables themselves (.pbix, .twb, .twbx, screenshots) ARE tracked.
+# ---------------------------------------------------------------------------
+*.pbix.tmp
+*.twbr
+~$*.pbix
+~$*.twb
 
 # ---------------------------------------------------------------------------
 # OS and Office lock files
 # ---------------------------------------------------------------------------
 Thumbs.db
+desktop.ini
 .DS_Store
 ~$*
+
+# ---------------------------------------------------------------------------
+# Deliberately NOT ignored - these are portfolio deliverables and must be
+# committed when they exist:
+#   *.py  *.ipynb  *.sql  *.md  *.csv (documentation)
+#   *.pbix  *.twb  *.twbx  dashboard screenshots (*.png / *.jpg)
+#   src/  sql/  tests/  docs/
+# Do not add broad patterns such as data/** or *.csv that would hide them.
+# ---------------------------------------------------------------------------

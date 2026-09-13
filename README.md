@@ -1,53 +1,226 @@
 # Nigeria Business Cost Intelligence
 
-## Project question
+Integrating eight official Nigerian government datasets into a defensible view of how the cost of
+doing business is changing — and being explicit about what the data can and cannot support.
 
-> **How are the costs of doing business changing across Nigerian states, and what should
-> different businesses do about it?**
+**Status:** data acquisition, preservation, profiling and schema design are complete. The cleaning
+pipeline, database, analysis and dashboards are not yet built. Nothing below is claimed as finished
+unless the status table says so.
 
-## Current status
+---
 
-| Phase | Description | Status |
+## Project overview
+
+**Central question**
+
+> **How are the costs of doing business changing across Nigerian states, and what should different
+> businesses do about it?**
+
+A business in Nigeria pays for stock, fuel, power, transport and imported goods. Each of those costs
+is measured by a different government agency, published on a different schedule, in a different file
+format, and — critically — at a different level of geographic detail.
+
+This project acquires those sources, preserves them unchanged, documents exactly what is in them, and
+designs a clean data model that integrates them **without inventing geographic detail the sources do
+not provide.**
+
+---
+
+## Why this project matters
+
+Nigerian businesses are absorbing simultaneous pressure from food prices, petrol and diesel, cooking
+gas, transport fares, electricity tariffs, inflation and the naira exchange rate. Each of those is
+published separately. Nobody publishes the combined picture.
+
+The obvious approach — download everything, join it on state and month, build a dashboard — produces a
+confident-looking answer that is partly fabricated. Three of the eight sources do not publish
+state-level values at all. Forcing them into a state table means inventing numbers.
+
+The harder and more honest approach, taken here, is to integrate what genuinely joins, keep the rest at
+the level it was actually published, and label every measure with its true geographic grain. The
+limitations are documented as findings rather than hidden.
+
+---
+
+## Official data sources
+
+**Official government sources only.** No Kaggle, no mirrors, no aggregators, no news sites. Where an
+official file does not exist, the gap is recorded rather than filled.
+
+| Agency | What it provides |
+|---|---|
+| **National Bureau of Statistics (NBS)** | Food, petrol, diesel, cooking gas and transport price watches; Consumer Price Index |
+| **Central Bank of Nigeria (CBN)** | NFEM daily naira/US dollar exchange rate |
+| **Nigerian Electricity Regulatory Commission (NERC)** | MYTO supplementary electricity tariff orders |
+
+**296 source files, approximately 1.2 GB**, covering **January 2025 – May 2026**, each verified by
+SHA-256 hash.
+
+---
+
+## Datasets
+
+| # | Dataset family | Source | Files | Published level |
+|---|---|---|---|---|
+| 1 | Selected Food Price Watch | NBS | 18 | National + zone |
+| 2 | Petrol (PMS) Price Watch | NBS | 22 | State + zone + national |
+| 3 | Diesel (AGO) Price Watch | NBS | 22 | State + zone + national |
+| 4 | Cooking Gas (LPG) Price Watch | NBS | 20 | State + zone + national |
+| 5 | Transport Fare Watch | NBS | 14 | State + zone + national |
+| 6 | Consumer Price Index (CPI) | NBS | 22 | National, urban, rural + state |
+| 7 | NFEM exchange rate | CBN | 5 | National |
+| 8 | Electricity tariffs (MYTO) | NERC | 173 | DisCo |
+
+---
+
+## Current project status
+
+| Stage | Status |
+|---|---|
+| Business problem definition | ✅ Complete |
+| Official source acquisition | ✅ Complete |
+| Raw-data preservation | ✅ Complete |
+| SHA-256 verification | ✅ Complete |
+| Source inventory | ✅ Complete |
+| Data profiling | ✅ Complete |
+| Structural anomaly investigation | ✅ Complete |
+| Canonical schema design | ✅ Complete |
+| Cleaning-rule design | ✅ Complete |
+| Decision log | ✅ Complete |
+| Git version control | ✅ Complete |
+| Cleaning pipeline | ⬜ Not started |
+| Processed datasets | ⬜ Not started |
+| PostgreSQL database | ⬜ Not started |
+| SQL analysis | ⬜ Not started |
+| Dashboards | ⬜ Not started |
+| Business recommendations | ⬜ Not started |
+
+---
+
+## Key data challenges discovered
+
+These were found by systematically profiling **219 spreadsheet sheets** and **173 PDFs** before writing
+any transformation code. Each one would silently corrupt a naive pipeline.
+
+| Problem | Why it matters |
+|---|---|
+| **NBS header rows move between files** — found on rows 1, 2, 3, 4, 15 and 16 | Code assuming "row 1 is the header" reads a title sentence as column names for some months and works for others. It fails silently. |
+| **Datasets sit at four different geographic levels** | State, zone, national and DisCo cannot be joined as if they were the same thing. |
+| **Food Price Watch publishes no complete state-level prices** | Verified in both the spreadsheets and four report PDFs. States appear only in "highest/lowest" callouts. |
+| **Petrol holds two side-by-side tables in one sheet** | Columns 1–4 are a state table; columns 6–7 are a separate zone table with different row meanings. |
+| **Diesel mixes states, zones and a NATIONAL row in one unnamed column** | Selecting "all rows" returns three geographic levels at once. |
+| **Cooking gas has two cylinder-size tables with identical headers** | 5 kg and 12.5 kg can only be told apart by column position, not by name — and the columns moved in 2026. |
+| **Transport March 2025 has a duplicated period header** | Two columns are both labelled `Average of Mar-24`; the second is really March 2025, proven by cross-checking the April release. |
+| **CPI state index levels cannot rank states by cost** | NBS prints the restriction directly beneath the table: market baskets differ state to state. |
+| **CPI contains 69,411 `#REF!` cells** | Almost all confined to rebasing working sheets; the presentation tables are clean. |
+| **CBN has six exact duplicate dates, and blanks that are not zeros** | One column is blank where data is absent; another holds a literal `0`. They mean different things. |
+| **134 of 173 NERC PDFs are image-only scans** | Including every 2026 order. Tariffs cannot be read without OCR, and OCR digit errors are silent. |
+| **DisCo territories are not states** | Licence areas cross state boundaries, so electricity cannot honestly be mapped to states without a separate verified approximation. |
+
+---
+
+## Geographic model
+
+The project deliberately preserves four levels rather than flattening everything into one state table:
+
+| Level | Used by |
+|---|---|
+| **STATE** | Petrol, diesel, cooking gas, transport, CPI (one table) |
+| **ZONE** | Food, and the zone breakdowns of the fuel and transport datasets |
+| **NATIONAL** | CBN exchange rate, CPI headline, published national aggregates |
+| **DISCO** | NERC electricity tariffs |
+
+**This is not one giant state-level dataset, and it should not be presented as one.** Every measure
+carries its true geographic grain so that a chart can never imply detail the source never published.
+
+---
+
+## Methodology
+
+| # | Step | Status |
 |---|---|---|
-| 1 | Business problem defined | **COMPLETE** |
-| 2 | Official data acquisition | **COMPLETE** |
-| 3 | Raw-data preservation and verification | **COMPLETE** |
-| 4 | Raw-data profiling | **COMPLETE** |
-| 5 | Data dictionary and cleaning-rule design | **NOT STARTED** |
+| 1 | Acquire official source files | ✅ Done |
+| 2 | Preserve raw files unchanged | ✅ Done |
+| 3 | Verify files using SHA-256 hashes | ✅ Done |
+| 4 | Profile workbook and PDF structures | ✅ Done |
+| 5 | Document structural differences and source defects | ✅ Done |
+| 6 | Design canonical long-format schemas | ✅ Done |
+| 7 | Define cleaning and validation rules before transformation | ✅ Done |
+| 8 | Build reproducible Python cleaning pipelines | ⬜ Upcoming |
+| 9 | Load clean data into PostgreSQL | ⬜ Upcoming |
+| 10 | Analyse using SQL and Python | ⬜ Upcoming |
+| 11 | Build dashboards | ⬜ Upcoming |
+| 12 | Produce business recommendations | ⬜ Upcoming |
 
-No cleaning, transformation or analysis has been performed.
+Steps 1–7 are complete and documented in this repository. **Steps 8 onward have not been started.**
 
-## Official sources
+The sequence is deliberate: the cleaning rules were designed *after* profiling the real files and
+*before* writing transformation code, so the rules respond to defects that actually exist rather than
+to assumptions about what government spreadsheets usually look like.
 
-All data comes from first-party official sources only:
+---
 
-- **National Bureau of Statistics (NBS)** — food, petrol (PMS), diesel (AGO), cooking gas (LPG)
-  and transport fare price watches, and the Consumer Price Index
-- **Nigerian Electricity Regulatory Commission (NERC)** — MYTO supplementary tariff orders
-- **Central Bank of Nigeria (CBN)** — NFEM daily naira/US dollar exchange rate
+## Data quality and analytical safeguards
 
-No third-party mirror, aggregator or republisher was used. Where an official file does not exist,
-the gap is recorded rather than filled.
+Designed in `docs/data_design/cleaning_rulebook.md` and enforced when the pipeline is built:
 
-## Raw-source note
+- **Raw files are never edited.** Source errors are corrected downstream and documented; the raw file
+  keeps the error.
+- **Blanks are never automatically converted to zero.** Four distinct states are represented:
+  `OK`, `MISSING`, `NOT_APPLICABLE`, `SOURCE_ERROR_REF`.
+- **National and zone aggregates are explicitly flagged**, never silently averaged in with states.
+- **Source errors are corrected only downstream, with provenance** — the wrong label is preserved
+  alongside the corrected value.
+- **Every cleaned spreadsheet value will be traceable to its original source cell**, via file, sheet,
+  row, column index and A1-style cell reference.
+- **Repeated NBS observations retain release information.** The same month is restated by several
+  releases; `release_month` keeps them distinguishable and enables a free correctness cross-check.
+- **CBN exact duplicates remain auditable** — marked, not deleted, so the clean layer still reconciles
+  row-for-row against the raw source.
+- **NERC tariffs require human validation before analysis.** Every extracted value, not a sample,
+  because an OCR digit error is a well-formed number that passes every automated check.
 
-The raw files are intentionally excluded from Git because they are large source artifacts
-(296 files, approximately 1.2 GB). They remain on disk under `data/raw/` and are never edited.
-Their provenance and integrity are documented under `docs/acquisition/`, including SHA-256
-verification of every file.
+---
 
-## Repository layout
+## Important limitations
 
+Stated plainly, because they shape what the finished analysis can honestly claim:
+
+- **Complete state-level food prices are not published** in this NBS source — not in the spreadsheets
+  and not in the report PDFs. This is a source ceiling, not a workload problem.
+- **CPI state index levels cannot be used to say one state is absolutely more expensive than another.**
+  Each state's index is re-based to 100 and weights a different basket. Comparing *rates of change* is
+  valid; comparing levels is not.
+- **CBN exchange rate is national.** It is not apportioned to states.
+- **Electricity tariffs are DisCo-level.** They are not converted to states.
+- **A DisCo-to-state mapping would require a separate verified approximation**, and even then would
+  remain an approximation, because licence areas cross state boundaries.
+- **Source gaps are not interpolated or invented.** Known missing releases — LPG May 2026, CPI January
+  2025, NERC March 2025 (all DisCos), plus three DisCo-months — stay missing and are documented.
+
+---
+
+## Repository structure
+
+```text
+Nigeria Business Cost Intelligence/
+├── README.md
+├── .gitignore
+├── data/
+│   └── raw/                        # 296 official source files (not committed)
+│       ├── README.md               # rules governing the raw layer (committed)
+│       ├── nbs/                    # food, petrol, diesel, cooking_gas, transport, cpi
+│       ├── nerc/                   # electricity_myto
+│       └── cbn/                    # exchange_rate
+└── docs/
+    ├── acquisition/                # inventory, coverage, verification, audit
+    ├── profiling/                  # structure summary, column inventory, data guide
+    └── data_design/                # canonical schemas, cleaning rulebook, decision log
 ```
-data/raw/          296 official source files (not tracked by Git; see .gitignore)
-  README.md        rules governing the raw layer (tracked)
-docs/acquisition/  source inventory, coverage matrices, download and transfer
-                   verification with SHA-256 hashes, acquisition audit
-docs/profiling/    dataset structure summary, column inventory, structural
-                   variation report, plain-English data guide
-```
 
-## Documentation index
+Folders for code, SQL, processed data and dashboards will be added as those stages are built.
+
+### Documentation index
 
 | File | Contents |
 |---|---|
@@ -61,7 +234,97 @@ docs/profiling/    dataset structure summary, column inventory, structural
 | `docs/profiling/column_inventory.csv` | Every column observed, with inferred role |
 | `docs/profiling/structural_variations.md` | How structure differs between months and datasets |
 | `docs/profiling/WHAT_THE_DATA_LOOKS_LIKE.md` | Plain-English guide to the data |
+| `docs/data_design/canonical_schemas.md` | 13 clean tables with primary keys and examples |
+| `docs/data_design/cleaning_rulebook.md` | Evidence-based cleaning and validation rules |
+| `docs/data_design/data_dictionary.csv` | 202 column definitions |
+| `docs/data_design/decision_log.md` | 16 design decisions with supporting evidence |
 
-Known data gaps and known source-label errors are recorded in
-`docs/acquisition/ACQUISITION_AUDIT.md` and `docs/profiling/structural_variations.md`.
-They are preserved, not corrected, so the raw layer reflects exactly what each agency published.
+---
+
+## Reproducibility
+
+The raw source files are **deliberately excluded from Git** — approximately 1.2 GB of government ZIPs,
+spreadsheets and PDFs. Committing them would bloat the repository without adding analytical value, and
+they are preserved locally instead.
+
+What the repository provides in their place:
+
+| Available now | Planned |
+|---|---|
+| Source inventory with official download URLs | Python cleaning code |
+| Provenance records for every file | SQL scripts |
+| SHA-256 hashes for all 296 files | Automated validation logic |
+| Full methodology and profiling evidence | Step-by-step rerun instructions |
+| Cleaning rules and canonical schemas | Environment / dependency specification |
+
+Because every file is recorded with its official source URL and its SHA-256 hash, anyone can
+re-download the sources and verify they obtained byte-identical files.
+
+**Full rerun instructions will be added once the cleaning pipeline is implemented.** Publishing
+commands for a pipeline that does not yet exist would be misleading.
+
+---
+
+## Planned portfolio outputs
+
+The finished repository is intended to include the following. Items marked ⬜ are **not yet built**.
+
+| Output | Status |
+|---|---|
+| Data dictionary | ✅ Complete |
+| Cleaning decision log | ✅ Complete |
+| Methodology documentation | ✅ Complete |
+| Source inventory | ✅ Complete |
+| Python / pandas cleaning code | ⬜ Planned |
+| PostgreSQL schema | ⬜ Planned |
+| SQL analysis queries | ⬜ Planned |
+| Automated validation checks | ⬜ Planned |
+| Power BI dashboard | ⬜ Planned |
+| Tableau dashboard | ⬜ Planned |
+| IBM Cognos work | ⬜ Planned |
+| Dashboard screenshots | ⬜ Planned |
+| Business recommendations | ⬜ Planned |
+| Reproducibility instructions | ⬜ Planned |
+
+---
+
+## Skills demonstrated
+
+**Already demonstrated in this repository**
+
+- **Data acquisition** — sourcing 296 files from three government agencies, including discovering a
+  JSON API behind a JavaScript-rendered page and paging a document library to build a complete index
+- **Data profiling** — systematic structural analysis of 219 spreadsheet sheets and 173 PDFs
+- **Data validation** — SHA-256 verification of every file at download, transfer and after each phase
+- **Source verification** — proving a mislabelled file's true period by cross-checking 33 states'
+  values against an adjacent release
+- **Data modelling** — 13 canonical long-format tables with justified primary keys across four
+  geographic grains
+- **Data-quality investigation** — identifying moving headers, stacked tables, duplicate column
+  labels, embedded aggregates and OCR risk *before* writing transformation code
+- **Documentation** — acquisition audit, profiling reports, cleaning rulebook, decision log
+- **Git / version control** — staged commits with a verified baseline
+- **AI-assisted analytical workflow** — using AI tooling for systematic investigation while
+  independently verifying every claim against the source files
+
+**To be demonstrated in later stages**
+
+- Python / pandas · PostgreSQL · SQL analysis · Power BI · Tableau · IBM Cognos
+
+---
+
+## Raw data policy
+
+**`data/raw/` is not committed to Git.**
+
+The 296 official government files are preserved locally and protected by SHA-256 verification recorded
+in `docs/acquisition/`. They are never edited, renamed, re-saved or extracted in place. ZIP archives
+stay zipped; the raw layer mirrors exactly what each agency published, including its errors.
+
+Every file is documented with its official source URL, file size and hash, so the raw layer can be
+reconstructed from the original government sources and verified against the recorded hashes.
+
+---
+
+*Independent portfolio project. Not affiliated with NBS, CBN or NERC. All data is published by those
+agencies and used here for analysis.*
