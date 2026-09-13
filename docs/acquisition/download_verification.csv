@@ -1,0 +1,297 @@
+﻿filename,relative_path,size_bytes,file_type,basic_integrity_check,status,notes
+SELECTED_FOOD_PRICES_AUG_SEPT_2025.zip,nbs/food/SELECTED_FOOD_PRICES_AUG_SEPT_2025.zip,10745281,ZIP,"ZIP listed OK (4 members), CRC test passed",PASS,members: Selected_Food_Report Sept_25.pdf | selected food table september-25.xlsx | selected food table August-25.xlsx | Selected Food Report Aug25.pdf
+Selected_Food Report_Oct25.zip,nbs/food/Selected_Food Report_Oct25.zip,5382099,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: Selected Food Report_Oct25.pdf | selected food table October25.xlsx
+Selected_Food_Report_Apr25.pdf,nbs/food/Selected_Food_Report_Apr25.pdf,5702720,PDF,"PDF header OK, %%EOF present",PASS,
+Selected_Food_Report_April_2026.zip,nbs/food/Selected_Food_Report_April_2026.zip,5206130,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: Selected_Food_Report_April_2026.pdf | selected food table Apr26.xlsx
+Selected_Food_Report_Dec_25.zip,nbs/food/Selected_Food_Report_Dec_25.zip,6015405,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: Selected Food Report_Dec 25.pdf | selected food table Dec25.xlsx
+Selected_Food_Report_Feb_2026.zip,nbs/food/Selected_Food_Report_Feb_2026.zip,6045184,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: Selected_Food_Report_Feb_2026.pdf | selected food table Feb 26.xlsx
+Selected_Food_Report_Jan25.pdf,nbs/food/Selected_Food_Report_Jan25.pdf,5739046,PDF,"PDF header OK, %%EOF present",PASS,
+Selected_Food_Report_Jan26.zip,nbs/food/Selected_Food_Report_Jan26.zip,6064473,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: Selected_Food_Report_Jan26.pdf | selected food table Jan26.xlsx
+Selected_Food_Report_July_2025.zip,nbs/food/Selected_Food_Report_July_2025.zip,5307330,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: Selected_Food_Report_July_2025.pdf | selected_food_table_July-25.xlsx
+Selected_Food_Report_June_2025.zip,nbs/food/Selected_Food_Report_June_2025.zip,5287972,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: Selected_Food_Report_June_2025.pdf | selected_food_table_June-25.xlsx
+Selected_Food_Report_Mar_2026.zip,nbs/food/Selected_Food_Report_Mar_2026.zip,5324812,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: Selected_Food_Report_Mar_2026.pdf | selected food table Mar26.xlsx
+Selected_Food_Report_May 26.zip,nbs/food/Selected_Food_Report_May 26.zip,5294517,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: Selected_Food_Report_May 26.pdf | selected food table May 26.xlsx
+Selected_Food_Report_May_2025.zip,nbs/food/Selected_Food_Report_May_2025.zip,5301528,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: Selected_Food_Report_May_2025.pdf | selected_food_table_May-25.xlsx
+Selected_Food_Report_Nov_25.zip,nbs/food/Selected_Food_Report_Nov_25.zip,5930085,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: selected food table Nov25.xlsx | Selected_Food_Report_Nov_25.pdf
+Selected_food_table_Jan25.xlsx,nbs/food/Selected_food_table_Jan25.xlsx,20164,XLSX,"OOXML container opened read-only, 12 parts",PASS,
+selected_food_table_Apr25.xlsx,nbs/food/selected_food_table_Apr25.xlsx,20098,XLSX,"OOXML container opened read-only, 12 parts",PASS,
+selected_food_table_Feb_25.xlsx,nbs/food/selected_food_table_Feb_25.xlsx,20345,XLSX,"OOXML container opened read-only, 12 parts",PASS,
+selected_food_table_Mar_25.xlsx,nbs/food/selected_food_table_Mar_25.xlsx,20548,XLSX,"OOXML container opened read-only, 12 parts",PASS,
+Fuel_Report_April_2025.xlsx,nbs/petrol/Fuel_Report_April_2025.xlsx,14949,XLSX,"OOXML container opened read-only, 12 parts",PASS,
+Fuel_Report_May_2025.xlsx,nbs/petrol/Fuel_Report_May_2025.xlsx,15190,XLSX,"OOXML container opened read-only, 12 parts",PASS,
+PMS Report March 2025.xlsx,nbs/petrol/PMS Report March 2025.xlsx,12180,XLSX,"OOXML container opened read-only, 11 parts",PASS,
+PMS Report OCTOBER 2025.zip,nbs/petrol/PMS Report OCTOBER 2025.zip,669900,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: PMS Report OCTOBER 2025.pdf | PMS_OCT_2025.xlsx
+PMS_APRIL_2026.zip,nbs/petrol/PMS_APRIL_2026.zip,744113,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: Fuel APRIL 2026.xlsx | PMS Report APRIL 2026.pdf
+PMS_DECEMBER_2025.zip,nbs/petrol/PMS_DECEMBER_2025.zip,1169149,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: PMS_DECEMBER_2025.xlsx | PMS Report DECEMBER 2025.pdf
+PMS_FEB_2025.xlsx,nbs/petrol/PMS_FEB_2025.xlsx,11968,XLSX,"OOXML container opened read-only, 10 parts",PASS,
+PMS_Jan_2025.xlsx,nbs/petrol/PMS_Jan_2025.xlsx,12378,XLSX,"OOXML container opened read-only, 10 parts",PASS,
+PMS_REPORT_NOV_2025.zip,nbs/petrol/PMS_REPORT_NOV_2025.zip,673736,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: PMS_Report_NOVEMBER_2025.pdf | Fuel_NOV_2025.xlsx
+PMS_Report_AUG_SEPT_2025.zip,nbs/petrol/PMS_Report_AUG_SEPT_2025.zip,2011234,ZIP,"ZIP listed OK (4 members), CRC test passed",PASS,members: PMS Report AUGUST 2025.pdf | PMS Report SEPTEMBER 2025.pdf | PMS_SEPTEMBER_2025.xlsx | PMS AUGUST 2025.xlsx
+PMS_Report_April_2025.pdf,nbs/petrol/PMS_Report_April_2025.pdf,475816,PDF,"PDF header OK, %%EOF present",PASS,
+PMS_Report_FEBRUARY_2026.zip,nbs/petrol/PMS_Report_FEBRUARY_2026.zip,1240734,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: PMS_Report_FEBRUARY_2026.pdf | PMS_FEBRUARY_ 2026.xlsx
+PMS_Report_FEB_2025.pdf,nbs/petrol/PMS_Report_FEB_2025.pdf,1086863,PDF,"PDF header OK, %%EOF present",PASS,
+PMS_Report_JANUARY_2026.zip,nbs/petrol/PMS_Report_JANUARY_2026.zip,741936,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: PMS Report JANUARY 2026.pdf | PMS_JANUARY_2025.xlsx
+PMS_Report_JAN_2025.pdf,nbs/petrol/PMS_Report_JAN_2025.pdf,1087321,PDF,"PDF header OK, %%EOF present",PASS,
+PMS_Report_JULY_2025.zip,nbs/petrol/PMS_Report_JULY_2025.zip,674365,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: PMS_Report_JULY_2025.pdf | Fuel_Report_July_2025.xlsx
+PMS_Report_JUNE_2025.pdf,nbs/petrol/PMS_Report_JUNE_2025.pdf,475966,PDF,"PDF header OK, %%EOF present",PASS,
+PMS_Report_June_2025.xlsx,nbs/petrol/PMS_Report_June_2025.xlsx,15162,XLSX,"OOXML container opened read-only, 12 parts",PASS,
+PMS_Report_MARCH_2026.zip,nbs/petrol/PMS_Report_MARCH_2026.zip,748466,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: PMS Report MARCH 2026.pdf | PMS_March_ 2026.xlsx
+PMS_Report_MAY_2025.pdf,nbs/petrol/PMS_Report_MAY_2025.pdf,476649,PDF,"PDF header OK, %%EOF present",PASS,
+PMS_Report_MAY_2026.zip,nbs/petrol/PMS_Report_MAY_2026.zip,742369,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: PMS Report MAY 2026.pdf | Fuel_MAY_2026.xlsx
+PMS_Report_March_2025.pdf,nbs/petrol/PMS_Report_March_2025.pdf,477298,PDF,"PDF header OK, %%EOF present",PASS,
+AGO_APRIL_2026.zip,nbs/diesel/AGO_APRIL_2026.zip,741968,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: AGO report - APRIL 2026.pdf | Diesel APRIL 2026.xlsx
+AGO_DECEMBER_2025.zip,nbs/diesel/AGO_DECEMBER_2025.zip,1175655,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: DIESEL_DECEMBER_2025.xlsx | AGO_DECEMBER_2025.pdf
+AGO_FEB_2025.xlsx,nbs/diesel/AGO_FEB_2025.xlsx,14098,XLSX,"OOXML container opened read-only, 10 parts",PASS,
+AGO_JAN_2025.xlsx,nbs/diesel/AGO_JAN_2025.xlsx,14370,XLSX,"OOXML container opened read-only, 10 parts",PASS,
+AGO_REPORT_NOV_2025.zip,nbs/diesel/AGO_REPORT_NOV_2025.zip,665872,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: DIESEL_NOV_2025.xlsx | AGO_Report_NOVEMBER_2025.pdf
+AGO_Report_AUGUST_SEPTEMBER_2025.zip,nbs/diesel/AGO_Report_AUGUST_SEPTEMBER_2025.zip,1983227,ZIP,"ZIP listed OK (4 members), CRC test passed",PASS,members: AGO_Report_SEPTEMBER_2025.pdf | AGO_Report_AUGUST_2025.pdf | DIESEL_SEPTEMBER_2025.xlsx | DIESEL_AUGUST_2025.xlsx
+AGO_Report_April_2025.pdf,nbs/diesel/AGO_Report_April_2025.pdf,477125,PDF,"PDF header OK, %%EOF present",PASS,
+AGO_Report_FEBRUARY_2025.pdf,nbs/diesel/AGO_Report_FEBRUARY_2025.pdf,1018458,PDF,"PDF header OK, %%EOF present",PASS,
+AGO_Report_FEBRUARY_2026.zip,nbs/diesel/AGO_Report_FEBRUARY_2026.zip,1233554,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: AGO_Report_FEBRUARY_2026.pdf | AGO_FEBRUARY_2026.xlsx
+AGO_Report_JANUARY_2025.pdf,nbs/diesel/AGO_Report_JANUARY_2025.pdf,1017275,PDF,"PDF header OK, %%EOF present",PASS,
+AGO_Report_JANUARY_2026.zip,nbs/diesel/AGO_Report_JANUARY_2026.zip,752362,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: AGO_Report_JANUARY_2026.pdf | AGO JANUARY 2026.xlsx
+AGO_Report_JULY_2025.zip,nbs/diesel/AGO_Report_JULY_2025.zip,668987,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: AGO_Report_JULY_2025.pdf | Diesel_Report_July_2025.xlsx
+AGO_Report_JUNE_2025.pdf,nbs/diesel/AGO_Report_JUNE_2025.pdf,477626,PDF,"PDF header OK, %%EOF present",PASS,
+AGO_Report_MARCH_2025.pdf,nbs/diesel/AGO_Report_MARCH_2025.pdf,478123,PDF,"PDF header OK, %%EOF present",PASS,
+AGO_Report_MAY_2025.pdf,nbs/diesel/AGO_Report_MAY_2025.pdf,477565,PDF,"PDF header OK, %%EOF present",PASS,
+AGO_Report_MAY_2026.zip,nbs/diesel/AGO_Report_MAY_2026.zip,737128,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: AGO_Report_MAY_2026.pdf | DIESEL_MAY_2026.xlsx
+AGO_Report_March_2026.zip,nbs/diesel/AGO_Report_March_2026.zip,742748,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: AGO_Report_March_2026.pdf | AGO_MARCH_2026.xlsx
+AGO_Report_OCTOBER_2025.zip,nbs/diesel/AGO_Report_OCTOBER_2025.zip,670472,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: AGO_Report_OCTOBER_2025.pdf | AGO_OCT_2025.xlsx
+Diesel Report March 2025.xlsx,nbs/diesel/Diesel Report March 2025.xlsx,14287,XLSX,"OOXML container opened read-only, 11 parts",PASS,
+Diesel_Report_April_2025.xlsx,nbs/diesel/Diesel_Report_April_2025.xlsx,14619,XLSX,"OOXML container opened read-only, 10 parts",PASS,
+Diesel_Report_June_2025.xlsx,nbs/diesel/Diesel_Report_June_2025.xlsx,14664,XLSX,"OOXML container opened read-only, 10 parts",PASS,
+Diesel_Report_May_2025.xlsx,nbs/diesel/Diesel_Report_May_2025.xlsx,14857,XLSX,"OOXML container opened read-only, 10 parts",PASS,
+GAS_PRICE_WATCH_APRIL_2025.xlsx,nbs/cooking_gas/GAS_PRICE_WATCH_APRIL_2025.xlsx,20155,XLSX,"OOXML container opened read-only, 14 parts",PASS,
+GAS_PRICE_WATCH_FEB_2025.xlsx,nbs/cooking_gas/GAS_PRICE_WATCH_FEB_2025.xlsx,19218,XLSX,"OOXML container opened read-only, 13 parts",PASS,
+GAS_PRICE_WATCH_JAN_2025.xlsx,nbs/cooking_gas/GAS_PRICE_WATCH_JAN_2025.xlsx,19675,XLSX,"OOXML container opened read-only, 13 parts",PASS,
+GAS_PRICE_WATCH_MARCH_2025.xlsx,nbs/cooking_gas/GAS_PRICE_WATCH_MARCH_2025.xlsx,20256,XLSX,"OOXML container opened read-only, 13 parts",PASS,
+GAS_PRICE_WATCH_May_2025.xlsx,nbs/cooking_gas/GAS_PRICE_WATCH_May_2025.xlsx,20665,XLSX,"OOXML container opened read-only, 13 parts",PASS,
+GAS_PRIC_WATCH_JUNE_2025.xlsx,nbs/cooking_gas/GAS_PRIC_WATCH_JUNE_2025.xlsx,20360,XLSX,"OOXML container opened read-only, 13 parts",PASS,
+LPG_AUGUST_2025.zip,nbs/cooking_gas/LPG_AUGUST_2025.zip,3159596,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: LPG_AUGUST_2025.pdf | GAS_PRICE_WATCH_AUGUST_2025___.xlsx
+LPG_July_2025.zip,nbs/cooking_gas/LPG_July_2025.zip,3352265,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: LPG_Report_Price_Watch_July_2025.pdf | GAS_PRICE_WATCH_JULY_2025.xlsx
+LPG_June_2025_Report.pdf,nbs/cooking_gas/LPG_June_2025_Report.pdf,3442454,PDF,"PDF header OK, %%EOF present",PASS,
+LPG_Nov_Dec_2025.zip,nbs/cooking_gas/LPG_Nov_Dec_2025.zip,7053478,ZIP,"ZIP listed OK (4 members), CRC test passed",PASS,members: GAS PRICE WATCH DECEMBER 2025_.xlsx | LPG_December_2025_Report.pdf | LPG_November_2025_Report.pdf | GAS PRICE WATCH NOVEMBER 2025__.xlsx
+LPG_Report_APR26.zip,nbs/cooking_gas/LPG_Report_APR26.zip,3376325,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: LPG_report__APR26.pdf | GAS PRICE WATCH APRIL 2026_table.xlsx
+LPG_Report_April_2025.pdf,nbs/cooking_gas/LPG_Report_April_2025.pdf,3466340,PDF,"PDF header OK, %%EOF present",PASS,
+LPG_Report_Feb-March_2026.zip,nbs/cooking_gas/LPG_Report_Feb-March_2026.zip,7122504,ZIP,"ZIP listed OK (4 members), CRC test passed",PASS,members: LPG_Report_March_2026.pdf | GAS Price Watch March_2026_table.xlsx | GAS PRICE WATCH FEBRUARY 2026_table.xlsx | LPG Report Feb26.pdf
+LPG_Report_February_2025.pdf,nbs/cooking_gas/LPG_Report_February_2025.pdf,5003076,PDF,"PDF header OK, %%EOF present",PASS,
+LPG_Report_January_2025.pdf,nbs/cooking_gas/LPG_Report_January_2025.pdf,1469772,PDF,"PDF header OK, %%EOF present",PASS,
+LPG_Report_MAY_2025.pdf,nbs/cooking_gas/LPG_Report_MAY_2025.pdf,3428977,PDF,"PDF header OK, %%EOF present",PASS,
+LPG_Report_March_2025.pdf,nbs/cooking_gas/LPG_Report_March_2025.pdf,3488120,PDF,"PDF header OK, %%EOF present",PASS,
+LPG_Report_OCT_25.zip,nbs/cooking_gas/LPG_Report_OCT_25.zip,3212357,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: LPG_Report_OCT_25.pdf | GAS PRICE WATCH OCTOBER 2025.xlsx
+LPG_Report_Report_Jan2026.zip,nbs/cooking_gas/LPG_Report_Report_Jan2026.zip,3929613,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: LPG_Report_Report_Jan2026.pdf | GAS PRICE WATCH JANUARY 2026_table.xlsx
+LPG_Report_Sept_2025.zip,nbs/cooking_gas/LPG_Report_Sept_2025.zip,3172634,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: LPG_Report_Sept_2025.pdf | GAS_PRICE_WATCH_SEPTEMBER_2025.xlsx
+TRANSPORT_COST_Watch_APR_2025.xlsx,nbs/transport/TRANSPORT_COST_Watch_APR_2025.xlsx,17646,XLSX,"OOXML container opened read-only, 14 parts",PASS,
+TRANSPORT_COST_Watch_FEB_2025.xlsx,nbs/transport/TRANSPORT_COST_Watch_FEB_2025.xlsx,16188,XLSX,"OOXML container opened read-only, 12 parts",PASS,
+TRANSPORT_COST_Watch_JAN_2025.xlsx,nbs/transport/TRANSPORT_COST_Watch_JAN_2025.xlsx,17181,XLSX,"OOXML container opened read-only, 14 parts",PASS,
+TRANSPORT_COST_Watch_MAR_2025.xlsx,nbs/transport/TRANSPORT_COST_Watch_MAR_2025.xlsx,16369,XLSX,"OOXML container opened read-only, 12 parts",PASS,
+Transport Fare Watch Report Nov_Dec_2025.zip,nbs/transport/Transport Fare Watch Report Nov_Dec_2025.zip,14817208,ZIP,"ZIP listed OK (4 members), CRC test passed",PASS,members: Transport Fare Watch Report_Dec2025.pdf | Transport Fare Watch Report_Nov2025.pdf | TRANSPORT COST Watch NOV_2025_.xlsx | TRANSPORT COST Watch DEC_2025_.xlsx
+Transport_Fare_Report_Apr_2025.pdf,nbs/transport/Transport_Fare_Report_Apr_2025.pdf,7303634,PDF,"PDF header OK, %%EOF present",PASS,
+Transport_Fare_Report_April_2026.zip,nbs/transport/Transport_Fare_Report_April_2026.zip,6875342,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: Transport_Fare_Report_April_2026.pdf | TRANSPORT COST Watch APR_2026_ (1).xlsx
+Transport_MAY_JUNE_JULY_2025.zip,nbs/transport/Transport_MAY_JUNE_JULY_2025.zip,20629551,ZIP,"ZIP listed OK (6 members), CRC test passed",PASS,members: Transport_MAY_2025.pdf | Transport_JUNE_2025.pdf | Transport_JULY_2025.pdf | TRANSPORT COST Watch JUN_2025_.xlsx | TRANSPORT COST Watch JUL_2025_.xlsx | TRANSPORT COST Watch MAY_2025_.xlsx
+Transport_Report_AUG_SEPT_2025.zip,nbs/transport/Transport_Report_AUG_SEPT_2025.zip,13730179,ZIP,"ZIP listed OK (4 members), CRC test passed",PASS,members: Transport_Report_SEPT_2025.pdf | Transport_Report_AUG_2025.pdf | TRANSPORT COST Watch AUG_2025_.xlsx | TRANSPORT COST Watch SEPT_2025_.xlsx
+Transport_Report_MAR26.zip,nbs/transport/Transport_Report_MAR26.zip,6904894,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: Transport_Report_MAR26.pdf | TRANSPORT COST Watch MAR_2026_.xlsx
+Transport_Report_MAY_2026.zip,nbs/transport/Transport_Report_MAY_2026.zip,7078247,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: Transport_Report_MAY_2026.pdf | TRANSPORT COST Watch MAY_2026_.xlsx
+Transport_Report_October_2025.zip,nbs/transport/Transport_Report_October_2025.zip,6918753,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: Transport_Report_October_2025.pdf | TRANSPORT_COST_Watch_OCT_2025.xlsx
+Transport_report_FEB_2026.zip,nbs/transport/Transport_report_FEB_2026.zip,7601825,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: Transport_report_FEB_2026.pdf | TRANSPORT_COST_Watch_FEB_2026.xlsx
+Transport_report_JAN_2026.zip,nbs/transport/Transport_report_JAN_2026.zip,7605344,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: Transport_report_JAN_2026.pdf | TRANSPORT_COST_Watch_JAN_2026.xlsx
+CPI_APRIL_2025.pdf,nbs/cpi/CPI_APRIL_2025.pdf,1112275,PDF,"PDF header OK, %%EOF present",PASS,
+CPI_APRIL_2026.zip,nbs/cpi/CPI_APRIL_2026.zip,2340775,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: CPI_APRIL_2026.pdf | cpi_1New_April2026.xlsx
+CPI_AUGUST_2025.zip,nbs/cpi/CPI_AUGUST_2025.zip,1205297,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: CPI_AUGUST_2025.pdf | CPI_August25.xlsx
+CPI_December_2025_Report.zip,nbs/cpi/CPI_December_2025_Report.zip,2245552,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: CPI_December_2025_Report.pdf | cpi_1New_December2025.xlsx
+CPI_June_2025_Report.pdf,nbs/cpi/CPI_June_2025_Report.pdf,1269316,PDF,"PDF header OK, %%EOF present",PASS,
+CPI_MARCH_2025.pdf,nbs/cpi/CPI_MARCH_2025.pdf,1113133,PDF,"PDF header OK, %%EOF present",PASS,
+CPI_MAY_2026.zip,nbs/cpi/CPI_MAY_2026.zip,2445866,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: CPI_MAY_2026.pdf | cpi_1New_May2026.xlsx
+CPI_May_2025_Report.pdf,nbs/cpi/CPI_May_2025_Report.pdf,1200805,PDF,"PDF header OK, %%EOF present",PASS,
+CPI_November_2025.zip,nbs/cpi/CPI_November_2025.zip,1399679,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: CPI_November_2025.pdf | cpi_1New_November25.xlsx
+CPI_October2025.zip,nbs/cpi/CPI_October2025.zip,1420086,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: CPI_October2025.pdf | cpi_1New_October25.xlsx
+CPI_Report_FEBRUARY_2026.zip,nbs/cpi/CPI_Report_FEBRUARY_2026.zip,2326610,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: CPI_Report_FEBRUARY_2026.pdf | cpi_1New_February2026.xlsx
+CPI_Report_January_2026.zip,nbs/cpi/CPI_Report_January_2026.zip,2254091,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: CPI_Report_January_2026.pdf | cpi_January2026.xlsx
+CPI_Report_March_2026.zip,nbs/cpi/CPI_Report_March_2026.zip,2091112,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: March_2026/cpi_1New_March2026.xls | March_2026/CPI_MARCH_2026.pdf
+CPI_September_2025.zip,nbs/cpi/CPI_September_2025.zip,1274070,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: CPI_September_2025.pdf | cpi_1New_September25.xlsx
+CPI_february_2025.pdf,nbs/cpi/CPI_february_2025.pdf,1133866,PDF,"PDF header OK, %%EOF present",PASS,
+Highlights of CPI Rebasing Result.pdf,nbs/cpi/Highlights of CPI Rebasing Result.pdf,297144,PDF,"PDF header OK, %%EOF present",PASS,
+July_2025_CPI_Report.zip,nbs/cpi/July_2025_CPI_Report.zip,1280677,ZIP,"ZIP listed OK (2 members), CRC test passed",PASS,members: cpi_1New_JuLY25.xlsx | July 2025 CPI report.pdf
+cpi_1New_Apr25.xlsx,nbs/cpi/cpi_1New_Apr25.xlsx,226810,XLSX,"OOXML container opened read-only, 45 parts",PASS,
+cpi_1New_Feb_2025.xlsx,nbs/cpi/cpi_1New_Feb_2025.xlsx,181738,XLSX,"OOXML container opened read-only, 35 parts",PASS,
+cpi_1New_June25.xlsx,nbs/cpi/cpi_1New_June25.xlsx,231862,XLSX,"OOXML container opened read-only, 45 parts",PASS,
+cpi_1New_Mar25.xlsx,nbs/cpi/cpi_1New_Mar25.xlsx,162400,XLSX,"OOXML container opened read-only, 31 parts",PASS,
+cpi_1New_May25.xlsx,nbs/cpi/cpi_1New_May25.xlsx,227913,XLSX,"OOXML container opened read-only, 45 parts",PASS,
+AEDC-MYTO-APR-2025.pdf,nerc/electricity_myto/AEDC-MYTO-APR-2025.pdf,1184179,PDF,"PDF header OK, %%EOF present",PASS,
+AEDC-MYTO-JAN-2025.pdf,nerc/electricity_myto/AEDC-MYTO-JAN-2025.pdf,3870708,PDF,"PDF header OK, %%EOF present",PASS,
+AEDC_AUG_2025_MYTO.pdf,nerc/electricity_myto/AEDC_AUG_2025_MYTO.pdf,4893998,PDF,"PDF header OK, %%EOF present",PASS,
+AEDC_February_2025_003.pdf,nerc/electricity_myto/AEDC_February_2025_003.pdf,2291429,PDF,"PDF header OK, %%EOF present",PASS,
+AEDC_July_2025_059.pdf,nerc/electricity_myto/AEDC_July_2025_059.pdf,1403007,PDF,"PDF header OK, %%EOF present",PASS,
+AEDC_MYTO_APR_2026.pdf,nerc/electricity_myto/AEDC_MYTO_APR_2026.pdf,11155163,PDF,"PDF header OK, %%EOF present",PASS,
+AEDC_MYTO_December_2025.pdf,nerc/electricity_myto/AEDC_MYTO_December_2025.pdf,11059744,PDF,"PDF header OK, %%EOF present",PASS,
+AEDC_MYTO_FEB_2026.pdf,nerc/electricity_myto/AEDC_MYTO_FEB_2026.pdf,11577101,PDF,"PDF header OK, %%EOF present",PASS,
+AEDC_MYTO_JAN_2026.pdf,nerc/electricity_myto/AEDC_MYTO_JAN_2026.pdf,8661503,PDF,"PDF header OK, %%EOF present",PASS,
+AEDC_MYTO_MAR_2026.pdf,nerc/electricity_myto/AEDC_MYTO_MAR_2026.pdf,11149166,PDF,"PDF header OK, %%EOF present",PASS,
+AEDC_MYTO_MAY_2026.pdf,nerc/electricity_myto/AEDC_MYTO_MAY_2026.pdf,11672312,PDF,"PDF header OK, %%EOF present",PASS,
+AEDC_May_2025_045.pdf,nerc/electricity_myto/AEDC_May_2025_045.pdf,6973108,PDF,"PDF header OK, %%EOF present",PASS,
+AEDC_NOV_2025_122.pdf,nerc/electricity_myto/AEDC_NOV_2025_122.pdf,11800710,PDF,"PDF header OK, %%EOF present",PASS,
+AEDC_OCT_2025_108.pdf,nerc/electricity_myto/AEDC_OCT_2025_108.pdf,11738398,PDF,"PDF header OK, %%EOF present",PASS,
+AEDC_SEPT_2025_095.pdf,nerc/electricity_myto/AEDC_SEPT_2025_095.pdf,12365269,PDF,"PDF header OK, %%EOF present",PASS,
+APLE-MYTO_-FEB-2025_014.pdf,nerc/electricity_myto/APLE-MYTO_-FEB-2025_014.pdf,2003346,PDF,"PDF header OK, %%EOF present",PASS,
+Abuja-june-2025-1.pdf,nerc/electricity_myto/Abuja-june-2025-1.pdf,1040871,PDF,"PDF header OK, %%EOF present",PASS,
+BEDC-MYTO-APR-2025.pdf,nerc/electricity_myto/BEDC-MYTO-APR-2025.pdf,724664,PDF,"PDF header OK, %%EOF present",PASS,
+BEDC-MYTO-JAN-2025.pdf,nerc/electricity_myto/BEDC-MYTO-JAN-2025.pdf,2167551,PDF,"PDF header OK, %%EOF present",PASS,
+BEDC_AUG_2025_MYTO.pdf,nerc/electricity_myto/BEDC_AUG_2025_MYTO.pdf,7471971,PDF,"PDF header OK, %%EOF present",PASS,
+BEDC_February_2025_004.pdf,nerc/electricity_myto/BEDC_February_2025_004.pdf,2484014,PDF,"PDF header OK, %%EOF present",PASS,
+BEDC_July_2025_060.pdf,nerc/electricity_myto/BEDC_July_2025_060.pdf,1033224,PDF,"PDF header OK, %%EOF present",PASS,
+BEDC_MYTO_APR_2026.pdf,nerc/electricity_myto/BEDC_MYTO_APR_2026.pdf,7667243,PDF,"PDF header OK, %%EOF present",PASS,
+BEDC_MYTO_December_2025.pdf,nerc/electricity_myto/BEDC_MYTO_December_2025.pdf,8105829,PDF,"PDF header OK, %%EOF present",PASS,
+BEDC_MYTO_FEB_2026.pdf,nerc/electricity_myto/BEDC_MYTO_FEB_2026.pdf,8541977,PDF,"PDF header OK, %%EOF present",PASS,
+BEDC_MYTO_JAN_2026.pdf,nerc/electricity_myto/BEDC_MYTO_JAN_2026.pdf,7720805,PDF,"PDF header OK, %%EOF present",PASS,
+BEDC_MYTO_MAR_2026.pdf,nerc/electricity_myto/BEDC_MYTO_MAR_2026.pdf,7975599,PDF,"PDF header OK, %%EOF present",PASS,
+BEDC_MYTO_MAY_2026.pdf,nerc/electricity_myto/BEDC_MYTO_MAY_2026.pdf,7819112,PDF,"PDF header OK, %%EOF present",PASS,
+BEDC_May_2025_046.pdf,nerc/electricity_myto/BEDC_May_2025_046.pdf,3770663,PDF,"PDF header OK, %%EOF present",PASS,
+BEDC_NOV_2025_124.pdf,nerc/electricity_myto/BEDC_NOV_2025_124.pdf,5228937,PDF,"PDF header OK, %%EOF present",PASS,
+BEDC_OCT_2025_110.pdf,nerc/electricity_myto/BEDC_OCT_2025_110.pdf,4027041,PDF,"PDF header OK, %%EOF present",PASS,
+BEDC_SEPT_2025_097.pdf,nerc/electricity_myto/BEDC_SEPT_2025_097.pdf,7922224,PDF,"PDF header OK, %%EOF present",PASS,
+Benin-june-2025.pdf,nerc/electricity_myto/Benin-june-2025.pdf,750805,PDF,"PDF header OK, %%EOF present",PASS,
+EEDC-MYTO-APR-2025.pdf,nerc/electricity_myto/EEDC-MYTO-APR-2025.pdf,740565,PDF,"PDF header OK, %%EOF present",PASS,
+EEDC-MYTO-JAN-2025.pdf,nerc/electricity_myto/EEDC-MYTO-JAN-2025.pdf,2114694,PDF,"PDF header OK, %%EOF present",PASS,
+EEDC_AUG_2025_MYTO.pdf,nerc/electricity_myto/EEDC_AUG_2025_MYTO.pdf,6420008,PDF,"PDF header OK, %%EOF present",PASS,
+EEDC_February_2025_006.pdf,nerc/electricity_myto/EEDC_February_2025_006.pdf,2399945,PDF,"PDF header OK, %%EOF present",PASS,
+EEDC_July_2025_062.pdf,nerc/electricity_myto/EEDC_July_2025_062.pdf,1018274,PDF,"PDF header OK, %%EOF present",PASS,
+EEDC_MYTO_APR_2026.pdf,nerc/electricity_myto/EEDC_MYTO_APR_2026.pdf,6907557,PDF,"PDF header OK, %%EOF present",PASS,
+EEDC_MYTO_December_2025.pdf,nerc/electricity_myto/EEDC_MYTO_December_2025.pdf,6688331,PDF,"PDF header OK, %%EOF present",PASS,
+EEDC_MYTO_FEB_2026.pdf,nerc/electricity_myto/EEDC_MYTO_FEB_2026.pdf,7069960,PDF,"PDF header OK, %%EOF present",PASS,
+EEDC_MYTO_JAN_2026.pdf,nerc/electricity_myto/EEDC_MYTO_JAN_2026.pdf,6672923,PDF,"PDF header OK, %%EOF present",PASS,
+EEDC_MYTO_MAR_2026.pdf,nerc/electricity_myto/EEDC_MYTO_MAR_2026.pdf,6711597,PDF,"PDF header OK, %%EOF present",PASS,
+EEDC_MYTO_MAY_2026.pdf,nerc/electricity_myto/EEDC_MYTO_MAY_2026.pdf,6705369,PDF,"PDF header OK, %%EOF present",PASS,
+EEDC_May_2025_048.pdf,nerc/electricity_myto/EEDC_May_2025_048.pdf,1891857,PDF,"PDF header OK, %%EOF present",PASS,
+EEDC_NOV_2025_126.pdf,nerc/electricity_myto/EEDC_NOV_2025_126.pdf,6952592,PDF,"PDF header OK, %%EOF present",PASS,
+EEDC_OCT_2025_112.pdf,nerc/electricity_myto/EEDC_OCT_2025_112.pdf,6874850,PDF,"PDF header OK, %%EOF present",PASS,
+EEDC_SEPT_2025_099.pdf,nerc/electricity_myto/EEDC_SEPT_2025_099.pdf,6772383,PDF,"PDF header OK, %%EOF present",PASS,
+EKEDC-MYTO-APRIL-2025.pdf,nerc/electricity_myto/EKEDC-MYTO-APRIL-2025.pdf,6005864,PDF,"PDF header OK, %%EOF present",PASS,
+EKEDP-MYTO-JAN-2025.pdf,nerc/electricity_myto/EKEDP-MYTO-JAN-2025.pdf,2390516,PDF,"PDF header OK, %%EOF present",PASS,
+EKEDP_AUG_2025_MYTO.pdf,nerc/electricity_myto/EKEDP_AUG_2025_MYTO.pdf,10563587,PDF,"PDF header OK, %%EOF present",PASS,
+EKEDP_February_2025_005.pdf,nerc/electricity_myto/EKEDP_February_2025_005.pdf,2703243,PDF,"PDF header OK, %%EOF present",PASS,
+EKEDP_July_2025_061.pdf,nerc/electricity_myto/EKEDP_July_2025_061.pdf,1080148,PDF,"PDF header OK, %%EOF present",PASS,
+EKEDP_MYTO_APR_2026.pdf,nerc/electricity_myto/EKEDP_MYTO_APR_2026.pdf,4481534,PDF,"PDF header OK, %%EOF present",PASS,
+EKEDP_MYTO_FEB_2026.pdf,nerc/electricity_myto/EKEDP_MYTO_FEB_2026.pdf,12034960,PDF,"PDF header OK, %%EOF present",PASS,
+EKEDP_MYTO_JAN_2026.pdf,nerc/electricity_myto/EKEDP_MYTO_JAN_2026.pdf,11471771,PDF,"PDF header OK, %%EOF present",PASS,
+EKEDP_MYTO_MAR_2026.pdf,nerc/electricity_myto/EKEDP_MYTO_MAR_2026.pdf,4015977,PDF,"PDF header OK, %%EOF present",PASS,
+EKEDP_MYTO_MAY_2026.pdf,nerc/electricity_myto/EKEDP_MYTO_MAY_2026.pdf,4476250,PDF,"PDF header OK, %%EOF present",PASS,
+EKEDP_May_2025_047.pdf,nerc/electricity_myto/EKEDP_May_2025_047.pdf,6209582,PDF,"PDF header OK, %%EOF present",PASS,
+EKEDP_NOV_2025_125.pdf,nerc/electricity_myto/EKEDP_NOV_2025_125.pdf,4378192,PDF,"PDF header OK, %%EOF present",PASS,
+EKEDP_OCT_2025_111.pdf,nerc/electricity_myto/EKEDP_OCT_2025_111.pdf,7155627,PDF,"PDF header OK, %%EOF present",PASS,
+EKEDP_SEPT_2025_098.pdf,nerc/electricity_myto/EKEDP_SEPT_2025_098.pdf,10778697,PDF,"PDF header OK, %%EOF present",PASS,
+Eko-june-2025.pdf,nerc/electricity_myto/Eko-june-2025.pdf,958330,PDF,"PDF header OK, %%EOF present",PASS,
+Enugu-june-2025.pdf,nerc/electricity_myto/Enugu-june-2025.pdf,661192,PDF,"PDF header OK, %%EOF present",PASS,
+IBEDC-MYTO-APR-2025.pdf,nerc/electricity_myto/IBEDC-MYTO-APR-2025.pdf,887631,PDF,"PDF header OK, %%EOF present",PASS,
+IBEDC-MYTO-JAN-2025.pdf,nerc/electricity_myto/IBEDC-MYTO-JAN-2025.pdf,12032670,PDF,"PDF header OK, %%EOF present",PASS,
+IBEDC_AUG_2025_MYTO.pdf,nerc/electricity_myto/IBEDC_AUG_2025_MYTO.pdf,11420210,PDF,"PDF header OK, %%EOF present",PASS,
+IBEDC_February-2025_007.pdf,nerc/electricity_myto/IBEDC_February-2025_007.pdf,2793627,PDF,"PDF header OK, %%EOF present",PASS,
+IBEDC_July_2025_063.pdf,nerc/electricity_myto/IBEDC_July_2025_063.pdf,1383530,PDF,"PDF header OK, %%EOF present",PASS,
+IBEDC_MYTO_APR_2026.pdf,nerc/electricity_myto/IBEDC_MYTO_APR_2026.pdf,12415694,PDF,"PDF header OK, %%EOF present",PASS,
+IBEDC_MYTO_December_2025.pdf,nerc/electricity_myto/IBEDC_MYTO_December_2025.pdf,5553550,PDF,"PDF header OK, %%EOF present",PASS,
+IBEDC_MYTO_FEB_2026.pdf,nerc/electricity_myto/IBEDC_MYTO_FEB_2026.pdf,12820278,PDF,"PDF header OK, %%EOF present",PASS,
+IBEDC_MYTO_JAN_2026.pdf,nerc/electricity_myto/IBEDC_MYTO_JAN_2026.pdf,11376486,PDF,"PDF header OK, %%EOF present",PASS,
+IBEDC_MYTO_MAR_2026.pdf,nerc/electricity_myto/IBEDC_MYTO_MAR_2026.pdf,12140306,PDF,"PDF header OK, %%EOF present",PASS,
+IBEDC_MYTO_MAY_2026.pdf,nerc/electricity_myto/IBEDC_MYTO_MAY_2026.pdf,12195421,PDF,"PDF header OK, %%EOF present",PASS,
+IBEDC_May_2025_049.pdf,nerc/electricity_myto/IBEDC_May_2025_049.pdf,6660442,PDF,"PDF header OK, %%EOF present",PASS,
+IBEDC_NOV_2025_127.pdf,nerc/electricity_myto/IBEDC_NOV_2025_127.pdf,12195454,PDF,"PDF header OK, %%EOF present",PASS,
+IBEDC_OCT_2025_113.pdf,nerc/electricity_myto/IBEDC_OCT_2025_113.pdf,12433590,PDF,"PDF header OK, %%EOF present",PASS,
+IBEDC_SEPT_2025_100.pdf,nerc/electricity_myto/IBEDC_SEPT_2025_100.pdf,11897659,PDF,"PDF header OK, %%EOF present",PASS,
+IE-MYTO-APR-2025.pdf,nerc/electricity_myto/IE-MYTO-APR-2025.pdf,1043114,PDF,"PDF header OK, %%EOF present",PASS,
+IE-MYTO-JAN-2025.pdf,nerc/electricity_myto/IE-MYTO-JAN-2025.pdf,10954773,PDF,"PDF header OK, %%EOF present",PASS,
+IE_AUG_2025_MYTO.pdf,nerc/electricity_myto/IE_AUG_2025_MYTO.pdf,10612928,PDF,"PDF header OK, %%EOF present",PASS,
+IE_February-2025_008.pdf,nerc/electricity_myto/IE_February-2025_008.pdf,2706733,PDF,"PDF header OK, %%EOF present",PASS,
+IE_July_2025_064.pdf,nerc/electricity_myto/IE_July_2025_064.pdf,1093662,PDF,"PDF header OK, %%EOF present",PASS,
+IE_MYTO_APR_2026.pdf,nerc/electricity_myto/IE_MYTO_APR_2026.pdf,4438896,PDF,"PDF header OK, %%EOF present",PASS,
+IE_MYTO_December_2025.pdf,nerc/electricity_myto/IE_MYTO_December_2025.pdf,5412502,PDF,"PDF header OK, %%EOF present",PASS,
+IE_MYTO_FEB_2026.pdf,nerc/electricity_myto/IE_MYTO_FEB_2026.pdf,11835122,PDF,"PDF header OK, %%EOF present",PASS,
+IE_MYTO_JAN_2026.pdf,nerc/electricity_myto/IE_MYTO_JAN_2026.pdf,10373829,PDF,"PDF header OK, %%EOF present",PASS,
+IE_MYTO_MAR_2026.pdf,nerc/electricity_myto/IE_MYTO_MAR_2026.pdf,4409232,PDF,"PDF header OK, %%EOF present",PASS,
+IE_MYTO_MAY_2026.pdf,nerc/electricity_myto/IE_MYTO_MAY_2026.pdf,4749903,PDF,"PDF header OK, %%EOF present",PASS,
+IE_May_2025_050.pdf,nerc/electricity_myto/IE_May_2025_050.pdf,6182785,PDF,"PDF header OK, %%EOF present",PASS,
+IE_NOV_2025_128.pdf,nerc/electricity_myto/IE_NOV_2025_128.pdf,5295547,PDF,"PDF header OK, %%EOF present",PASS,
+IE_OCT_2025_114.pdf,nerc/electricity_myto/IE_OCT_2025_114.pdf,5626164,PDF,"PDF header OK, %%EOF present",PASS,
+IE_SEPT_2025_101.pdf,nerc/electricity_myto/IE_SEPT_2025_101.pdf,11001398,PDF,"PDF header OK, %%EOF present",PASS,
+Ibadan-June-2025.pdf,nerc/electricity_myto/Ibadan-June-2025.pdf,1045675,PDF,"PDF header OK, %%EOF present",PASS,
+Ikeja-june-2025.pdf,nerc/electricity_myto/Ikeja-june-2025.pdf,944169,PDF,"PDF header OK, %%EOF present",PASS,
+JED-MYTO-APR-2025.pdf,nerc/electricity_myto/JED-MYTO-APR-2025.pdf,657968,PDF,"PDF header OK, %%EOF present",PASS,
+JED-MYTO-JAN-2025.pdf,nerc/electricity_myto/JED-MYTO-JAN-2025.pdf,5662462,PDF,"PDF header OK, %%EOF present",PASS,
+JED_AUG_2025_MYTO.pdf,nerc/electricity_myto/JED_AUG_2025_MYTO.pdf,5653451,PDF,"PDF header OK, %%EOF present",PASS,
+JED_February-2025_009.pdf,nerc/electricity_myto/JED_February-2025_009.pdf,2250456,PDF,"PDF header OK, %%EOF present",PASS,
+JED_July_2025_065.pdf,nerc/electricity_myto/JED_July_2025_065.pdf,970572,PDF,"PDF header OK, %%EOF present",PASS,
+JED_MYTO_APR_2026.pdf,nerc/electricity_myto/JED_MYTO_APR_2026.pdf,6457554,PDF,"PDF header OK, %%EOF present",PASS,
+JED_MYTO_FEB_2026.pdf,nerc/electricity_myto/JED_MYTO_FEB_2026.pdf,6587824,PDF,"PDF header OK, %%EOF present",PASS,
+JED_MYTO_JAN_2026.pdf,nerc/electricity_myto/JED_MYTO_JAN_2026.pdf,5767099,PDF,"PDF header OK, %%EOF present",PASS,
+JED_MYTO_MAR_2026.pdf,nerc/electricity_myto/JED_MYTO_MAR_2026.pdf,6329376,PDF,"PDF header OK, %%EOF present",PASS,
+JED_MYTO_MAY_2026.pdf,nerc/electricity_myto/JED_MYTO_MAY_2026.pdf,6304666,PDF,"PDF header OK, %%EOF present",PASS,
+JED_May_2025_051.pdf,nerc/electricity_myto/JED_May_2025_051.pdf,2182281,PDF,"PDF header OK, %%EOF present",PASS,
+JED_NOV_2025_129.pdf,nerc/electricity_myto/JED_NOV_2025_129.pdf,6503481,PDF,"PDF header OK, %%EOF present",PASS,
+JED_OCT_2025_115.pdf,nerc/electricity_myto/JED_OCT_2025_115.pdf,10164367,PDF,"PDF header OK, %%EOF present",PASS,
+JED_SEPT_2025_102.pdf,nerc/electricity_myto/JED_SEPT_2025_102.pdf,5886011,PDF,"PDF header OK, %%EOF present",PASS,
+KAEDC-MYTO-APR-2025.pdf,nerc/electricity_myto/KAEDC-MYTO-APR-2025.pdf,632826,PDF,"PDF header OK, %%EOF present",PASS,
+KAEDC-MYTO-JAN-2025.pdf,nerc/electricity_myto/KAEDC-MYTO-JAN-2025.pdf,2091683,PDF,"PDF header OK, %%EOF present",PASS,
+KAEDC_AUG_2025_MYTO.pdf,nerc/electricity_myto/KAEDC_AUG_2025_MYTO.pdf,6063895,PDF,"PDF header OK, %%EOF present",PASS,
+KAEDC_February-2025_010.pdf,nerc/electricity_myto/KAEDC_February-2025_010.pdf,2320386,PDF,"PDF header OK, %%EOF present",PASS,
+KAEDC_July_2025_066.pdf,nerc/electricity_myto/KAEDC_July_2025_066.pdf,987873,PDF,"PDF header OK, %%EOF present",PASS,
+KAEDC_MYTO_APR_2026.pdf,nerc/electricity_myto/KAEDC_MYTO_APR_2026.pdf,6694578,PDF,"PDF header OK, %%EOF present",PASS,
+KAEDC_MYTO_December_2025.pdf,nerc/electricity_myto/KAEDC_MYTO_December_2025.pdf,6966463,PDF,"PDF header OK, %%EOF present",PASS,
+KAEDC_MYTO_FEB_2026.pdf,nerc/electricity_myto/KAEDC_MYTO_FEB_2026.pdf,7664544,PDF,"PDF header OK, %%EOF present",PASS,
+KAEDC_MYTO_JAN_2026.pdf,nerc/electricity_myto/KAEDC_MYTO_JAN_2026.pdf,6933518,PDF,"PDF header OK, %%EOF present",PASS,
+KAEDC_MYTO_MAR_2026.pdf,nerc/electricity_myto/KAEDC_MYTO_MAR_2026.pdf,6528681,PDF,"PDF header OK, %%EOF present",PASS,
+KAEDC_MYTO_MAY_2026.pdf,nerc/electricity_myto/KAEDC_MYTO_MAY_2026.pdf,6764624,PDF,"PDF header OK, %%EOF present",PASS,
+KAEDC_May_2025_052.pdf,nerc/electricity_myto/KAEDC_May_2025_052.pdf,2665733,PDF,"PDF header OK, %%EOF present",PASS,
+KAEDC_NOV_2025_130.pdf,nerc/electricity_myto/KAEDC_NOV_2025_130.pdf,6982205,PDF,"PDF header OK, %%EOF present",PASS,
+KAEDC_OCT_2025_116.pdf,nerc/electricity_myto/KAEDC_OCT_2025_116.pdf,7574872,PDF,"PDF header OK, %%EOF present",PASS,
+KAEDC_SEPT_2025_103.pdf,nerc/electricity_myto/KAEDC_SEPT_2025_103.pdf,6444247,PDF,"PDF header OK, %%EOF present",PASS,
+KEDCO-MYTO-APR-2025.pdf,nerc/electricity_myto/KEDCO-MYTO-APR-2025.pdf,617905,PDF,"PDF header OK, %%EOF present",PASS,
+KEDCO-MYTO-JAN-2025.pdf,nerc/electricity_myto/KEDCO-MYTO-JAN-2025.pdf,1923370,PDF,"PDF header OK, %%EOF present",PASS,
+KEDCO_AUG_2025_MYTO.pdf,nerc/electricity_myto/KEDCO_AUG_2025_MYTO.pdf,6366566,PDF,"PDF header OK, %%EOF present",PASS,
+KEDCO_February-2025_011.pdf,nerc/electricity_myto/KEDCO_February-2025_011.pdf,2373659,PDF,"PDF header OK, %%EOF present",PASS,
+KEDCO_July_2025_067.pdf,nerc/electricity_myto/KEDCO_July_2025_067.pdf,983279,PDF,"PDF header OK, %%EOF present",PASS,
+KEDCO_MYTO_APR_2026.pdf,nerc/electricity_myto/KEDCO_MYTO_APR_2026.pdf,7294539,PDF,"PDF header OK, %%EOF present",PASS,
+KEDCO_MYTO_December_2025.pdf,nerc/electricity_myto/KEDCO_MYTO_December_2025.pdf,4622880,PDF,"PDF header OK, %%EOF present",PASS,
+KEDCO_MYTO_FEB_2026.pdf,nerc/electricity_myto/KEDCO_MYTO_FEB_2026.pdf,8178975,PDF,"PDF header OK, %%EOF present",PASS,
+KEDCO_MYTO_JAN_2026.pdf,nerc/electricity_myto/KEDCO_MYTO_JAN_2026.pdf,6554415,PDF,"PDF header OK, %%EOF present",PASS,
+KEDCO_MYTO_MAR_2026.pdf,nerc/electricity_myto/KEDCO_MYTO_MAR_2026.pdf,7283020,PDF,"PDF header OK, %%EOF present",PASS,
+KEDCO_MYTO_MAY_2026.pdf,nerc/electricity_myto/KEDCO_MYTO_MAY_2026.pdf,7114441,PDF,"PDF header OK, %%EOF present",PASS,
+KEDCO_May_2025_053.pdf,nerc/electricity_myto/KEDCO_May_2025_053.pdf,2563094,PDF,"PDF header OK, %%EOF present",PASS,
+KEDCO_NOV_2025_131.pdf,nerc/electricity_myto/KEDCO_NOV_2025_131.pdf,7182130,PDF,"PDF header OK, %%EOF present",PASS,
+KEDCO_OCT_2025_117.pdf,nerc/electricity_myto/KEDCO_OCT_2025_117.pdf,8110845,PDF,"PDF header OK, %%EOF present",PASS,
+KEDCO_SEPT_2025_104.pdf,nerc/electricity_myto/KEDCO_SEPT_2025_104.pdf,6562143,PDF,"PDF header OK, %%EOF present",PASS,
+Kaduna-june-2025.pdf,nerc/electricity_myto/Kaduna-june-2025.pdf,633258,PDF,"PDF header OK, %%EOF present",PASS,
+Kano-june-2025.pdf,nerc/electricity_myto/Kano-june-2025.pdf,633766,PDF,"PDF header OK, %%EOF present",PASS,
+PHED-MYTO-APR-2025.pdf,nerc/electricity_myto/PHED-MYTO-APR-2025.pdf,653251,PDF,"PDF header OK, %%EOF present",PASS,
+PHED-MYTO-JAN-2025.pdf,nerc/electricity_myto/PHED-MYTO-JAN-2025.pdf,2136962,PDF,"PDF header OK, %%EOF present",PASS,
+PHED_AUG_2025_MYTO.pdf,nerc/electricity_myto/PHED_AUG_2025_MYTO.pdf,6894855,PDF,"PDF header OK, %%EOF present",PASS,
+PHED_February-2025_012.pdf,nerc/electricity_myto/PHED_February-2025_012.pdf,2386776,PDF,"PDF header OK, %%EOF present",PASS,
+PHED_July_2025_068.pdf,nerc/electricity_myto/PHED_July_2025_068.pdf,1009148,PDF,"PDF header OK, %%EOF present",PASS,
+PHED_MYTO_APR_2026.pdf,nerc/electricity_myto/PHED_MYTO_APR_2026.pdf,8222050,PDF,"PDF header OK, %%EOF present",PASS,
+PHED_MYTO_FEB_2026.pdf,nerc/electricity_myto/PHED_MYTO_FEB_2026.pdf,8725565,PDF,"PDF header OK, %%EOF present",PASS,
+PHED_MYTO_JAN_2026.pdf,nerc/electricity_myto/PHED_MYTO_JAN_2026.pdf,7491552,PDF,"PDF header OK, %%EOF present",PASS,
+PHED_MYTO_MAR_2026.pdf,nerc/electricity_myto/PHED_MYTO_MAR_2026.pdf,7997895,PDF,"PDF header OK, %%EOF present",PASS,
+PHED_MYTO_MAY_2026.pdf,nerc/electricity_myto/PHED_MYTO_MAY_2026.pdf,8114986,PDF,"PDF header OK, %%EOF present",PASS,
+PHED_May_2025_054.pdf,nerc/electricity_myto/PHED_May_2025_054.pdf,3411489,PDF,"PDF header OK, %%EOF present",PASS,
+PHED_NOV_2025_132.pdf,nerc/electricity_myto/PHED_NOV_2025_132.pdf,8268250,PDF,"PDF header OK, %%EOF present",PASS,
+PHED_OCT_2025_118.pdf,nerc/electricity_myto/PHED_OCT_2025_118.pdf,12199266,PDF,"PDF header OK, %%EOF present",PASS,
+PHED__SEPT_2025_105.pdf,nerc/electricity_myto/PHED__SEPT_2025_105.pdf,7211180,PDF,"PDF header OK, %%EOF present",PASS,
+Portharcourt-june-2025.pdf,nerc/electricity_myto/Portharcourt-june-2025.pdf,705703,PDF,"PDF header OK, %%EOF present",PASS,
+YEDC-MYTO-APR-2025.pdf,nerc/electricity_myto/YEDC-MYTO-APR-2025.pdf,543438,PDF,"PDF header OK, %%EOF present",PASS,
+YEDC-MYTO-JAN-2025.pdf,nerc/electricity_myto/YEDC-MYTO-JAN-2025.pdf,1902877,PDF,"PDF header OK, %%EOF present",PASS,
+YEDC_AUG_2025_MYTO.pdf,nerc/electricity_myto/YEDC_AUG_2025_MYTO.pdf,5165731,PDF,"PDF header OK, %%EOF present",PASS,
+YEDC_February-2025_013.pdf,nerc/electricity_myto/YEDC_February-2025_013.pdf,2093733,PDF,"PDF header OK, %%EOF present",PASS,
+YEDC_July_2025_069.pdf,nerc/electricity_myto/YEDC_July_2025_069.pdf,952777,PDF,"PDF header OK, %%EOF present",PASS,
+YEDC_MYTO_APR_2026.pdf,nerc/electricity_myto/YEDC_MYTO_APR_2026.pdf,6107647,PDF,"PDF header OK, %%EOF present",PASS,
+YEDC_MYTO_December_2025.pdf,nerc/electricity_myto/YEDC_MYTO_December_2025.pdf,6045168,PDF,"PDF header OK, %%EOF present",PASS,
+YEDC_MYTO_FEB_2026.pdf,nerc/electricity_myto/YEDC_MYTO_FEB_2026.pdf,6546809,PDF,"PDF header OK, %%EOF present",PASS,
+YEDC_MYTO_JAN_2026.pdf,nerc/electricity_myto/YEDC_MYTO_JAN_2026.pdf,5894658,PDF,"PDF header OK, %%EOF present",PASS,
+YEDC_MYTO_MAR_2026.pdf,nerc/electricity_myto/YEDC_MYTO_MAR_2026.pdf,5948939,PDF,"PDF header OK, %%EOF present",PASS,
+YEDC_MYTO_MAY_2026.pdf,nerc/electricity_myto/YEDC_MYTO_MAY_2026.pdf,6031290,PDF,"PDF header OK, %%EOF present",PASS,
+YEDC_May_2025_055.pdf,nerc/electricity_myto/YEDC_May_2025_055.pdf,1837480,PDF,"PDF header OK, %%EOF present",PASS,
+YEDC_NOV_2025_133.pdf,nerc/electricity_myto/YEDC_NOV_2025_133.pdf,6071212,PDF,"PDF header OK, %%EOF present",PASS,
+YEDC_OCT_2025_119.pdf,nerc/electricity_myto/YEDC_OCT_2025_119.pdf,9533477,PDF,"PDF header OK, %%EOF present",PASS,
+YEDC_SEPT_2025_106.pdf,nerc/electricity_myto/YEDC_SEPT_2025_106.pdf,5162592,PDF,"PDF header OK, %%EOF present",PASS,
+Yola-june-2025.pdf,nerc/electricity_myto/Yola-june-2025.pdf,805662,PDF,"PDF header OK, %%EOF present",PASS,
+PROVENANCE_READ_ME.txt,cbn/exchange_rate/PROVENANCE_READ_ME.txt,5499,TXT,"text readable, 5499 bytes",PASS,
+cbn_ExchRateByCurrency_page_snapshot_20260913T120305Z.html,cbn/exchange_rate/cbn_ExchRateByCurrency_page_snapshot_20260913T120305Z.html,14173,HTML,"text readable, 14173 bytes",PASS,
+cbn_api_GetAllNFEM_Rates_snapshot_20260913T120305Z.json,cbn/exchange_rate/cbn_api_GetAllNFEM_Rates_snapshot_20260913T120305Z.json,124093,JSON,JSON parsed OK (read-only),PASS,
+cbn_nfem_rates_2025-01-01_to_2026-05-31_EXTRACTED-FROM-CBN-WEBPAGE.csv,cbn/exchange_rate/cbn_nfem_rates_2025-01-01_to_2026-05-31_EXTRACTED-FROM-CBN-WEBPAGE.csv,26890,CSV,"CSV readable, 353 lines incl. header",PASS,
+cbn_rates_script1_20260913T120305Z.js,cbn/exchange_rate/cbn_rates_script1_20260913T120305Z.js,3221,JS,"text readable, 3221 bytes",PASS,
