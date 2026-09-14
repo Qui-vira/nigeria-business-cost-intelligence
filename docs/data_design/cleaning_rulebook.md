@@ -387,38 +387,97 @@ table has exactly six zones per item-month.
 
 ## 2. Petrol (PMS)
 
-**RAW PROBLEM** — Header row moves between 1, 2, 3 and 15. Columns 1–4 are a *state* table while
-columns 6–7 are a separate *zone* table in the same sheet. An `AVERAGE` row sits below the states,
-followed by `Year on Year` and `Month on Month` footnote rows. Period columns are Excel datetimes.
-January 2026 drops the zone block entirely.
+**RAW PROBLEM** — A petrol sheet holds **four distinct blocks**, and their positions move between
+releases:
+
+| Block | Usual position | Contents | Canonical? |
+|---|---|---|---|
+| State table | col A + three datetime cols B–D | 37 states/FCT, then `AVERAGE`, then `Year on Year` / `Month on Month` | **yes** — `STATE` + `NATIONAL` |
+| Zone table | cols F–G, header `Zone` \| `Average Price` | the six zones, **one** price column | **yes** — `ZONE` |
+| Extreme callouts | below the zone table, same columns | `STATES WITH THE HIGHEST/LOWEST AVERAGE PRICES` + three state rows each | **no** |
+| Derived stats | July 2025 only, cols I–J | `MAX` / `MIN` over the zone averages | **no** |
+
+Header row moves between **1, 2, 3 and 15**. Period columns are Excel datetimes dated the 1st.
+The state table carries **three** periods; the zone table carries **one** (the release month).
+
+> **January 2026 structural variation — verified 2026-09-14.**
+> An earlier version of this rulebook stated that January 2026 *"drops the zone block entirely."*
+> **That was wrong.** `PMS_Report_JANUARY_2026.zip` member `PMS_JANUARY_2025.xlsx`, sheet `Sheet1`,
+> contains the complete publication:
+>
+> | Rows | Content |
+> |---|---|
+> | 2 | `State` header, datetime columns 2025-01, 2025-12, **2026-01** |
+> | 3–39 | all **37** states/FCT |
+> | 40 | national `AVERAGE` |
+> | 41–42 | `Year on Year`, `Month on Month` footnotes |
+> | **44** | **a second header, `Zone` \| `Average Price`, in columns A/B** |
+> | **45–50** | **all six geopolitical zones** |
+> | 54–62 | highest/lowest callout blocks |
+>
+> The zone table is **below** the state table in columns A/B rather than beside it in F/G. Nothing is
+> missing — only the layout differs. These zone rows are valid published data and **must be cleaned**.
+> See D-22.
 
 Two verified label errors: the January 2026 release contains a member named `PMS_JANUARY_2025.xlsx`
 whose internal title row also reads `JANUARY 2025`, and the October 2025 sheet's title row reads
 `AUGUST 2025 REPORT`.
 
 **WHY IT MATTERS** — Reading the two side-by-side tables as one produces rows where a state is paired
-with an unrelated zone average. Trusting the filename files January 2026 data under January 2025.
+with an unrelated zone average. Reading the F/G column pair to its end turns six callout states into
+six fake `ZONE` rows per release. Locating the zone table by coordinate loses January 2026 entirely.
+Trusting the filename files January 2026 data under January 2025.
 
 **CLEANING RULE**
 
-1. Detect the header (§0.1) using the `State` anchor.
-2. Extract the two tables **separately by column block**: the state block (`State` + three period
-   columns) and the zone block (`Zone` + `Average Price`). Never join them row-wise.
-3. Stop the state block at the first row classified `NATIONAL`; capture that row as the national
-   aggregate. Discard the `Year on Year` / `Month on Month` footnote rows — they are derived
-   statistics, not observations, and are recomputable.
+1. **Locate blocks by content, never by coordinate.** Scan the whole sheet for header cells:
+   - a cell equal to `State` (case-insensitive, trimmed) opens a **state block**;
+   - a cell equal to `Zone` opens a **zone block**, wherever it sits — F/G beside the state table, or
+     A/B beneath it. Both must work without a coordinate rule.
+   A sheet may contain more than one block header; process each.
+2. **Each block ends where its rows stop resolving to its own type.** Walk downward from the header
+   and stop at the first label that does not classify (§0.2) as a member of that block:
+   - state block: accept `STATE`; accept the first `NATIONAL` row and stop immediately after it;
+   - zone block: accept `ZONE` only, and stop at the first non-zone label.
+   This single rule discards the `Year on Year` / `Month on Month` footnotes, the
+   `STATES WITH THE HIGHEST/LOWEST AVERAGE PRICES` headings and the callout state rows beneath them,
+   without naming any of them.
+3. **Never join the blocks row-wise.** A state row and a zone row that share a spreadsheet row number
+   are unrelated.
 4. Derive the period **only** from the datetime column headers. Ignore the filename, the worksheet
-   name and the title row.
+   name and the title row. The zone block has a single `Average Price` column and takes the release
+   month as its `observation_month`.
 5. Record the known label errors in a `source_anomaly` column on affected rows:
-   `MEMBER_FILENAME_YEAR_WRONG` (Jan 2026), `TITLE_ROW_MONTH_WRONG` (Oct 2025).
+   `MEMBER_FILENAME_YEAR_WRONG` (Jan 2026), `TITLE_ROW_MONTH_WRONG` (Oct 2025). These are the only two
+   title corrections; there is no general title-repair rule.
 
-**EXPECTED CLEAN OUTPUT** — `petrol_price_monthly` with 37 state rows, up to 6 zone rows and 1
-national row per month, each typed and flagged.
+**NOT INGESTED — and why**
 
-**VALIDATION CHECK** — January 2026 rows must carry `observation_month = 2026-01-01`. Their prior-month
-column must equal the December 2025 release's current-month values for all 33 comparable states — the
-check already performed during profiling, now automated as a regression test. October 2025 rows must
-carry `observation_month = 2025-10-01` despite the title row.
+- **Extreme callouts.** `STATES WITH THE HIGHEST/LOWEST AVERAGE PRICES` and the three state rows under
+  each are a reporting highlight, not a geography series. The states and prices they show are already
+  present in the state block; ingesting them would duplicate observations and, if read as part of the
+  zone block, would classify states as zones. Petrol has **no** canonical extreme-callout table, so
+  the structure is documented here and left unextracted.
+  The February 2025 lowest-price block contains the tied label **`Ekiti/Oyo`**. It stays in the
+  callout area and is never resolved: `Ekiti/Oyo` is **not** added to `ref_state_zone`, and the
+  slash-splitting rule in §0.2 remains restricted to the food and cooking-gas callout fields. A slash
+  in a main petrol geography column still raises.
+- **July 2025 `MAX` / `MIN`.** `Fuel_Report_July_2025.xlsx` carries `MAX` (I2/J2) and `MIN` (I5/J5)
+  computed across the six zone averages — the only petrol cells beyond column G in any release. They
+  are derived statistics over values already published, recomputable from the zone rows, and belong to
+  no geography. Excluded from `petrol_price_monthly`; the cells remain untouched in the raw workbook.
+
+**EXPECTED CLEAN OUTPUT** — `petrol_price_monthly`, per release: **37 states × 3 periods + 1 national ×
+3 periods + 6 zones × 1 period = 120 rows.** Across the 17 spreadsheet releases 2025-01 … 2026-05 that
+is **2,040 rows.** The six petrol PDFs are corroborative only — they cannot supply a spreadsheet cell
+reference and so generate no canonical rows.
+
+**VALIDATION CHECK** — All 17 releases processed, 2025-01 … 2026-05 with no gap. Every release yields
+all 37 states/FCT and exactly six zones — **including January 2026**, whose zone rows come from A/B.
+January 2026 rows carry `observation_month = 2026-01-01`; their prior-month column equals the December
+2025 release's current-month values for every comparable state. October 2025 rows carry
+`observation_month = 2025-10-01` despite the title row. No callout state, no `Ekiti/Oyo`, no `MAX` or
+`MIN` cell and no footnote label reaches the clean table.
 
 ---
 
@@ -784,6 +843,9 @@ clean row records what was done.
 |---|---|---|
 | Member filename and title row say 2025 | `PMS_Report_JANUARY_2026.zip` → `PMS_JANUARY_2025.xlsx` | Period taken from datetime headers → 2026-01. `source_anomaly = 'MEMBER_FILENAME_YEAR_WRONG'` |
 | Title row says `AUGUST 2025 REPORT` | `PMS Report OCTOBER 2025.zip` | Period from headers → 2025-10. `source_anomaly = 'TITLE_ROW_MONTH_WRONG'` |
+| **Zone table moved to columns A/B, below the state table** | `PMS_Report_JANUARY_2026.zip` → `PMS_JANUARY_2025.xlsx` | Blocks located by content, not coordinate (D-22). All six zone rows cleaned normally. `source_anomaly = 'ZONE_BLOCK_BELOW_STATE_BLOCK'` |
+| `MAX` / `MIN` cells in columns I/J | `Fuel_Report_July_2025.xlsx` | Derived statistics over the zone averages. Excluded from `petrol_price_monthly` (D-23); raw cells untouched |
+| Tied extreme label `Ekiti/Oyo` | `PMS_FEB_2025.xlsx`, lowest-price callout block | Stays in the callout area. Never added to `ref_state_zone`, never split, never a geography value (D-23) |
 | Duplicate period header, current month mislabelled | `TRANSPORT_COST_Watch_MAR_2025.xlsx` | Resolve by column position → 2025-03. `source_anomaly = 'DUPLICATE_PERIOD_HEADER_RESOLVED_BY_POSITION'` |
 | **Kebbi published as `Taraba` in the 12.5 kg block** | 12 files: all 2025 LPG releases | Corrected to `Kebbi` **only** when all five fingerprint conditions in §4a match. `source_anomaly = 'LPG_12_5KG_KEBBI_LABELLED_TARABA'`; published text kept in `geography_raw_label`. No global Taraba→Kebbi rule. |
 | **`SouthWest` zone label with no space** | `AGO JANUARY 2026.xlsx`, diesel | Normalised to the zone `South West`. Never treated as a state. |

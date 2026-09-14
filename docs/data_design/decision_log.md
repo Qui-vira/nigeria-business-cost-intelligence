@@ -512,6 +512,61 @@ six NBS datasets during the 2026-09-13 extension.
 
 ---
 
+## D-22 — Petrol tables are located by content, never by coordinate
+
+**Decision.** The petrol cleaner finds each table by scanning the whole sheet for its header token —
+`State` for the state block, `Zone` for the zone block — and ends each block at the first row whose
+label stops classifying as that block's own geography type. No fixed row, no fixed column, no
+per-release special case.
+
+**Evidence.** Across the 17 spreadsheet releases the header row sits on row **1, 2, 3 or 15**, and the
+zone table sits in **columns F/G in 16 releases but in columns A/B in January 2026**, beneath the state
+table and behind its own second `Zone` header on row 44. A coordinate-based extractor silently returns
+zero zone rows for January 2026. A column-pair extractor that reads F/G to the end of the sheet ingests
+the six `STATES WITH THE HIGHEST/LOWEST AVERAGE PRICES` rows as zones — roughly 96 fabricated `ZONE`
+rows across the corpus, each one a state wearing a zone's label.
+
+The terminate-on-type rule removes four different problems with one mechanism: the `Year on Year` and
+`Month on Month` footnotes, the two callout headings, the callout state rows, and July 2025's `MAX` /
+`MIN` cells all fail to classify and therefore end their block. None of them is named in code.
+
+**Rejected alternative.** Special-casing January 2026 by coordinate. It would work today and break at
+the next layout change, and it encodes a fact about one file into logic that is supposed to describe a
+dataset.
+
+**Consequence.** `cleaning_rulebook.md` §2 was rewritten. Its previous claim that January 2026
+*"drops the zone block entirely"* is retracted: the release is complete — 37 states, a national
+`AVERAGE`, and all six zones — and its zone rows are cleaned like any other release's.
+
+---
+
+## D-23 — Petrol extreme callouts and derived statistics are documented, not ingested
+
+**Decision.** Four petrol structures are deliberately excluded from `petrol_price_monthly`:
+the `STATES WITH THE HIGHEST AVERAGE PRICES` block, the `STATES WITH THE LOWEST AVERAGE PRICES` block,
+the `Year on Year` / `Month on Month` footnotes, and July 2025's `MAX` / `MIN` cells.
+
+**Evidence.**
+- The callout blocks restate three states already present in the state block, at the same price. They
+  are a reporting highlight, not an additional observation, and petrol has no canonical extreme-callout
+  table in `canonical_schemas.md` (unlike food and cooking gas, which do).
+- `Fuel_Report_July_2025.xlsx` is the only petrol workbook with any content past column G: `MAX` in
+  I2/J2 and `MIN` in I5/J5, computed across the six zone averages. Recomputable from rows the clean
+  table already holds.
+- The February 2025 lowest-price block carries the tied label **`Ekiti/Oyo`**. It is a callout tie, so
+  it never reaches a geography field. `Ekiti/Oyo` is **not** added to `ref_state_zone`, and §0.2's
+  slash-splitting rule stays restricted to the food and cooking-gas callout fields. A slash in a main
+  petrol geography column still raises.
+
+**Consequence.** Ingesting the callouts would double-count six states per release and, read as part of
+the zone block, would classify states as zones. Ingesting `MAX` / `MIN` would create price rows
+belonging to no geography. Excluding them costs nothing recoverable: every excluded number is either
+already in the table or derivable from it. The structures are described in `cleaning_rulebook.md` §2 so
+that a later decision to build a petrol callout table has the evidence it needs, and the raw cells are
+left untouched.
+
+---
+
 ## Open items carried into Phase 6
 
 1. **`xlrd` is not installed**, so `CPI_Report_March_2026.zip` (legacy `.xls`) could not be read during
@@ -534,3 +589,7 @@ six NBS datasets during the 2026-09-13 extension.
    re-checked before analysis, and never filled.
 7. **The 44 new NERC orders (June–September 2026) are image-only scans**, like the existing corpus, so
    D-12 applies to them unchanged.
+8. **Petrol has no canonical extreme-callout table.** The highest/lowest blocks are documented in
+   `cleaning_rulebook.md` §2 but not extracted (D-23). If state-level extremes are wanted later, a
+   `petrol_price_extreme_callout` table would need designing, including a rule for the tied
+   `Ekiti/Oyo` label.

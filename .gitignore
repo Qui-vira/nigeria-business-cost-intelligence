@@ -80,6 +80,15 @@ desktop.ini
 ~$*
 
 # ---------------------------------------------------------------------------
+# Working notes - local only
+#
+# handoff.md is the between-session working note: current state, next steps and
+# a running list of corrections. It is deliberately never committed, so the
+# repository history stays a record of the work rather than of the scaffolding.
+# ---------------------------------------------------------------------------
+handoff.md
+
+# ---------------------------------------------------------------------------
 # Deliberately NOT ignored - these are portfolio deliverables and must be
 # committed when they exist:
 #   *.py  *.ipynb  *.sql  *.md  *.csv (documentation)

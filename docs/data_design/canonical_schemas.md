@@ -241,6 +241,21 @@ They carry identical values, which is exactly the cross-check described in D-10.
 `geography_type` is in the key so that a state, a zone and the national aggregate can never be merged
 by a name collision.
 
+**Grain per release.** The state table publishes three periods; the zone table publishes one. Each of
+the 17 spreadsheet releases therefore contributes **37 states × 3 + 1 national × 3 + 6 zones × 1 = 120
+rows**, giving **2,040 rows** for 2025-01 … 2026-05.
+
+**Blocks are found by content, not coordinate (D-22).** The zone table sits in columns F/G in 16
+releases and in columns **A/B beneath the state table** in January 2026 — that release is complete, not
+zone-less, and its six zone rows are cleaned like any other's. Each block ends at the first row whose
+label stops classifying as that block's type, which is what keeps the `STATES WITH THE
+HIGHEST/LOWEST AVERAGE PRICES` callouts, the `Year on Year` / `Month on Month` footnotes and July
+2025's `MAX` / `MIN` cells out of the table (D-23). Petrol has **no** canonical extreme-callout table;
+the tied label `Ekiti/Oyo` therefore never reaches a geography field and is not in `ref_state_zone`.
+
+The six petrol PDFs are corroborative only. They cannot supply `source_cell_reference`, so they
+generate no canonical rows.
+
 ### `diesel_price_monthly`
 
 Identical shape and identical key. Its distinguishing feature is that `geography_type` carries the
