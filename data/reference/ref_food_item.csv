@@ -1,0 +1,43 @@
+item_code,item_label,item_label_normalised,observed_aliases,alias_variant_count,unit,unit_source,unit_evidence,observed_in
+EGG_AGRIC,"Agric hen eggs,","agric hen eggs,","Agric hen eggs, | Agric hen eggs",2,,,,food
+EGG_AGRIC_CRATE30,"Agric hen eggs, (a Crate of 30 pieces)","agric hen eggs, (a crate of 30 pieces)","Agric hen eggs, (a Crate of 30 pieces)",1,1 crate of 30 pieces,SPREADSHEET_LABEL,"item label states '(a Crate of 30 pieces)'; corroborated by Selected_Food_Report_Mar_2026.pdf p4 'Eggs (a crate of 30 pieces) stood at N6,127.62' = D3 of selected food table Mar26.xlsx",food
+BEANS_BROWN,Beans Brown,beans brown,Beans Brown,1,1 kg,NBS_REPORT_PDF,"Selected_Food_Report_July_2025.pdf p4 'Brown Beans (1kg, sold loose) average price was N2,319.27' = D4 of selected_food_table_July-25.xlsx",food
+BEANS_WHITE,Beans white,beans white,Beans white,1,,,,food
+BEEF_BONELESS,Beef Boneless,beef boneless,Beef Boneless,1,1 kg,NBS_REPORT_PDF,"Selected Food Report_Dec 25.pdf p4 'beef boneless (1kg) ... to N6,885.09 in December 2025' = D6 of selected food table Dec25.xlsx",food
+BREAD_SLICED_450G,"Bread (sliced), 450g","bread (sliced), 450g","Bread (sliced), 450g",1,450 g,SPREADSHEET_LABEL,item label states '450g',food
+BREAD_UNSLICED_450G,"Bread (unsliced), 450g","bread (unsliced), 450g","Bread (unsliced), 450g",1,450 g,SPREADSHEET_LABEL,item label states '450g',food
+CARROTS_FRESH,"Carrots, fresh","carrots, fresh","Carrots, fresh",1,1 kg,NBS_REPORT_PDF,"Selected_Food_Report_Jan25.pdf p3 '1kg of carrots cost N1,787.16' = D9 of Selected_food_table_Jan25.xlsx",food
+FISH_CATFISH_FRESH,Cat fresh fish,cat fresh fish,Cat fresh fish,1,,,,food
+CHICKEN_FEET,Chicken feet,chicken feet,Chicken feet,1,,,,food
+CHICKEN_MEAT_FROZEN,Chicken meat (Frozen),chicken meat (frozen),Chicken meat (Frozen),1,,,,food
+CHICKEN_WINGS,Chicken Wings,chicken wings,Chicken Wings,1,,,,food
+CRAYFISH_SMALL_WHITE,Cray fish small white,cray fish small white,Cray fish small white,1,1 kg,NBS_REPORT_PDF,"Selected_Food_Report_Feb_2026.pdf p3 'Cray fish (small white) 1kg stood at N8,785.16' = D14 of selected food table Feb 26.xlsx; also May 2025 report 'small white crayfish 1kg ... N8,046.84' = D14 of selected_food_table_May-25.xlsx",food
+FISH_DRIED_BONGA,"Dried fish, Bonga","dried fish, bonga","Dried fish, Bonga",1,,,,food
+GARRI_WHITE,Garri white,garri white,Garri white,1,1 kg,NBS_REPORT_PDF,"Selected_Food_Report_May_2025.pdf p3 'Garri white (1kg) ... to N1,341.79 in May 2025' = D16 of selected_food_table_May-25.xlsx",food
+GARRI_YELLOW,Garri Yellow,garri yellow,Garri Yellow,1,,,,food
+GINGER_FRESH,"Ginger, fresh","ginger, fresh","Ginger, fresh",1,1 kg,NBS_REPORT_PDF,"Selected_Food_Report_May 26.pdf p3 'Ginger Fresh (1kg) stood at N5,906.82' = D18 of selected food table May 26.xlsx",food
+GOAT_MEAT_BONE_IN,Goat Meat Bone in,goat meat bone in,Goat Meat Bone in,1,,,,food
+GROUNDNUT_OIL_75CL,"Groundnut oil, 75cl","groundnut oil, 75cl","Groundnut oil, 75cl",1,75 cl,SPREADSHEET_LABEL,"item label states '75cl'; corroborated by Selected_Food_Report_Apr25.pdf 'Groundnuts oil, 75cl stood at N3,250.32' = D20 of selected_food_table_Apr25.xlsx",food
+GROUNDNUTS_ROASTED_75CL,"Groundnuts, roasted,75cl bottle","groundnuts, roasted,75cl bottle","Groundnuts, roasted,75cl bottle",1,75 cl bottle,SPREADSHEET_LABEL,item label states '75cl bottle',food
+POTATO_IRISH,Irish Potatoe,irish potatoe,Irish Potatoe,1,1 kg,NBS_REPORT_PDF,"Selected_Food_Report_June_2025.pdf p3 '1kg of Irish potatoes ... N2,045.94 in June 2025' = D22 of selected_food_table_June-25.xlsx",food
+RICE_LOCAL_BROKEN,Local Rice (Broken),local rice (broken),Local Rice (Broken),1,,,,food
+FISH_MACKEREL_FROZEN,"Mackerel, Frozen","mackerel, frozen","Mackerel, Frozen",1,,,,food
+MAIZE_GRAIN_WHITE_LOOSE,Maize (Corn) Grains (White) sold loose,maize (corn) grains (white) sold loose,Maize (Corn) Grains (White) sold loose,1,1 kg,NBS_REPORT_PDF,"Selected_Food_Report Sept_25.pdf p3 'Maize Grain White (1kg, sold loose) declined to N888.68 in September 2025' = D25 of selected food table september-25.xlsx",food
+ONIONS_FRESH,"Onions, fresh","onions, fresh","Onions, fresh",1,1 kg,NBS_REPORT_PDF,"Selected_Food_Report_May 26.pdf p3 'onion Bulb (1kg) decreased to N1,180.01 in May 2026' = D26 of selected food table May 26.xlsx",food
+PALM_OIL_75CL,"Palm oil, 75cl","palm oil, 75cl","Palm oil, 75cl",1,75 cl,SPREADSHEET_LABEL,item label states '75cl',food
+PLANTAIN_RIPE,Plantain (ripe),plantain (ripe),Plantain (ripe),1,,,,food
+PLANTAIN_UNRIPE,Plantain (unripe),plantain (unripe),Plantain (unripe),1,,,,food
+RICE_LOCAL_SHORT_GRAIN,"Rice Local, short-Grained","rice local, short-grained","Rice Local, short-Grained",1,1 kg,NBS_REPORT_PDF,"Selected_Food_Report_Jan26.pdf p4 'locally produced Rice (1kg) stood at N1,841.83' = D30 of selected food table Jan26.xlsx; the same phrasing anchors to D30 in Aug, Oct, Nov, Dec 2025 and Feb 2026, never to Local Rice (Broken)",food
+RICE_IMPORTED_LONG_GRAIN,Rice Long-Grained (Imported),rice long-grained (imported),Rice Long-Grained (Imported),1,,,,food
+SEMOVITA_1KG,"Semovita, Prepacked (1kg)","semovita, prepacked (1kg)","Semovita, Prepacked (1kg)",1,1 kg,SPREADSHEET_LABEL,item label states '(1kg)',food
+FISH_SMOKED_MACKEREL,Smoked fish (Mackerel),smoked fish (mackerel),Smoked fish (Mackerel) | Smoked fish,2,,,,food
+POTATO_SWEET,Sweet potatoes,sweet potatoes,Sweet potatoes,1,,,,food
+FISH_TILAPIA_FRESH,Tilapia fresh fish (Epiya),tilapia fresh fish (epiya),Tilapia fresh fish (Epiya),1,,,,food
+MILK_EVAP_PEAK_150G,"Tin Milk-Evaporated, Peak Milk, 150g","tin milk-evaporated, peak milk, 150g","Tin Milk-Evaporated, Peak Milk, 150g",1,150 g,SPREADSHEET_LABEL,item label states '150g',food
+MILK_EVAP_THREECROWN_160G,"Tin Milk-Evaporated, Three Crown Milk, 160g","tin milk-evaporated, three crown milk, 160g","Tin Milk-Evaporated, Three Crown Milk, 160g",1,160 g,SPREADSHEET_LABEL,item label states '160g',food
+FISH_TITUS_FROZEN,"Titus, frozen","titus, frozen","Titus, frozen",1,,,,food
+TOMATOES_FRESH,"Tomatoes, fresh","tomatoes, fresh","Tomatoes, fresh",1,1 kg,NBS_REPORT_PDF,"Selected_Food_Report_Nov_25.pdf p3 'tomatoes (1kg, sold loose) decreased to N1,243.02 in November 2025' = D39 of selected food table Nov25.xlsx",food
+VEG_OIL_75CL,"Vegetable Oil, 75cl","vegetable oil, 75cl","Vegetable Oil, 75cl",1,75 cl,SPREADSHEET_LABEL,item label states '75cl',food
+WATERMELON_WHOLE,"Watermelon whole, medium size fresh","watermelon whole, medium size fresh","Watermelon whole, medium size fresh",1,,,,food
+WHEAT_FLOUR_2KG,"Wheat Flour, Prepacked (2kg)","wheat flour, prepacked (2kg)","Wheat Flour, Prepacked (2kg)",1,2 kg,SPREADSHEET_LABEL,item label states '(2kg)',food
+YAM_TUBER,Yam Tuber,yam tuber,Yam Tuber,1,1 kg,NBS_REPORT_PDF,"Selected_Food_Report_Jan25.pdf p3 'The average price of 1kg of Yam tuber rose ... to N1,991.33 in January 2025' = D43 of Selected_food_table_Jan25.xlsx",food

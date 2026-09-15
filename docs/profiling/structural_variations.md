@@ -52,9 +52,12 @@ Scope measured: **118 NBS files → 219 spreadsheet sheets** (218 readable, 1 no
    states fieldwork is done by "over 700 NBS Staff in all States") but publishes only national, zone, and
    the highest/lowest state per item. No amount of PDF extraction will produce state-level food prices
    from this source.
-2. **Exactly 15 items per month have no year-ago average** (column 2) and therefore **no YoY** (column 6).
-   Verified cell-by-cell: these are genuinely empty cells in the correct positions, **not shifted rows**.
-   January 2025 additionally has no prior-month value or MoM, consistent with the rebased series starting.
+2. **Exactly 15 items have no year-ago average** (column 2) and therefore **no YoY** (column 6) —
+   in each of the 12 releases 2025-01 … 2025-12, and in **none** of the five 2026 releases, where the
+   year-ago column is complete for all 42 items. Verified cell-by-cell: these are genuinely empty cells
+   in the correct positions, **not shifted rows**. January 2025 additionally has no prior-month value or
+   MoM for the same 15 items, consistent with the rebased series starting. 180 + 15 = 195 blanks in
+   total. The count is release-dependent and must never be stated as "per month" (D-34).
 3. **Two files carry a stale sheet name.** `selected_food_table_Apr25.xlsx` and
    `selected_food_table_Mar_25.xlsx` both name their sheet `Selected Food Dec 2024`. The column headers
    (`Average of Apr-25`, `Average of Mar-25`) confirm the **data is correct** — only the sheet label is wrong.

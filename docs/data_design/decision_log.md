@@ -111,29 +111,35 @@ then it would be an approximation that must be labelled as one.
 every `State Transport` sheet ends with `Grand Total`. Recorded in `structural_variations.md` §10.
 
 **Rejected alternatives.**
-- *Delete them.* Loses the published national figure, which is authoritative and not reproducible by
-  averaging states — NBS weights its national average.
+- *Delete them.* Loses the published national figure, which is authoritative and is what NBS
+  actually published — including any revision, rounding or defect it carries.
 - *Leave them untyped.* `AVG(price)` would then average the national figure together with the states.
   The query succeeds and the answer is wrong, with nothing to signal the error.
 
 **Consequence.** Both the detail and the published aggregate remain available, and cannot be confused.
-A validation check compares the published national value against the unweighted state mean; they are
-expected to **differ**, and an exact match is treated as a suspected mis-classification.
+A validation check compares the published national value against the aggregate of the geographies
+beneath it, using the relationship **established for that dataset** — see D-37. For petrol, diesel,
+transport and food that relationship is an unweighted mean of the 37 states, and an exact match is the
+expected result, not a suspicion.
 
 ---
 
 ## D-06 — Missing is never automatically zero
 
-**Decision.** Four distinct states are represented: `OK`, `MISSING`, `NOT_APPLICABLE`,
-`SOURCE_ERROR_REF`. No blank is ever filled — not with zero, not by interpolation, not by carrying a
-value forward.
+**Decision.** Five distinct states are represented: `OK`, `MISSING`, `NOT_REPORTED`,
+`NOT_APPLICABLE`, `SOURCE_ERROR_REF`. No blank is ever filled — not with zero, not by interpolation,
+not by carrying a value forward. `NOT_APPLICABLE` asserts that a value could not exist and needs an
+official source saying so; where the reason for a blank is unknown the status is `NOT_REPORTED`
+(D-34).
 
 **Evidence.**
 - CBN publishes a **literal 0** in `noOfDeals` for 298 in-window rows, while turnover fields are
   **blank** in 300 (2026-09-13 snapshot; 297 and 300 under the earlier 2026-05-31 window). Two
   different absences in the same file, one of which is a real measurement.
-- Food has exactly 15 items per month with no year-ago average, and therefore no YoY. These items were
-  added to the basket; a year-ago price cannot exist.
+- Food has 15 items with no year-ago average, and therefore no YoY, in each of the 12 releases
+  2025-01 … 2025-12 — and none in any 2026 release, because the items entered the basket in January
+  2025. The count is **per release, not per month**. Their status is `NOT_REPORTED`, not
+  `NOT_APPLICABLE`: the basket explanation is inferred, not stated by NBS (D-34).
 - CPI contains 69,411 `#REF!` cells — spreadsheet errors, not values.
 
 **Consequence.** Every measure column is paired with a status column, making absence queryable and its
@@ -555,8 +561,11 @@ the `Year on Year` / `Month on Month` footnotes, and July 2025's `MAX` / `MIN` c
   table already holds.
 - The February 2025 lowest-price block carries the tied label **`Ekiti/Oyo`**. It is a callout tie, so
   it never reaches a geography field. `Ekiti/Oyo` is **not** added to `ref_state_zone`, and §0.2's
-  slash-splitting rule stays restricted to the food and cooking-gas callout fields. A slash in a main
-  petrol geography column still raises.
+  slash-splitting rule stays restricted to the callout fields. A slash in a main petrol geography
+  column still raises.
+  *(Update, Food: that scope narrowed again. All 1,428 food callout cells name exactly one state, so
+  no splitting rule is implemented for food and §0.2 now covers `cooking_gas_extreme_callout` alone —
+  D-35. The conclusion for petrol is unchanged.)*
 
 **Consequence.** Ingesting the callouts would double-count six states per release and, read as part of
 the zone block, would classify states as zones. Ingesting `MAX` / `MIN` would create price rows
@@ -724,6 +733,215 @@ mix-up in either sheet.
 
 ---
 
+## D-30 — Food's period comes from three agreeing header signals; the worksheet name is evidence only
+
+**Decision.** For every food release the observation months are derived from the three period headers,
+by column position, and the release month must be confirmed by **all three independently**: the
+current-month header, the prior-month header plus one month, and the year-ago header plus twelve. The
+file name is required to agree as a fourth. Any disagreement stops the run. The worksheet **name** is
+recorded and drives nothing.
+
+**Evidence.** Two of 17 releases carry a stale worksheet name: `selected_food_table_Mar_25.xlsx` and
+`selected_food_table_Apr25.xlsx` both name their main sheet `Selected Food Dec 2024`, four and five
+months adrift. The three header signals agree in all 17 releases, and the file name agrees in all 17.
+
+**Rejected alternative.** Transport's rule (D-28) — sheet name cross-checked against the prior-month
+header. It is the right rule for Transport, where the *header* is the unreliable signal in one
+release. In Food the reverse is true: the headers are sound and the sheet name is not. The general
+principle from D-28 still holds and is what produced this rule: derive from structure, corroborate
+with a second signal, keep the published text as provenance.
+
+**Consequence.** Food is the fourth dataset in which a rule written around a literal string in the
+file would have been falsified by a later release.
+
+---
+
+## D-31 — Food's zone sheet is proved to publish the release month, arithmetically
+
+**Decision.** The `Zone All item` sheet is assigned the release month, and this is asserted as a hard
+check rather than assumed:
+
+```
+national  =  sum(zone_average x states_in_zone) / 37
+weights: North Central 7, North East 6, North West 7, South East 5, South South 6, South West 6
+```
+
+must hold within a relative tolerance of **1e-9** for **713 of 714** item-releases.
+
+**Evidence.** The zone sheet carries no period label of any kind — no month in its name, no header, no
+cell. Run against the main sheet's current-month column the identity matches **713 of 714**
+item-releases; run against the prior-month column it matches **0 of 714**. The relationship is not a
+coincidence of this corpus: NBS states it on the methodology page of every report — *"The average of
+all these prices is reported for each state and the total average for the states is the average for
+the country."* It is corroborated a third way by the four cross-release revisions, whose deltas are
+exact multiples of 1/37 (+₦4,860, −₦990, −₦10, −₦10 in a single state).
+
+**Rejected alternative.** Assuming the zone sheet describes the release month because it ships in the
+release. That is probably true, but it is an assumption, and this dataset has already shown that the
+obvious label can be wrong (D-30). The arithmetic turns the assumption into a test that would fail if
+NBS ever shipped a stale zone sheet.
+
+**Consequence.** Food gains the cross-table hard check that Transport has (D-29), through a different
+mechanism. It also corrected a general rule: see D-37.
+
+---
+
+## D-32 — The March 2025 crate-of-eggs national average is preserved, not recalculated
+
+**Decision.** `selected_food_table_Mar_25.xlsx` sheet `Selected Food Dec 2024` cell **D3 =
+7670.559190085271** is written out byte-exact and flagged `NATIONAL_ABOVE_ALL_ZONES`. It is the single
+documented exception to the D-31 identity. Every row that carries the value — three of them — is
+flagged.
+
+**Evidence.** Every zone average on that row is lower (5808.93 – 6985.22); the identity implies
+6211.10, so the published figure is 19.03 % above it. An average over states cannot exceed every
+regional average of those same states. The series around it reads 5878.14 → 5976.12 → **7670.56** →
+6150.18: a one-month spike and revert. NBS never corrected it — the value is restated identically in
+`selected_food_table_Apr25.xlsx` C3 and `selected food table Mar26.xlsx` B3, and both the March MoM
+(+28.35 %) and the April MoM (−19.82 %) consume it.
+
+**Rejected alternative.** Substituting the implied 6211.10, or nulling the cell. Either would publish a
+number NBS never published and would break the audit trail from the clean row back to the cell. The
+defect is in the source; the clean layer's job is to make it visible, not to hide or to fix it.
+
+**Consequence.** Any analysis of egg prices must decide for itself what to do with March 2025. The flag
+makes that decision possible instead of invisible.
+
+---
+
+## D-33 — The four July 2025 zone/callout conflicts are published unresolved
+
+**Decision.** In `selected_food_table_July-25.xlsx`, four items have a zone average above the published
+state maximum. Both the zone value and the callout are written out unchanged; every offending zone
+cell is flagged `ZONE_ABOVE_STATE_MAXIMUM`. The exception set is counted at item-release grain — 710 of
+714 pass — and flagged at zone-cell grain, where those four items put **six** zone averages outside the
+bracket.
+
+| Item | Zone(s) outside | `Lowest` | `Highest` |
+|---|---|---|---|
+| Agric hen eggs, crate | South East | Gombe (4900) | Ogun (6816.2) |
+| Cray fish small white | South West | Bayelsa (7444.27) | Ekiti (11847.17) |
+| Three Crown Milk 160g | South East, South South, South West | Jigawa (799.99) | Rivers (939.26) |
+| Yam Tuber | South South | Bauchi (1650) | Rivers (3073.95) |
+
+**Evidence.** These are the only four such item-releases in 714. In three of the four, the offending
+zone contains the very state named as the national maximum, so the zone average exceeds its own member
+state's price. The D-31 identity holds 42/42 in that release, so the zone and national columns agree
+with each other; each offending zone value is also a one-month spike that reverts in August. Against
+that, July 2025 has **43 of 84 callout strings byte-identical to June's**, by far the highest of the 16
+consecutive pairs (the others run 1–21) — though the offending cells are mostly not among them, so the
+carry-over is a separate observation, not the explanation.
+
+**Rejected alternative.** Deciding that the callouts are wrong because the identity holds. The identity
+would hold even if both the national and the zone figures came from the same faulty pivot, so it cannot
+adjudicate between them. **We do not know which published component is wrong, and the clean layer does
+not pretend to.**
+
+**Consequence.** A fifth item-release, or a seventh zone cell, fails the run and forces inspection.
+
+---
+
+## D-34 — An unexplained blank is `NOT_REPORTED`, never `NOT_APPLICABLE`
+
+**Decision.** Food's 195 blank national prices carry `value_status = 'NOT_REPORTED'`. `NOT_APPLICABLE`
+is reserved for blanks an official source explicitly explains, and is not used in this dataset.
+
+**Evidence.** Exactly 15 items carry a blank year-ago average in each of the 12 releases 2025-01 …
+2025-12, and the same 15 carry a blank prior-month average in 2025-01 only — 180 + 15 = 195. From
+2026-01 the year-ago column is complete for all 42 items. The pattern is entirely consistent with those
+15 items entering the basket in January 2025, and the October 2025 report does mention a rebased
+basket — but no NBS source states that these particular cells could not exist.
+
+**Rejected alternative.** `NOT_APPLICABLE`, inferred from the regularity of the pattern. That labels the
+world, not the sheet: it asserts the value *could not* exist, which is a stronger claim than the
+evidence supports. A very regular pattern is still a pattern, not a statement.
+
+**Consequence.** This corrected an approved validation check that read *"exactly 15 items per month
+carry a NULL year-ago average"*. Written that way it fails on all five 2026 releases. Absence counts
+are now asserted **per release**, never per month.
+
+---
+
+## D-35 — Food callout ties are not implemented, because Food has none
+
+**Decision.** `food_price_extreme_callout` parses only the verified `State (number)` structure. A slash,
+a comma before the bracket, or any second state is a **hard failure that stops the run**. It is never
+split. `is_shared_extreme` stays in the schema for consistency with `cooking_gas_extreme_callout` and
+is `FALSE` on every food row, asserted by a check.
+
+**Evidence.** All **1,428** food callout cells match `State (number)` exactly. Zero contain a slash;
+zero name more than one state; zero are blank or malformed. The tie machinery the approved design
+carried over from LPG has nothing to act on.
+
+**Rejected alternative.** Implementing splitting anyway, for symmetry with LPG. Untested code between
+the source and the output is a liability, and a future slash would be silently interpreted by logic no
+release has ever exercised. Failing loudly puts a human in front of the first one.
+
+**Consequence.** The §0.2 slash-splitting rule is now scoped to `cooking_gas_extreme_callout` alone.
+
+---
+
+## D-36 — Food items resolve through a reference table, and units are never inferred
+
+**Decision.** `data/reference/ref_food_item.csv` assigns each of the 42 items a stable `item_code`, a
+canonical `item_label` taken from the main sheet, its observed raw aliases, and a `unit` /
+`unit_source` / `unit_evidence` triple. A label that does not resolve stops the run. `item_label_raw`
+preserves whatever each sheet printed.
+
+**A unit is recorded only when the spreadsheet label states it, or an official NBS report PDF states it
+for that exact item.** Where neither does, `unit` is NULL. 23 of 42 items have a unit — 11 from the
+label, 12 from a report PDF; **19 are NULL**.
+
+**Evidence.** Two raw variants need reconciling: `Agric hen eggs` without its comma in the January 2025
+main sheet, and `Smoked fish` on the zone sheet against `Smoked fish (Mackerel)` on the main sheet in
+all 17 releases. For units, each PDF claim was tied to its item by matching the naira figure the
+sentence quotes against that release's published cell — for example *"Ginger Fresh (1kg) stood at
+₦5,906.82"* against D18 of the May 2026 workbook.
+
+That anchoring is not ceremony. The January 2025 report says *"the average price of 1kg of small white
+crayfish was ₦6,202.36"*, but ₦6,202.36 is the published figure for **Goat Meat Bone in**; crayfish that
+month is ₦6,227.04. The sentence is wrong, so it was discarded for both items, and crayfish took its
+unit from two other releases instead. Goat meat has no unit anywhere and is left NULL.
+
+**Rejected alternative.** Filling the 19 gaps with "1 kg" because most loose commodities are priced that
+way and the surrounding prices look consistent with it. That is exactly the inference the rule forbids —
+plausible, unsourced, and indistinguishable in the output from a sourced fact.
+
+**Consequence.** A consumer of this data can tell which units are documented and which are simply
+unknown, which is not true of a table where every row is confidently filled.
+
+---
+
+## D-37 — Aggregation relationships are established per dataset, never assumed globally
+
+**Decision.** `cleaning_rulebook.md` §0.3 no longer says that a published national figure is expected to
+differ from an unweighted mean of states, nor that an exact match is suspicious. The rule is now: the
+relationship is **established from the dataset's own structure and official methodology, then validated
+dataset by dataset**. Where established it becomes a hard check with a documented tolerance and
+exception set; where not established, nothing is asserted.
+
+**Evidence.** The old rule was falsified by this project's own committed data. Testing every state-level
+table built so far:
+
+| Table | National vs unweighted mean of the 37 states |
+|---|---|
+| `petrol_price_monthly` | 51 / 51 exact |
+| `diesel_price_monthly` | 51 / 51 exact |
+| `transport_fare_state_monthly` | 85 / 85 exact |
+| `food_price_national_monthly` | 713 / 714 within 1e-9, via the zone weights (D-31) |
+
+NBS says so in its own methodology: *"the total average for the states is the average for the country."*
+
+**Rejected alternative.** Leaving the rule and treating Food as a special case. The rule was stated
+generally, so it would have kept misfiring — it turns the single strongest check available in four
+datasets into a reason for suspicion.
+
+**Consequence.** No already-processed petrol, diesel or transport output changes: the rule text was
+wrong, the data was not. Discovered during Food inspection and corrected before the Food cleaner was
+written.
+
+---
+
 ## Open items carried into Phase 6
 
 1. **`xlrd` is not installed**, so `CPI_Report_March_2026.zip` (legacy `.xls`) could not be read during
@@ -760,9 +978,10 @@ mix-up in either sheet.
    state-level extremes are ever wanted across fuels, the three would need reconciling.
 12. **Seven 2025 months would lose Kebbi entirely from 12.5 kg without the §4a correction** — the
    state is absent from both the main table and the callouts in 2025-06 … 2025-12.
-13. **Transport is the only dataset whose two tables reconcile against each other** (D-29). No
-   equivalent cross-check exists for food or CPI; worth considering whether one can be constructed
-   when those are cleaned.
+13. ~~**Transport is the only dataset whose two tables reconcile against each other** (D-29).~~
+   **PARTLY DONE.** Food now has one too, by a different mechanism: its national column reconciles
+   against its zone sheet through the state-count weights (D-31), 713 of 714 item-releases within
+   1e-9. CPI still has no cross-table check; worth considering when it is cleaned.
 14. **`NASSARAWA` has now been observed in CPI, diesel, petrol and transport.** The alias was
    harvested from the raw files rather than authored, which is why each new appearance resolves
    without a code change.
@@ -773,3 +992,24 @@ mix-up in either sheet.
    harness and let individual cases reuse that verified result, except where a case deliberately
    targets raw-integrity logic and must re-run it. Noted during Transport; **not implemented in that
    commit** so the change is reviewed on its own rather than mixed into a dataset delivery.
+   **Update (Food).** The Food fault-injection harness now does exactly this — it memoises
+   `sha256_file` for the duration of the run and verifies the corpus once before the first case and
+   once after the last, which is what makes a 40-case suite practical. The change lives in the
+   scratch harness only; **the pipeline is untouched** and the shared-harness refactor is still open.
+
+16. **Nineteen of the 42 food items have no documented unit** (D-36) — including `Beans white`,
+   `Garri Yellow`, `Goat Meat Bone in`, both plantains, `Local Rice (Broken)`, `Sweet potatoes` and
+   every fish except crayfish. Neither the spreadsheet label nor any of the 15 report PDFs states one.
+   They are NULL and must stay NULL until an official source is found; a future NBS methodology annex
+   or basket definition would be the place to look.
+
+17. **The July 2025 food conflict is unresolved, not closed** (D-33). Four item-releases publish a
+   zone average above the published state maximum, and nothing in the corpus establishes which side is
+   wrong. If NBS ever republishes July 2025, or if a state-level food source appears, it should be
+   re-examined rather than left flagged forever.
+
+18. **Two food items are near-duplicates that may or may not be the same product.**
+   `Local Rice (Broken)` and `Rice Local, short-Grained` both exist in the basket, and the report
+   prose says only "Rice local (1kg)" / "locally produced rice (1kg)". Price anchoring resolved every
+   such sentence to `Rice Local, short-Grained`, so that item carries the unit and the other does not.
+   Whether the two are genuinely distinct products is a question for NBS, not for the cleaner.

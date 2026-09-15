@@ -107,9 +107,11 @@ state fails to join across datasets.
 5. `UNCLASSIFIED` rows are a hard failure. The run stops and the value is added to the reference
    table deliberately, or excluded deliberately. Silent dropping is not permitted.
 
-**Splitting combined labels is NOT a general rule.** It applies only to the extreme-callout fields
-(`food_price_extreme_callout`, `cooking_gas_extreme_callout`), where NBS genuinely uses `Kebbi/Nasarawa`
-to record a tie. It is never applied to a main geography column.
+**Splitting combined labels is NOT a general rule.** It applies only to
+`cooking_gas_extreme_callout`, where NBS genuinely uses `Kebbi/Nasarawa` to record a tie. It is never
+applied to a main geography column, and it is **not implemented for Food**: all 1,428 food callout
+cells name exactly one state, so a food slash is a hard failure requiring inspection, not a tie
+(D-35, §1b).
 
 The restricted rule, in the callout fields only:
 
@@ -141,8 +143,9 @@ with the states. The query succeeds and the answer is wrong.
 **CLEANING RULE** — Aggregates are **kept, not deleted**, and marked:
 `is_aggregate = TRUE` together with `geography_type IN ('ZONE','NATIONAL')`.
 All state-level analysis filters on `geography_type = 'STATE'`. The published national figure remains
-available as the authoritative national value — which is better than recomputing it, because NBS
-weights its national average rather than taking a plain mean of states.
+available as the authoritative national value, and is always preferred to a recomputed one: it is
+what NBS published, and recomputing would silently discard any revision, rounding or defect the
+publication carries.
 
 **EXPECTED CLEAN OUTPUT** — One row per aggregate, clearly typed, never deleted.
 
@@ -159,9 +162,40 @@ wrong for them:
 | `food_price_zone_monthly` | **none** — this table is zone-only; the national series is a separate table |
 | `food_price_national_monthly` | every row is national, by design; the check does not apply |
 
-Separately, the published national value is compared with the unweighted mean of that month's state
-values at the same grain. They are expected to **differ**, because NBS weights its national average.
-A suspiciously exact match is investigated as a possible mis-classification.
+#### The aggregation relationship is established per dataset, never assumed (D-31)
+
+**RULE.** An aggregation relationship between a national figure and the geographies beneath it is
+**established from that dataset's own structure and official methodology, then validated dataset by
+dataset**. Do not assume globally that a national figure must equal an unweighted mean of states,
+and do not assume globally that it must differ from one. Either assumption turns a valid check into
+a false alarm somewhere in this project.
+
+Where a relationship *is* established, it becomes a hard check with a documented tolerance and a
+documented exception set. Where none is established, no check is asserted at all.
+
+What has actually been established here:
+
+| Dataset | Established relationship | Verified |
+|---|---|---|
+| `petrol_price_monthly` | national = unweighted mean of the 37 state values | 51 / 51 exact |
+| `diesel_price_monthly` | national = unweighted mean of the 37 state values | 51 / 51 exact |
+| `transport_fare_state_monthly` | national = unweighted mean of the 37 state values | 85 / 85 exact |
+| `food_price_national_monthly` | national = Σ(zone average × states in zone) ÷ 37 | 713 / 714 within 1e-9 |
+
+Food has no state column, so its relationship is expressed through the zone table using the state
+count of each zone as the weight — North Central 7, North East 6, North West 7, South East 5,
+South South 6, South West 6, summing to 37. This is arithmetically the same statement as an
+unweighted mean of 37 state averages, and it is exactly what the NBS methodology page describes:
+*"The average of all these prices is reported for each state and the total average for the states is
+the average for the country."*
+
+An exact match is therefore the **expected** result for these four tables, not a red flag. The sole
+documented exception is the March 2025 crate-of-eggs national average, which is published above
+every one of its own zone averages; it is preserved unchanged and flagged, never recalculated
+(D-32).
+
+Already-processed petrol, diesel and transport outputs are **not** modified by this correction — the
+rule text was wrong, the data was not.
 
 ### 0.4 Wide to long
 
@@ -256,20 +290,43 @@ blank turnover is an absent one; treating them alike corrupts both.
 
 | Source state | Clean representation |
 |---|---|
-| empty cell | `NULL`, with `value_status = 'MISSING'` |
 | literal `0` published | `0`, with `value_status = 'OK'` |
-| value cannot exist (e.g. year-ago figure for a newly added item) | `NULL`, `value_status = 'NOT_APPLICABLE'` |
+| empty cell, reason unknown | `NULL`, `value_status = 'NOT_REPORTED'` |
+| empty cell, in a dataset already published with the older spelling | `NULL`, `value_status = 'MISSING'` |
+| empty cell, and an official source states the value could not exist | `NULL`, `value_status = 'NOT_APPLICABLE'` |
 | `#REF!` or other Excel error | `NULL`, `value_status = 'SOURCE_ERROR_REF'` |
 
 **No blank is ever filled.** Not by zero, not by interpolation, not by carrying a value forward.
 
+`MISSING` and `NOT_REPORTED` make the same claim — the cell is empty and we do not know why.
+**`NOT_REPORTED` is the spelling for new datasets**; `MISSING` is retained only where it is already
+committed (CBN turnover), because this correction changes rule text, not processed data.
+
+**`NOT_APPLICABLE` is a claim about the world, not about the sheet, and may only be used when an
+official NBS source explicitly says the value could not exist** (D-34). An observed pattern — even a
+completely regular one — is not such a source. It is used in no dataset currently built.
+
 **EXPECTED CLEAN OUTPUT** — Every measure column is paired with a status, so absence is queryable.
 
-**VALIDATION CHECK** — In food, exactly 15 items per month carry a NULL year-ago average and a NULL
-YoY — matching the profiled count. In CBN, exactly **298** in-window rows carry `nfem_deal_count = 0`
-with status `OK`, and **300** carry NULL turnover with status `MISSING` (2026-09-13 snapshot; both are
-regression expectations, and the rule they guard is that the two absences never convert into each
-other).
+**VALIDATION CHECK** — Absence counts are asserted **per release**, never as "N per month", because
+a basket that changes makes the count release-dependent.
+
+Food — verified across all 17 releases:
+
+| Period column | Releases affected | Items | NULLs |
+|---|---|---|---|
+| Year-ago | 2025-01 … 2025-12 (12 releases) | 15 | 180 |
+| Prior month | 2025-01 only | the same 15 | 15 |
+| Current month | none | 0 | 0 |
+| **Total NULL national prices** | | | **195** |
+
+From the 2026-01 release onward the year-ago column is **complete for all 42 items**, because the
+15 items entered the basket in January 2025 and a 2026 release looks back only as far as 2025. The
+zone and callout tables contain no NULLs at all. All 195 carry `value_status = 'NOT_REPORTED'`.
+
+CBN — exactly **298** in-window rows carry `nfem_deal_count = 0` with status `OK`, and **300** carry
+NULL turnover with status `MISSING` (2026-09-13 snapshot; both are regression expectations, and the
+rule they guard is that the two absences never convert into each other).
 
 ### 0.7 Numeric casting
 
@@ -319,12 +376,14 @@ make the tie unrepresentable or force a fake cell reference on the second row.
    `source_column_index` and `source_row` are non-null on every row, and the reference is well-formed
    A1 notation consistent with the recorded row and column.
 
-2. **One-to-one by default.** In every table **except** `food_price_extreme_callout` and
-   `cooking_gas_extreme_callout`, `(source_file, source_member, source_sheet, source_cell_reference)`
-   is **unique**. Two rows claiming one cell in a price table is a parser bug.
+2. **One-to-one by default.** In every table **except** `cooking_gas_extreme_callout`,
+   `(source_file, source_member, source_sheet, source_cell_reference)` is **unique**. Two rows
+   claiming one cell in a price table is a parser bug. `food_price_extreme_callout` has the same
+   shape as the cooking-gas table but no shared cell in the corpus — all 1,428 food callout cells
+   name exactly one state — so in practice it is one-to-one too, and a check asserts it (D-35).
 
-3. **Controlled expansion in the two callout tables.** Rows may share a source cell, but only under
-   all of these conditions:
+3. **Controlled expansion in the cooking-gas callout table.** Rows may share a source cell, but only
+   under all of these conditions:
    - every row in the group has `is_shared_extreme = TRUE`;
    - they share an identical `price_ngn` and an identical `raw_callout_text`;
    - their `state` values are **distinct** and each resolves through `ref_state_zone`;
@@ -344,12 +403,33 @@ make the tie unrepresentable or force a fake cell reference on the second row.
 
 **RAW PROBLEM** — The spreadsheets publish national and six-zone figures only. There is **no state
 column**. State names appear only inside `Highest` / `Lowest` cells as packed text such as
-`Oyo (1941.78)`. Verified across the May 2025, Nov 2025, Jan 2026 and May 2026 report PDFs: every
-contents page lists *National* then the six zones, with no state section.
+`Oyo (1941.78)`. Verified again across all 17 releases and 15 report PDFs: every contents page lists
+*National* then the six zones, and the PDF appendix is the same two spreadsheet tables rounded to
+2 dp — it carries no extra geography.
 
-Two files carry a stale worksheet name (`selected_food_table_Apr25.xlsx` and
-`selected_food_table_Mar_25.xlsx` both name their sheet `Selected Food Dec 2024`). February 2025
-renames the first column to `Item Labels` (plural).
+Every release is two sheets and nothing else: a main sheet named `Selected Food <month> <year>` and a
+zone sheet named `Zone All item`. Both are exactly **43 rows by 8 / 7 columns of content** — one
+header row and 42 items — in all 17 releases, while the *reported* extents run to 50–51 rows and up
+to 12 columns of empty formatting.
+
+| Column | Main sheet | Zone sheet |
+|---|---|---|
+| 1 | `Item Label` (or `Item Labels`) | `Item Label` |
+| 2 | `Average of <year-ago>` | `NORTH CENTRAL` |
+| 3 | `Average of <prior month>` | `NORTH EAST` |
+| 4 | `Average of <current month>` | `NORTH WEST` |
+| 5 | `MoM` — derived, excluded | `SOUTH EAST` |
+| 6 | `YoY` — derived, excluded | `SOUTH SOUTH` |
+| 7 | `Highest` — packed `State (number)` | `SOUTH WEST` |
+| 8 | `Lowest` — packed `State (number)` | — |
+
+Columns 5 and 6 are **literal Excel formulas**, `=(D2-C2)/C2*100` and `=(D2-B2)/B2*100` — 1,233 such
+cells across the corpus, all on the main sheet, none on any zone sheet. That is why they can be
+excluded as derived rather than merely assumed to be.
+
+Known label defects: `selected_food_table_Mar_25.xlsx` and `selected_food_table_Apr25.xlsx` both name
+their main sheet `Selected Food Dec 2024`; `selected_food_table_Feb_25.xlsx` renames the first column
+to `Item Labels` and prints `Average of feb-24` in lower case.
 
 **WHY IT MATTERS** — The project question is about states. Food cannot answer it at state level, and
 pretending otherwise would be fabrication. This is a **source limitation, not a cleaning problem**,
@@ -358,34 +438,99 @@ and no amount of PDF extraction changes it.
 **CLEANING RULE**
 
 1. Produce three tables and no others:
-   - `food_price_national_monthly` — item × month, from the three period columns of the monthly sheet
+   - `food_price_national_monthly` — item × observation month × release, from the three period columns
    - `food_price_zone_monthly` — item × zone × month, from `Zone All item`
    - `food_price_extreme_callout` — item × month × HIGHEST/LOWEST, parsed from the packed text
-2. Accept `Item Label` and `Item Labels` as the same field.
-3. Ignore the worksheet **name** entirely when deriving periods. Derive the period from the column
-   headers, which profiling confirmed are correct even in the two stale-named files.
-4. Parse callout cells with a strict pattern: text before `(`, number inside `(...)`. Keep the
-   original in `raw_callout_text`. Split `/` into multiple rows.
-5. **Do not build, infer, interpolate or reconstruct a complete state-level food price table.**
+2. **Find the sheets by content, never by name** (D-30). The main sheet is the one whose header row
+   carries `Average of <month>-<yy>`; the zone sheet is the one whose header carries `NORTH CENTRAL`.
+   Accept `Item Label` and `Item Labels` as the same anchor and keep the published text in
+   `header_label_raw`.
+3. **Ignore the worksheet name when deriving the period.** Require three agreeing signals — the
+   current-month header, the prior-month header plus one month, and the year-ago header plus twelve —
+   with the file name as a fourth. Any disagreement stops the run. The sheet name is recorded as
+   evidence and drives nothing; it is wrong in 2 of 17 releases.
+4. **Take periods by column position**, 2 / 3 / 4, and keep each published header verbatim in
+   `source_period_label`.
+5. **Size both tables from content.** Never read `max_row` or `max_column`. Assert that nothing exists
+   below row 43 or right of column 8.
+6. Resolve every item label through `ref_food_item.csv` (D-36). An unresolved label is a hard failure.
+   `item_label_raw` always preserves what that sheet printed.
+7. **The zone sheet publishes the release month** (D-31), established arithmetically rather than from
+   a label: the national column D equals the state-count-weighted mean of the six zone averages in
+   713 of 714 item-releases, and the prior-month column C matches in none.
+8. Parse callout cells with one strict pattern: `State (number)`. Keep the original in
+   `raw_callout_text`. **Do not implement slash splitting** (D-35) — see below.
+9. **Do not build, infer, interpolate or reconstruct a complete state-level food price table.**
+10. **Correct nothing that NBS published.** Two verified defects are written out unchanged and
+    flagged (D-32, D-33).
 
-**EXPECTED CLEAN OUTPUT** — National and zone series that are complete, plus a callout table that is
-explicitly labelled as extremes, never as state coverage.
+**EXPECTED CLEAN OUTPUT** — 2,142 national rows, 4,284 zone rows, 1,428 callout rows.
 
-**VALIDATION CHECK** — Ties mean an item-month can legitimately produce **more than two rows**, so the
-check is on categories and internal consistency, not on a row count:
+| Table | Arithmetic | Rows | Primary key |
+|---|---|---|---|
+| `food_price_national_monthly` | 17 × 42 × 3 periods | 2,142 | `release_month, observation_month, item_code` |
+| `food_price_zone_monthly` | 17 × 42 × 6 zones | 4,284 | `observation_month, item_code, zone` |
+| `food_price_extreme_callout` | 17 × 42 × 2 extremes | 1,428 | `observation_month, item_code, extreme_type, state` |
 
-- `extreme_type` for any (`observation_month`, `item_label`) is a subset of `{HIGHEST, LOWEST}` —
-  no third category may ever appear.
-- Each item-month has **at most one HIGHEST group and at most one LOWEST group**.
-- Within a group, one row is normal. More than one row is permitted **only** when every row in that
-  group has `is_shared_extreme = TRUE`, shares an identical `price_ngn`, and shares an identical
-  `raw_callout_text` — i.e. they all came from one tied source cell.
-- More than one row in a group with differing prices, or with `is_shared_extreme = FALSE`, is a
-  parsing fault and fails.
-- Every `state` resolves through `ref_state_zone`.
+### 1a. The two published defects — preserved, never corrected
 
-A separate test asserts that no query joins this table as though it were full state coverage. The zone
-table has exactly six zones per item-month.
+**March 2025, crate of eggs (D-32).** `selected_food_table_Mar_25.xlsx` sheet `Selected Food Dec 2024`
+cell **D3 = 7670.559190085271**, while every zone average on the same row is lower (5808.93 – 6985.22)
+and the weighted identity implies 6211.10 — the published value is 19.03 % above it, and is the single
+exception to that identity. NBS never corrected it: it is restated byte-identically as
+`selected_food_table_Apr25.xlsx` C3 and `selected food table Mar26.xlsx` B3, and both MoM figures
+consume it. All three rows are written out unchanged and flagged `NATIONAL_ABOVE_ALL_ZONES`.
+
+**July 2025, four items (D-33).** In `selected_food_table_July-25.xlsx` four items have a zone average
+above the published state maximum, which cannot be true of an average over states. They are the only
+such cases in 714 item-releases. The zone/national identity holds 42/42 in that release, so the two
+sides of the workbook agree with each other and the callouts are the third party that disagrees —
+**but we cannot establish which published component is wrong, so neither is altered**:
+
+| Item | Zone(s) outside the bracket | Published `Lowest` | Published `Highest` |
+|---|---|---|---|
+| `Agric hen eggs, (a Crate of 30 pieces)` | South East | `Gombe (4900)` | `Ogun (6816.2)` |
+| `Cray fish small white` | South West | `Bayelsa (7444.27)` | `Ekiti (11847.17)` |
+| `Tin Milk-Evaporated, Three Crown Milk, 160g` | South East, South South, South West | `Jigawa (799.99)` | `Rivers (939.26)` |
+| `Yam Tuber` | South South | `Bauchi (1650)` | `Rivers (3073.95)` |
+
+The exception set is counted at **item-release** grain — 710 of 714 pass — and flagged at the finer
+**zone-cell** grain, where those four items put six individual zone averages outside the bracket.
+Every flagged cell carries `ZONE_ABOVE_STATE_MAXIMUM`. Any fifth item-release, or any seventh zone
+cell, fails the run.
+
+### 1b. Callout ties are not implemented, because Food has none (D-35)
+
+Across all **1,428** callout cells in the corpus there is not one slash, not one tie, and not one
+cell naming more than a single state. A splitting rule for Food would therefore be untested code
+standing between the source and the output.
+
+**RULE** — parse only the verified `State (number)` structure. A slash, a comma before the bracket, or
+any second state is a **hard failure that stops the run for inspection**; it is never silently
+interpreted. `is_shared_extreme` is retained in the schema for consistency with
+`cooking_gas_extreme_callout` and is `FALSE` on every Food row — a check asserts this.
+
+The slash-splitting rule in §0.2 therefore applies to `cooking_gas_extreme_callout` only.
+
+**VALIDATION CHECK** — the checks that carry the weight:
+
+- `extreme_type` for any (`observation_month`, `item_code`) is exactly `{HIGHEST, LOWEST}`, one row
+  each — no third category, no repetition, no absence.
+- Every `state` resolves through `ref_state_zone`; all 37 appear at least once.
+- **Weighted reconciliation (hard).** `national = Σ(zone × states_in_zone) / 37` within a relative
+  tolerance of `1e-9`, for 713 of 714 item-releases, with March 2025 crate-of-eggs as the single
+  documented exception.
+- **`Lowest ≤ national ≤ Highest` (hard).** 714 of 714 item-releases.
+- **Every zone average inside `[Lowest, Highest]` (hard).** 710 of 714 item-releases, with the four
+  documented July 2025 cases as the only permitted exceptions.
+- **Cross-release restatement.** Prior-month column: 672 compared, 668 byte-identical, 0
+  precision-only, **4 substantive revisions**. Year-ago column: 210 compared, 209 byte-identical, 1
+  precision-only, 0 substantive. Substantive revisions are never collapsed — both publications are
+  kept and told apart by `release_month`. Every one of the four deltas is an exact multiple of 1/37,
+  i.e. one state restated by a round naira amount, which is itself corroboration of the aggregation
+  rule above.
+- A separate test asserts that no query joins the callout table as though it were full state
+  coverage. The zone table has exactly six zones per item-month.
 
 ---
 
@@ -464,7 +609,7 @@ Trusting the filename files January 2026 data under January 2025.
   the structure is documented here and left unextracted.
   The February 2025 lowest-price block contains the tied label **`Ekiti/Oyo`**. It stays in the
   callout area and is never resolved: `Ekiti/Oyo` is **not** added to `ref_state_zone`, and the
-  slash-splitting rule in §0.2 remains restricted to the food and cooking-gas callout fields. A slash
+  slash-splitting rule in §0.2 remains restricted to the cooking-gas callout fields. A slash
   in a main petrol geography column still raises.
 - **July 2025 `MAX` / `MIN`.** `Fuel_Report_July_2025.xlsx` carries `MAX` (I2/J2) and `MIN` (I5/J5)
   computed across the six zone averages — the only petrol cells beyond column G in any release. They
@@ -558,7 +703,7 @@ naira.
   states and prices are already in the main column. They carry the tied labels **`Adamawa/Plateau`**
   and **`Kogi/Zamfara`** - diesel's equivalent of petrol's `Ekiti/Oyo`. Neither is a canonical
   geography, neither is added to `ref_state_zone`, and neither is ever split (§0.2's slash rule stays
-  restricted to the food and cooking-gas callout fields).
+  restricted to the cooking-gas callout fields).
 - **July 2025 stray `MAX` / `MIN`.** `Diesel_Report_July_2025.xlsx` carries two unlabelled values at
   **K1 and L1** - `1941.9754403195839` and `1619.0598316666667`, the South South maximum and South
   West minimum of that month's zone averages. The only diesel content past column I in any release.
@@ -1064,8 +1209,13 @@ clean row records what was done.
 | **Period header dated the 25th, not the 14th** \| `AGO_REPORT_NOV_2025.zip` -> `DIESEL_NOV_2025.xlsx`, middle period `2025-10-25` \| Truncated to month start -> `2025-10-01`, which is correct. Published date kept verbatim in `source_period_label`. `source_anomaly = 'PERIOD_HEADER_DAY_NOT_14'`. No global date rewriting (D-24). |
 | `MAX` / `MIN` cells at K1/L1 \| `Diesel_Report_July_2025.xlsx` \| Derived statistics over the zone averages. Excluded from `diesel_price_monthly`; raw cells untouched. |
 | Tied callout labels `Adamawa/Plateau`, `Kogi/Zamfara` \| diesel highest/lowest callout blocks \| Stay in the callout area. Never added to `ref_state_zone`, never split, never a geography value. |
-| Stale worksheet name `Selected Food Dec 2024` | `selected_food_table_Apr25.xlsx`, `selected_food_table_Mar_25.xlsx` | Sheet name ignored; period from column headers. `source_anomaly = 'STALE_SHEET_NAME'` |
-| Column renamed `Item Labels` | `selected_food_table_Feb_25.xlsx` | Accepted as an alias of `Item Label` |
+| Stale worksheet name `Selected Food Dec 2024` | `selected_food_table_Apr25.xlsx`, `selected_food_table_Mar_25.xlsx` | Sheet name ignored; month from three agreeing period headers (D-30). `source_anomaly = 'STALE_SHEET_NAME'` |
+| Column renamed `Item Labels`, month in lower case (`Average of feb-24`) | `selected_food_table_Feb_25.xlsx` | Accepted as an alias of `Item Label`; headers parsed case-insensitively. `source_anomaly = 'HEADER_ITEM_LABELS_PLURAL'`; `header_label_raw` keeps the published text |
+| **National crate-of-eggs average above every one of its own zone averages** | `selected_food_table_Mar_25.xlsx`, sheet `Selected Food Dec 2024`, cell **D3 = 7670.559190085271** | Preserved byte-exact, never recalculated (D-32). The weighted identity implies 6211.10 (+19.03 %). Restated identically in `selected_food_table_Apr25.xlsx` C3 and `selected food table Mar26.xlsx` B3; all three rows flagged `NATIONAL_ABOVE_ALL_ZONES` |
+| **Zone average above the published state maximum**, 4 items / 6 zone cells | `selected_food_table_July-25.xlsx`, sheet `Selected Food July 2025` | Both the zone value and the callout preserved unchanged; we cannot establish which published component is wrong (D-33). `source_anomaly = 'ZONE_ABOVE_STATE_MAXIMUM'` on each offending zone cell |
+| Item label `Agric hen eggs` without its trailing comma | `Selected_food_table_Jan25.xlsx`, main sheet A2 | Reconciled through `ref_food_item.csv`; `item_label_raw` preserved (D-36) |
+| Zone sheet prints `Smoked fish` where the main sheet prints `Smoked fish (Mackerel)` | zone sheet A33, **all 17 releases** | Same item code via `ref_food_item.csv`; each sheet's own text kept in `item_label_raw` (D-36) |
+| Reported sheet extents of 50–51 rows and up to 12 columns | every food release | Formatting residue only — no content below row 43 or right of column 8. Tables sized from content, never from `max_row` / `max_column` |
 | Legacy `.xls` in a subfolder | `CPI_Report_March_2026.zip` | Requires `xlrd`; if unreadable, recorded MISSING |
 | 69,411 `#REF!` cells | 5 CPI workbooks, mostly `Table1 (2)` | `NULL` + `value_status = 'SOURCE_ERROR_REF'`; working sheets quarantined |
 | OCR text corruption | 39 text-based NERC PDFs | Flagged, dual-pass compared, human-validated |

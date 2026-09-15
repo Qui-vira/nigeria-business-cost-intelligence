@@ -172,8 +172,9 @@ Designed in `docs/data_design/cleaning_rulebook.md` and enforced when the pipeli
 
 - **Raw files are never edited.** Source errors are corrected downstream and documented; the raw file
   keeps the error.
-- **Blanks are never automatically converted to zero.** Four distinct states are represented:
-  `OK`, `MISSING`, `NOT_APPLICABLE`, `SOURCE_ERROR_REF`.
+- **Blanks are never automatically converted to zero.** Five distinct states are represented:
+  `OK`, `MISSING`, `NOT_REPORTED`, `NOT_APPLICABLE`, `SOURCE_ERROR_REF`. `NOT_APPLICABLE` claims a
+  value could not exist and requires an official source; an unexplained blank is `NOT_REPORTED`.
 - **National and zone aggregates are explicitly flagged**, never silently averaged in with states.
 - **Source errors are corrected only downstream, with provenance** — the wrong label is preserved
   alongside the corrected value.

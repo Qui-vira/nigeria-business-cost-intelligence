@@ -44,8 +44,10 @@ however, produce **several** clean rows where the expansion is deliberate and do
 The documented exception is a **tied state callout**. `Kebbi/Nasarawa (6500)` is a single Excel cell;
 cleaning emits one row for Kebbi and one for Nasarawa, and both correctly cite that same cell. So
 `(source_file, source_member, source_sheet, source_cell_reference)` is unique in every table **except**
-`food_price_extreme_callout` and `cooking_gas_extreme_callout`, where rows sharing a cell must all
-carry `is_shared_extreme = TRUE`, an identical price and raw text, and distinct states.
+`cooking_gas_extreme_callout`, where rows sharing a cell must all carry `is_shared_extreme = TRUE`, an
+identical price and raw text, and distinct states. `food_price_extreme_callout` has the same shape but
+no such row in the corpus: all 1,428 food callout cells name exactly one state, so that table is
+one-row-per-cell too (D-35).
 
 ---
 
@@ -72,7 +74,7 @@ for provenance but is not needed for uniqueness:
 
 | Table | Why |
 |---|---|
-| `food_price_zone_monthly` | `Zone All item` carries the current month only |
+| `food_price_zone_monthly` | `Zone All item` carries the current month only — established by the weighted reconciliation (D-31), not by a label, because the sheet has none |
 | `food_price_extreme_callout` | Highest/Lowest describe the current month only |
 | `transport_fare_state_monthly` | `State Transport` carries the current month only |
 | `cooking_gas_extreme_callout` | Extremes blocks describe the current month only |
@@ -167,56 +169,79 @@ matches two modes · no prefix is a prefix of another.
 
 ## 1. Food
 
+Built by `src/cleaning/clean_nbs_food.py`. Every item resolves through `data/reference/ref_food_item.csv`,
+which supplies `item_code`, the canonical `item_label`, the known raw aliases, and the `unit` /
+`unit_source` pair. `item_label_raw` on every row preserves the text that sheet actually printed.
+
 ### `food_price_national_monthly`
 
-| observation_month | release_month | item_label | avg_price_ngn | value_status | source_period_label | is_primary_release |
-|---|---|---|---|---|---|---|
-| 2026-05-01 | 2026-05-01 | Beans Brown | 1344.93 **[real]** | OK | Average of May-26 | TRUE |
-| 2026-04-01 | 2026-05-01 | Beans Brown | 1338.93 **[real]** | OK | Average of April-26 | FALSE |
-| 2025-05-01 | 2026-05-01 | Beans Brown | 2385.15 **[real]** | OK | Average of May-25 | FALSE |
-| 2025-05-01 | 2026-05-01 | Agric hen eggs, (a Crate of 30 pieces) | *NULL* | NOT_APPLICABLE | Average of May-25 | FALSE |
+| observation_month | release_month | item_code | item_label | avg_price_ngn | value_status | period_position | source_period_label | is_primary_release | source_anomaly |
+|---|---|---|---|---|---|---|---|---|---|
+| 2026-05-01 | 2026-05-01 | BEANS_BROWN | Beans Brown | 1344.9319046192759 **[real]** | OK | CURRENT_MONTH | Average of May-26 | TRUE | |
+| 2026-04-01 | 2026-05-01 | BEANS_BROWN | Beans Brown | 1338.9328294458949 **[real]** | OK | PRIOR_MONTH | Average of April-26 | FALSE | |
+| 2025-05-01 | 2026-05-01 | BEANS_BROWN | Beans Brown | 2385.151862935156 **[real]** | OK | YEAR_AGO | Average of May-25 | FALSE | |
+| 2025-01-01 | 2025-01-01 | SEMOVITA_1KG | Semovita, Prepacked (1kg) | *NULL* | NOT_REPORTED | YEAR_AGO | Average of Jan-24 | TRUE | |
+| 2025-03-01 | 2025-03-01 | EGG_AGRIC_CRATE30 | Agric hen eggs, (a Crate of 30 pieces) | 7670.559190085271 **[real]** | OK | CURRENT_MONTH | Average of Mar-25 | TRUE | STALE_SHEET_NAME\|NATIONAL_ABOVE_ALL_ZONES |
 
-**Primary key:** `(release_month, observation_month, item_label)`
+**Primary key:** `(release_month, observation_month, item_code)` — 2,142 rows.
 
-All three rows for `Beans Brown` come from the single May 2026 release, which restates May 2025 and
+All three `Beans Brown` rows come from the single May 2026 release, which restates May 2025 and
 April 2026 alongside the current month. `release_month` is therefore required: without it the April
-2026 row from this release collides with the April 2026 row from the April release.
+2026 row from this release collides with the April 2026 row from the April release, and the four
+verified substantive revisions would be silently collapsed.
 
-The last row is one of the 15 items each month with no year-ago figure. Note that `observation_month`
-is **2025-05-01** — the month the value describes — while `release_month` is **2026-05-01**, the report
-it came from. The two are different by design and must never be conflated.
+`observation_month` is the month the value describes; `release_month` is the report it came from. The
+two are different by design and must never be conflated.
+
+**The NULL row is a 2025 row, not a 2026 one.** Exactly 15 items carry a NULL year-ago average in
+each of the 12 releases 2025-01 … 2025-12, and the same 15 carry a NULL prior-month average in the
+2025-01 release only — 195 NULLs in total. **From the 2026-01 release onward the year-ago column is
+complete for all 42 items**, because those items entered the basket in January 2025. Writing this as
+"15 items each month" would be wrong and would fail the five 2026 releases.
+
+The status is `NOT_REPORTED`, not `NOT_APPLICABLE`: the pattern is consistent with a basket change,
+but no official NBS source states that these values could not exist, so the clean layer claims only
+what it can show — the cell is empty (D-34).
 
 A duplicate on this key means the same release published the same item twice for one month — always a
 parsing fault.
 
 ### `food_price_zone_monthly`
 
-| observation_month | release_month | item_label | zone | avg_price_ngn | geography_type |
-|---|---|---|---|---|---|
-| 2025-09-01 | 2025-09-01 | Agric hen eggs, | North Central | 254.71726193263 **[real]** | ZONE |
-| 2025-09-01 | 2025-09-01 | Agric hen eggs, | South East | 268.8533333333333 **[real]** | ZONE |
+| observation_month | release_month | item_code | item_label | zone | avg_price_ngn | value_status | geography_type | observation_month_basis | source_anomaly |
+|---|---|---|---|---|---|---|---|---|---|
+| 2025-09-01 | 2025-09-01 | EGG_AGRIC | Agric hen eggs, | North Central | 254.71726193263 **[real]** | OK | ZONE | RELEASE_CURRENT_PERIOD_COLUMN | |
+| 2025-09-01 | 2025-09-01 | EGG_AGRIC | Agric hen eggs, | South East | 268.8533333333333 **[real]** | OK | ZONE | RELEASE_CURRENT_PERIOD_COLUMN | |
+| 2025-07-01 | 2025-07-01 | YAM_TUBER | Yam Tuber | South South | 3290.084005837685 **[real]** | OK | ZONE | RELEASE_CURRENT_PERIOD_COLUMN | ZONE_ABOVE_STATE_MAXIMUM |
 
-**Primary key:** `(observation_month, item_label, zone)`
+**Primary key:** `(observation_month, item_code, zone)` — 4,284 rows, no NULLs.
 
-`Zone All item` publishes only the release month, so `observation_month` and `release_month` always
-agree and no release discriminator is needed. A duplicate means one zone appeared twice for an item.
+`Zone All item` carries **no period label of any kind**. That it publishes the release month is
+established arithmetically, not assumed: `national = Σ(zone × states_in_zone) / 37` matches the
+main sheet's current-month column in 713 of 714 item-releases and its prior-month column in none
+(D-31). `observation_month_basis` records that derivation on every row.
 
 ### `food_price_extreme_callout`
 
-| observation_month | release_month | item_label | extreme_type | state | price_ngn | is_shared_extreme | raw_callout_text |
-|---|---|---|---|---|---|---|---|
-| 2026-05-01 | 2026-05-01 | Beans Brown | HIGHEST | Oyo | 1941.78 **[real]** | FALSE | Oyo (1941.78) |
-| 2026-05-01 | 2026-05-01 | Beans Brown | LOWEST | Taraba | 760 **[real]** | FALSE | Taraba (760) |
-| 2025-02-01 | 2025-02-01 | *(illustrative tie)* | LOWEST | Kebbi | 6500 *[illustrative]* | TRUE | Kebbi/Nasarawa (6500) |
-| 2025-02-01 | 2025-02-01 | *(illustrative tie)* | LOWEST | Nasarawa | 6500 *[illustrative]* | TRUE | Kebbi/Nasarawa (6500) |
+| observation_month | release_month | item_code | item_label | extreme_type | state | zone | price_ngn | is_shared_extreme | raw_callout_text |
+|---|---|---|---|---|---|---|---|---|---|
+| 2026-05-01 | 2026-05-01 | BEANS_BROWN | Beans Brown | HIGHEST | Oyo | South West | 1941.78 **[real]** | FALSE | Oyo (1941.78) |
+| 2026-05-01 | 2026-05-01 | BEANS_BROWN | Beans Brown | LOWEST | Taraba | North East | 760 **[real]** | FALSE | Taraba (760) |
 
-**Primary key:** `(observation_month, item_label, extreme_type, state)`
+**Primary key:** `(observation_month, item_code, extreme_type, state)` — 1,428 rows, exactly one
+HIGHEST and one LOWEST per item-release.
 
-`state` is in the key because a tie names several states in one cell, producing one legitimate row per
-state within the same extreme.
+`state` is in the key because the cooking-gas equivalent can name several states in one tied cell.
+**Food never does.** All 1,428 food callout cells match `State (number)` exactly, contain no slash
+and name exactly one state, so no splitting rule is implemented for this table and every row has
+`is_shared_extreme = FALSE` — asserted by a check. A slash or a second state in a future release is a
+hard failure requiring inspection, never a silent split (D-35).
+
+Callout values are published rounded (0, 1 or 2 dp), so they are not byte-comparable with the
+full-precision national and zone series.
 
 > **This table is not state coverage.** It records which state was highest and which was lowest —
-> nothing about the other 34.
+> nothing about the other 35.
 
 ---
 
@@ -545,9 +570,9 @@ most likely means the same tariff table was parsed from two pages.
 
 | Table | Primary key | Geography |
 |---|---|---|
-| `food_price_national_monthly` | `release_month, observation_month, item_label` | NATIONAL |
-| `food_price_zone_monthly` | `observation_month, item_label, zone` | ZONE |
-| `food_price_extreme_callout` | `observation_month, item_label, extreme_type, state` | STATE *(callout)* |
+| `food_price_national_monthly` | `release_month, observation_month, item_code` | NATIONAL |
+| `food_price_zone_monthly` | `observation_month, item_code, zone` | ZONE |
+| `food_price_extreme_callout` | `observation_month, item_code, extreme_type, state` | STATE *(callout)* |
 | `petrol_price_monthly` | `release_month, observation_month, geography_type, geography_name` | STATE/ZONE/NATIONAL |
 | `diesel_price_monthly` | `release_month, observation_month, geography_type, geography_name` | STATE/ZONE/NATIONAL |
 | `cooking_gas_price_monthly` | `release_month, observation_month, cylinder_size_kg, geography_type, geography_name` | STATE/ZONE/NATIONAL |
