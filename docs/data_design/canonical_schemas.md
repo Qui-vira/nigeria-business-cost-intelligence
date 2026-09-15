@@ -299,6 +299,22 @@ generate no canonical rows.
 `cylinder_size_kg` is essential: the two product blocks carry **identical column headers**, so without
 it the 5 kg and 12.5 kg prices for the same place and month collide directly.
 
+**Grain per release.** Verified uniform across all 32 blocks (16 releases × 2 sizes): 3 period columns
+and 44 main-table geographies each (37 states/FCT + 6 zones + 1 national). That is
+**44 × 3 × 2 = 264 rows per release**, and **4,224 rows** across the 16 spreadsheet releases
+2025-01 … 2026-04.
+
+**Blocks are identified by order, not by banner (D-26).** The left geography block is 5 kg and the
+right is 12.5 kg in all 16 releases. The row-1 banner drifts 0–2 columns away from its block and reads
+**`12KG`** in January 2026, so it is kept as published provenance and never used to locate or size a
+block. Geography columns sit at 1/9 through 2026-01 and at 3/11 from 2026-02.
+
+**The national row is `Average` or `Grand Total` (D-27).** Both resolve to `NATIONAL` / `Nigeria`; the
+main table ends at the first row that *classifies* national, never at a literal word.
+
+The six LPG PDFs are corroborative only. They cannot supply `source_cell_reference`, so they generate
+no canonical rows.
+
 > **2025 12.5 kg rows carry a known source defect.** In all twelve 2025 releases the 12.5 kg block
 > prints `Taraba` in Kebbi's North West position, so Taraba appears twice and Kebbi is absent. Affected
 > rows resolve to `geography_name = 'Kebbi'` with `geography_raw_label = 'Taraba'` and
@@ -310,6 +326,14 @@ it the 5 kg and 12.5 kg prices for the same place and month collide directly.
 | observation_month | release_month | cylinder_size_kg | extreme_type | rank_within_block | state | price_ngn | is_shared_extreme |
 |---|---|---|---|---|---|---|---|
 | 2025-02-01 | 2025-02-01 | 12.5 | LOWEST | 1 | Lagos | 15750 **[real]** | FALSE |
+
+**Grain.** 3 highest + 3 lowest per block × 2 sizes × 16 releases = **192 callout slots**. Exactly one
+slot — 2025-02, 12.5 kg, lowest, row 56 — holds the tie **`Kebbi/Nasarawa`**, which splits into two
+rows flagged `is_shared_extreme = TRUE`, giving **193 clean rows**. `Kebbi/Nasarawa` is never a
+canonical state and is never added to `ref_state_zone`.
+
+This is the **only** canonical extreme-callout table in the project for a fuel: petrol and diesel
+document their callout blocks but deliberately do not extract them (D-23, D-25).
 | 2025-02-01 | 2025-02-01 | 12.5 | LOWEST | 2 | Kebbi | 16250 **[real]** | TRUE |
 | 2025-02-01 | 2025-02-01 | 12.5 | LOWEST | 2 | Nasarawa | 16250 **[real]** | TRUE |
 

@@ -586,32 +586,75 @@ label, no slash label and no `MAX`/`MIN` cell reaches the clean table.
 ## 4. Cooking gas (LPG)
 
 **RAW PROBLEM** — Each sheet holds **two side-by-side product tables** (5 kg on the left, 12.5 kg on
-the right) whose column headers are **identical text**, distinguished only by a merged banner in row 1.
-Beneath the main table sit an `Average` national row and two further stacked blocks,
-`STATES WITH THE HIGHEST AVERAGE PRICES` and `STATES WITH THE LOWEST AVERAGE PRICES`. In 2026 releases
-the geography column silently moved from position 1 to position 3, `MoM`/`YoY` became `MOM`/`YOY`, and
-sheet names drifted to `Sheet1`. One cell reads `Kebbi/Nasarawa`.
+the right) whose column headers are **identical text**. Beneath each main table sit a national row and
+two stacked callout blocks, `STATES WITH THE HIGHEST AVERAGE PRICES` and
+`STATES WITH THE LOWEST AVERAGE PRICES`. One cell reads `Kebbi/Nasarawa`.
+
+**Verified structure — 16 spreadsheet releases, 2025-01 … 2026-04, inspected 2026-09-15.**
+Uniform across **all 32 blocks** (16 releases x 2 sizes):
+
+| Per block | Value |
+|---|---|
+| Period columns (`Average of <mon-yy>`) | **3** |
+| Main-table geographies | **44** = 37 states/FCT + 6 zones + 1 national |
+| Callout rows | **3 highest + 3 lowest** |
+| Derived columns | `MoM` / `MOM`, `YoY` / `YOY` |
+
+The header row is **always 2** — unlike petrol and diesel it never moves. The main table is nested:
+each zone heads a section of its own member states, then the national row closes it.
+
+**What moves, and what does not**
+
+| Releases | Geography columns | 5 kg banner | 12.5 kg banner | Sheet name | National label | Case |
+|---|---|---|---|---|---|---|
+| 2025-01 … 2025-12 | **1, 9** | c1 `5KG` | c9 `12.5KG` | real names | `Average` | `MoM`/`YoY` |
+| 2026-01 | **1, 9** | c1 `5KG` | c11 **`12KG`** | `LPG JANUARY 2026` | `Average` | `MOM`/`YOY` |
+| 2026-02 | **3, 11** | c5 `5KG` | c11 `12.5KG` | `LPG FEBRUARY 2026` | **`Grand Total`** | `MOM`/`YOY` |
+| 2026-03, 2026-04 | **3, 11** | c4 `5KG` | c12 `12.5KG` | **`Sheet1`** | **`Grand Total`** | `MOM`/`YOY` |
+
+Three corrections to earlier versions of this document, all verified from the raw workbooks:
+
+1. **`Average` is not the only national label.** The last three releases (2026-02, 2026-03, 2026-04)
+   label the national row **`Grand Total`**. Both are valid and both resolve to
+   `geography_type = NATIONAL`, `geography_name = Nigeria`. A rule that parses "until the `Average`
+   row" over-runs the table in three releases.
+2. **The geography column moves from February 2026, not January.** `2026-01` still uses columns 1/9.
+3. **The banner does not reliably mark its block.** Its column drifts 0, +1 or +2 away from the
+   block's geography column, and **January 2026's right-hand banner reads `12KG`, not `12.5KG`**.
 
 **WHY IT MATTERS** — Selecting columns by name cannot distinguish 5 kg from 12.5 kg, because the names
-are the same. Selecting by fixed position breaks in 2026.
+are identical. Selecting by fixed position breaks from February 2026. Selecting by banner breaks in
+January 2026 and wherever the banner is offset.
 
 **CLEANING RULE**
 
-1. Locate the geography column **by content**: the first column whose values match known states or
-   zones. Do not assume position 1 or 3.
-2. Assign `cylinder_size_kg` by **column block position relative to the banner row**, not by header
-   text: the block under `5KG` is 5.0, the block under `12.5KG` is 12.5.
+1. Locate the geography columns **by content**: every column holding a run of values that classify as
+   states, zones or national under §0.2. Two such columns are expected. Do not assume 1/9 or 3/11.
+2. Assign `cylinder_size_kg` by **left-to-right order of those geography columns**: the left block is
+   **5.0**, the right block is **12.5**. Verified in all 16 releases. **Do not use the banner** - keep
+   its published text (`5KG`, `12.5KG`, `12KG`) as provenance only. If a release ever presents other
+   than exactly two geography blocks, **stop and raise** rather than guess.
 3. Treat header names case-insensitively so `MoM` and `MOM` are the same field.
-4. Parse the main table until the `Average` row; capture that as `NATIONAL`.
-5. Parse the two extremes blocks into `cooking_gas_extreme_callout`, tagged by the banner above them.
-6. Split `Kebbi/Nasarawa` into two rows, both `is_shared_extreme = TRUE`.
+4. Parse the main table until the first row that classifies `NATIONAL` - whether it reads `Average`
+   or `Grand Total` - and capture that row as the national aggregate.
+5. Parse the two callout blocks into `cooking_gas_extreme_callout`, tagged by the heading above them.
+   They never enter the main price table.
+6. Split `Kebbi/Nasarawa` into two rows, both `is_shared_extreme = TRUE`. It is a **tied callout**,
+   never a canonical state, and never an alias in `ref_state_zone`.
+7. `MoM` / `YoY` are derived percentages and never enter `cooking_gas_price_monthly`.
 
 ### 4a. LPG 12.5 kg block: Kebbi is published as "Taraba" (2025)
 
 **RAW PROBLEM** — In the **12.5 kg block of all twelve 2025 LPG releases**, the North West zone
 position that should hold **Kebbi** is labelled **`Taraba`**. Taraba therefore appears **twice** in
 that block — once correctly under North East, once in Kebbi's North West slot — and **Kebbi is absent
-from the 12.5 kg main table entirely**, surviving only in the "lowest prices" callout.
+from the 12.5 kg main table entirely**.
+
+> **Correction to an earlier version of this document.** It stated that Kebbi survives "only in the
+> lowest prices callout". Verified against the raw workbooks: Kebbi appears in the 12.5 kg callout in
+> only **5 of the 12** affected releases — 2025-01, 2025-02 (as the tie `Kebbi/Nasarawa`), 2025-03,
+> 2025-04 and 2025-05. In **2025-06 through 2025-12 Kebbi is absent from the 12.5 kg block entirely**,
+> main table and callouts alike. Without the correction below, seven months lose the state completely.
 
 **Evidence** (read-only inspection, `GAS_PRICE_WATCH_JAN_2025.xlsx`):
 
@@ -629,7 +672,19 @@ row-count check does not detect this. Confirmed in **12 files**: January through
 of 2025. Both Taraba rows carry different prices, so any aggregation silently mixes two states'
 values under one name while a whole state disappears.
 
-**CLEANING RULE** — A narrowly-conditioned correction. **All** of the following must hold before a
+**The decisive evidence — the two blocks are row-aligned.** Across all 16 releases the 5 kg and
+12.5 kg main tables occupy the **same spreadsheet rows**, 43 geography rows deep. Comparing the two
+label columns row by row:
+
+- in each of the **12 affected 2025 releases, exactly one row differs** — row 23, where 5 kg reads
+  `Kebbi` and 12.5 kg reads `Taraba`. All 42 other rows are identical;
+- in all **4 of the 2026 releases, all 43 rows match**.
+
+The disputed row's 12.5 kg ÷ 5 kg price ratio is ~2.5, the ordinary cylinder ratio and within the
+range of every other state in the same file, and it differs from the genuine North East Taraba value.
+So the row behaves like a normal state row that is simply mislabelled.
+
+**CLEANING RULE** — A narrowly-conditioned correction. **All six** of the following must hold before a
 row is reinterpreted; if any fails, no correction is applied and the run raises:
 
 1. the dataset is cooking gas **and** `cylinder_size_kg = 12.5`;
@@ -637,7 +692,12 @@ row is reinterpreted; if any fails, no correction is applied and the run raises:
 3. the row sits inside the **North West** zone block, in the position **between `Katsina` and
    `Sokoto`**;
 4. the label `Taraba` **also** appears in its correct North East position in the same block;
-5. `Kebbi` is **absent** from that block's main table.
+5. `Kebbi` is **absent** from that block's main table;
+6. **the 5 kg block on the same spreadsheet row reads `Kebbi`.**
+
+Condition 6 is the strongest of the six and is new: it is a per-file structural fact read from the
+same workbook, not an inference about what the number ought to be. It makes the correction
+self-verifying — the file itself names the state, one column block to the left.
 
 Only then is the row's canonical geography set to `Kebbi`, with
 `source_anomaly = 'LPG_12_5KG_KEBBI_LABELLED_TARABA'`. The published text `Taraba` is preserved
@@ -652,8 +712,18 @@ verbatim in `geography_raw_label`, so the correction is visible and reversible.
 (geography × month × cylinder size), plus a separate callout table. For 2025 12.5 kg months, 37
 distinct states including both Taraba and Kebbi exactly once each.
 
+Per release: **44 geographies × 3 periods × 2 cylinder sizes = 264 rows.** Across the 16 spreadsheet
+releases 2025-01 … 2026-04 that is **4,224 rows**, plus **193** callout rows (6 callouts × 2 sizes ×
+16 releases = 192 slots, one of which is the `Kebbi/Nasarawa` tie and splits into two).
+
+The six LPG PDFs are corroborative only — they cannot supply a spreadsheet cell reference and so
+generate no canonical rows.
+
 **VALIDATION CHECK** — Every month yields both cylinder sizes. The number of geographies is identical
-between the two size blocks for a given month. No row has a NULL `cylinder_size_kg`.
+between the two size blocks for a given month. No row has a NULL `cylinder_size_kg`. Exactly **12**
+rows carry `LPG_12_5KG_KEBBI_LABELLED_TARABA`, all in 2025, all 12.5 kg, all resolving to `Kebbi`;
+the genuine North East `Taraba` row survives untouched in every block; and no 5 kg row is ever
+corrected.
 
 **Zone-block completeness check (new, and it is what would have caught this defect).** For every
 dataset that publishes states grouped under zone headers — cooking gas and diesel — each zone block
@@ -924,7 +994,10 @@ clean row records what was done.
 | `MAX` / `MIN` cells in columns I/J | `Fuel_Report_July_2025.xlsx` | Derived statistics over the zone averages. Excluded from `petrol_price_monthly` (D-23); raw cells untouched |
 | Tied extreme label `Ekiti/Oyo` | `PMS_FEB_2025.xlsx`, lowest-price callout block | Stays in the callout area. Never added to `ref_state_zone`, never split, never a geography value (D-23) |
 | Duplicate period header, current month mislabelled | `TRANSPORT_COST_Watch_MAR_2025.xlsx` | Resolve by column position → 2025-03. `source_anomaly = 'DUPLICATE_PERIOD_HEADER_RESOLVED_BY_POSITION'` |
-| **Kebbi published as `Taraba` in the 12.5 kg block** | 12 files: all 2025 LPG releases | Corrected to `Kebbi` **only** when all five fingerprint conditions in §4a match. `source_anomaly = 'LPG_12_5KG_KEBBI_LABELLED_TARABA'`; published text kept in `geography_raw_label`. No global Taraba→Kebbi rule. |
+| **Kebbi published as `Taraba` in the 12.5 kg block** | 12 files: all 2025 LPG releases | Corrected to `Kebbi` **only** when all **six** fingerprint conditions in §4a match - including the new condition that the 5 kg block on the same spreadsheet row reads `Kebbi`. `source_anomaly = 'LPG_12_5KG_KEBBI_LABELLED_TARABA'`; published text kept in `geography_raw_label`. No global Taraba->Kebbi rule. |
+| National row labelled `Grand Total`, not `Average` | LPG 2026-02, 2026-03, 2026-04 | Both labels classify as `NATIONAL` -> `Nigeria` (D-27). The main table ends at the first row that classifies national, never at a literal word. |
+| Right-hand banner reads `12KG` | LPG `GAS PRICE WATCH JANUARY 2026_table.xlsx` | Published text preserved as provenance; the block is identified by order and cleaned as 12.5 kg (D-26). Never treated as a third cylinder product. |
+| Geography columns move 1/9 -> 3/11 | LPG from 2026-02 onward (**not** 2026-01) | Blocks located by content, not position. |
 | **`SouthWest` zone label with no space** \| `AGO JANUARY 2026.xlsx`, diesel - **cell H7, duplicate side table only** \| Normalised to the zone `South West`. Never treated as a state. The main geography column of the same file reads `SOUTH WEST`, so the canonical path never meets it. |
 | **Period header dated the 25th, not the 14th** \| `AGO_REPORT_NOV_2025.zip` -> `DIESEL_NOV_2025.xlsx`, middle period `2025-10-25` \| Truncated to month start -> `2025-10-01`, which is correct. Published date kept verbatim in `source_period_label`. `source_anomaly = 'PERIOD_HEADER_DAY_NOT_14'`. No global date rewriting (D-24). |
 | `MAX` / `MIN` cells at K1/L1 \| `Diesel_Report_July_2025.xlsx` \| Derived statistics over the zone averages. Excluded from `diesel_price_monthly`; raw cells untouched. |

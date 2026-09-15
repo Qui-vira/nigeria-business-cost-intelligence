@@ -623,6 +623,56 @@ so the canonical path never meets it; the §0.2 normalisation remains as a safet
 
 ---
 
+## D-26 — LPG cylinder blocks are identified by order, never by banner
+
+**Decision.** The two cooking-gas product tables are located by finding the columns that hold runs of
+recognisable geography, then assigned by **left-to-right order**: the left block is 5 kg, the right is
+12.5 kg. The row-1 banner is kept as published text and is never used to locate or size a block. If a
+release ever yields other than exactly two geography blocks, the run stops.
+
+**Evidence.** Across the 16 releases the banner is unreliable in three separate ways:
+
+- its column drifts **0, +1 or +2** away from the block's geography column, so "the block under the
+  banner" is not a well-defined column range;
+- **January 2026's right-hand banner reads `12KG`, not `12.5KG`** — a cleaner matching the literal
+  text would fail to identify the block, or would invent a third cylinder product;
+- the geography columns themselves move from **1/9 to 3/11 beginning in February 2026** (not January,
+  as an earlier version of the rulebook stated), so fixed positions fail too.
+
+Order, by contrast, held in **all 16 verified releases**: the leftmost geography block is 5 kg every
+time. It is also the property the source is least likely to change silently, because swapping the two
+products would be visible to any reader of the published report.
+
+**Rejected alternative.** Parsing the banner text for a number. It works for `5KG` and `12.5KG`, and
+turns `12KG` into a fourth product that does not exist. The published banner is retained as
+provenance so the `12KG` oddity stays visible.
+
+**Consequence.** `cylinder_size_kg` is 5.0 or 12.5 and never NULL. The verified structure is uniform:
+44 geographies × 3 periods × 2 sizes × 16 releases = **4,224** main rows, plus **193** callout rows.
+
+---
+
+## D-27 — `Average` and `Grand Total` are both the national row
+
+**Decision.** Both labels resolve to `geography_type = NATIONAL`, `geography_name = Nigeria`. The main
+table ends at the first row that *classifies* as national, not at a row matching a particular word.
+
+**Evidence.** The national row is labelled `Average` in the 13 releases 2025-01 … 2026-01 and
+**`Grand Total`** in 2026-02, 2026-03 and 2026-04. An earlier version of the rulebook said to "parse
+the main table until the `Average` row"; in those three releases there is no such row, so the parse
+would run past the national aggregate and into the callout blocks — pulling callout states into the
+price table as if they were extra observations.
+
+Both labels were already in §0.2's `NATIONAL` set, so content-based classification handled this
+correctly the whole time. The defect was in the *instruction*, not in the classifier.
+
+**Consequence.** This is the third dataset where a rule written around a literal string was falsified
+by a later release (petrol's zone block, diesel's period day, now LPG's national label). The pattern
+is consistent enough to state as a habit: **terminate a block on what a row *is*, never on what it
+says.**
+
+---
+
 ## Open items carried into Phase 6
 
 1. **`xlrd` is not installed**, so `CPI_Report_March_2026.zip` (legacy `.xls`) could not be read during
@@ -654,3 +704,8 @@ so the canonical path never meets it; the §0.2 normalisation remains as a safet
    (`Adamawa/Plateau`, `Kogi/Zamfara`). Any future callout table must cover petrol and diesel together.
 10. **The July 2025 stray `MAX` / `MIN` artefact appears in both the petrol and the diesel release.**
    Worth a glance at the other July 2025 NBS products before they are cleaned.
+11. **Cooking gas is the only dataset with a canonical extreme-callout table.** Petrol and diesel
+   deliberately have none (D-23, D-25), so their callout structures are documented but unextracted. If
+   state-level extremes are ever wanted across fuels, the three would need reconciling.
+12. **Seven 2025 months would lose Kebbi entirely from 12.5 kg without the §4a correction** — the
+   state is absent from both the main table and the callouts in 2025-06 … 2025-12.
