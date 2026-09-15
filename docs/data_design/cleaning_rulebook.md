@@ -100,7 +100,7 @@ state fails to join across datasets.
 
    | Observed raw label | Source | Resolves to |
    |---|---|---|
-   | `SouthWest` (no space) | `AGO JANUARY 2026.xlsx`, diesel | **South West** |
+   | `SouthWest` (no space) | `AGO JANUARY 2026.xlsx`, diesel - **cell H7, in the duplicate side table only** | **South West** |
 
    `SouthWest` is a **zone**, never a state. It must not enter `ref_state_zone`, and a check asserts
    no zone label — in any spelling — ever appears as a state alias.
@@ -174,7 +174,11 @@ A suspiciously exact match is investigated as a possible mis-classification.
 
 Month-label parsing must handle every form observed across the 52 distinct labels in
 `column_inventory.csv`:
-- Excel datetimes (petrol dated the 1st, diesel dated the **14th**) → truncate to month start
+- Excel datetimes → truncate to month start. Petrol dates the 1st. Diesel dates the **14th in
+  50 of its 51 period headers**; the November 2025 release prints **`2025-10-25`** for its
+  middle period (see §3). The day is a label convention either way and carries no meaning, so
+  truncation is the rule and the published date is kept verbatim in `source_period_label`.
+  **Never rewrite a source date to the expected day.**
 - abbreviated names: `Apr-25`, `Sept-24`
 - full names: `April-26`, `December-25`
 - lower case: `feb-24`
@@ -483,26 +487,99 @@ January 2026 rows carry `observation_month = 2026-01-01`; their prior-month colu
 
 ## 3. Diesel (AGO)
 
-**RAW PROBLEM** — Header row moves between 1, 2, 3 and 16. The geography column has **no header**.
-States, the six zones and a `NATIONAL` row are interleaved in that same column. Four sheets are named
-`Sheet1`. Period headers are datetimes dated the **14th** of the month.
+**RAW PROBLEM** — Header row moves between 1, 2, 3 and 16. The **main geography column has no header
+at all** (column A, the header cell is empty), and it mixes all three geographic levels. Four sheets
+are named `Sheet1`.
+
+A diesel sheet holds one canonical table and four non-canonical areas:
+
+| Area | Position | Contents | Canonical? |
+|---|---|---|---|
+| **Main geography table** | col A (no header) + three datetime cols B-D | 37 states, 6 zones and `NATIONAL`, nested together | **yes** |
+| `YoY` / `MoM` | cols E and F | derived percentages | **no** |
+| Duplicate side zone table | cols H/I, header `Zone` \| (value) | the six zone current-month values, repeated | **no** |
+| Highest/lowest callouts | cols H/I, below the side table | `STATES WITH THE HIGHEST/LOWEST AVERAGE PRICES` + three states each | **no** |
+| Stray working cells | July 2025 only, **K1 / L1** | unlabelled `MAX` / `MIN` over the zone averages | **no** |
+
+**The main column is nested, not flat.** Each zone acts as a section heading followed by its own member
+states, and `NATIONAL` closes the table:
+
+```
+NORTH CENTRAL          <- ZONE
+  Abuja … Plateau      <- its 7 STATEs
+NORTH EAST             <- ZONE
+  Adamawa … Yobe       <- its 6 STATEs
+… NORTH WEST (7) · SOUTH EAST (5) · SOUTH SOUTH (6) · SOUTH WEST (6) …
+NATIONAL               <- NATIONAL
+```
+
+Verified across all 17 releases (2026-09-15): the pattern is **identical in every one**, there are
+**no blank rows inside the block**, and every state sits under the zone `ref_state_zone.csv` assigns
+it — **0 nesting mismatches**. Casing separates the two zone spellings: the main column prints zones
+in UPPER CASE, the side table in Title Case.
+
+> **Period dates — verified correction.** An earlier version of this rulebook stated that diesel
+> period headers are "datetimes dated the **14th** of the month". Across **51 inspected period
+> headers, 50 use day 14 and one does not**: `AGO_REPORT_NOV_2025.zip` member `DIESEL_NOV_2025.xlsx`
+> prints **`2025-10-25`** for its middle period, where 2025-10-14 would be expected.
+>
+> The cleaning rule is unaffected — truncating to month start gives the correct `2025-10-01` — but the
+> factual claim was wrong and the day must never be assumed. `source_period_label` keeps the published
+> date verbatim so the oddity stays visible. See D-24.
 
 **WHY IT MATTERS** — Selecting "all rows" yields a mixture of three geographic levels with nothing but
-the row label to distinguish them.
+the row label to distinguish them. Reading the side table as well would emit a second row for every
+zone, colliding directly on the primary key. Reading `YoY` / `MoM` as prices would file percentages as
+naira.
 
 **CLEANING RULE**
 
 1. Detect the header (§0.1) using the datetime anchor.
-2. Address the geography column **by position** (first column), since it has no name.
-3. Apply §0.2 classification to every row. `UNCLASSIFIED` stops the run.
-4. Truncate the datetime header to month start — the 14th is a label convention, not an observation date.
-5. Ignore the worksheet name entirely; four are `Sheet1`.
+2. Address the main geography column **by position** (first column), since it has no name. **The
+   duplicate side table in columns H/I is never canonical input.**
+3. Take **only** the three datetime columns as prices. Every other column in the row - `YoY`, `MoM`
+   and anything beyond - is excluded.
+4. Apply §0.2 classification to every row. `UNCLASSIFIED` stops the run.
+5. Truncate the datetime header to month start; keep the published date verbatim in
+   `source_period_label`. **Never rewrite a source date to the expected day.**
+6. Ignore the worksheet name entirely; four are `Sheet1`.
 
-**EXPECTED CLEAN OUTPUT** — `diesel_price_monthly` where `geography_type` cleanly separates the three
-levels that share one source column.
+**NOT INGESTED — and why**
 
-**VALIDATION CHECK** — Per month: exactly 6 `ZONE` rows, exactly 1 `NATIONAL` row, and the remainder
-`STATE`. Any other distribution fails.
+- **Duplicate side zone table (columns H/I).** Repeats the six zone *current-month* values that the
+  main column already carries. Verified across all 17 releases: **0 value mismatches** against the
+  main column. Useful as corroboration, never as input - ingesting it would double every zone row.
+  It is also the only place `SouthWest` (no space) occurs, at **H7 of `AGO JANUARY 2026.xlsx`**; the
+  main column of that same file reads `SOUTH WEST` normally, so a cleaner obeying rule 2 never meets
+  it. The §0.2 normalisation stands as a safety rule.
+- **`YoY` and `MoM` (columns E and F).** Derived percentages, recomputable from the three price
+  columns. In diesel these are *columns*; in petrol the same statistics are *footer rows*.
+- **Highest/lowest callout blocks** (columns H/I, below the side table). Reporting highlights whose
+  states and prices are already in the main column. They carry the tied labels **`Adamawa/Plateau`**
+  and **`Kogi/Zamfara`** - diesel's equivalent of petrol's `Ekiti/Oyo`. Neither is a canonical
+  geography, neither is added to `ref_state_zone`, and neither is ever split (§0.2's slash rule stays
+  restricted to the food and cooking-gas callout fields).
+- **July 2025 stray `MAX` / `MIN`.** `Diesel_Report_July_2025.xlsx` carries two unlabelled values at
+  **K1 and L1** - `1941.9754403195839` and `1619.0598316666667`, the South South maximum and South
+  West minimum of that month's zone averages. The only diesel content past column I in any release.
+  The same analyst artefact appears in the July 2025 *petrol* file.
+
+**EXPECTED CLEAN OUTPUT** — `diesel_price_monthly`, per release: **37 states + 6 zones + 1 national =
+44 geographies, each with 3 periods = 132 rows.** Across the 17 spreadsheet releases 2025-01 …
+2026-05 that is **2,244 rows.**
+
+Note the contrast with petrol: diesel's zone rows live in the main table and carry **all three**
+periods, whereas petrol's zone table has a single `Average Price` column and carries one. Diesel
+therefore yields more rows per release than petrol (132 vs 120).
+
+The six diesel PDFs are corroborative only - they cannot supply a spreadsheet cell reference and so
+generate no canonical rows.
+
+**VALIDATION CHECK** — All 17 releases processed, 2025-01 … 2026-05 with no gap. Per release: exactly
+**37** `STATE`, exactly **6** `ZONE`, exactly **1** `NATIONAL`, each with exactly **3** period values.
+Any other distribution fails. `2025-10-25` must map to `observation_month = 2025-10-01` while
+`source_period_label` still reads `2025-10-25`. No side-table row, no `YoY`/`MoM` value, no callout
+label, no slash label and no `MAX`/`MIN` cell reaches the clean table.
 
 ---
 
@@ -848,7 +925,10 @@ clean row records what was done.
 | Tied extreme label `Ekiti/Oyo` | `PMS_FEB_2025.xlsx`, lowest-price callout block | Stays in the callout area. Never added to `ref_state_zone`, never split, never a geography value (D-23) |
 | Duplicate period header, current month mislabelled | `TRANSPORT_COST_Watch_MAR_2025.xlsx` | Resolve by column position → 2025-03. `source_anomaly = 'DUPLICATE_PERIOD_HEADER_RESOLVED_BY_POSITION'` |
 | **Kebbi published as `Taraba` in the 12.5 kg block** | 12 files: all 2025 LPG releases | Corrected to `Kebbi` **only** when all five fingerprint conditions in §4a match. `source_anomaly = 'LPG_12_5KG_KEBBI_LABELLED_TARABA'`; published text kept in `geography_raw_label`. No global Taraba→Kebbi rule. |
-| **`SouthWest` zone label with no space** | `AGO JANUARY 2026.xlsx`, diesel | Normalised to the zone `South West`. Never treated as a state. |
+| **`SouthWest` zone label with no space** \| `AGO JANUARY 2026.xlsx`, diesel - **cell H7, duplicate side table only** \| Normalised to the zone `South West`. Never treated as a state. The main geography column of the same file reads `SOUTH WEST`, so the canonical path never meets it. |
+| **Period header dated the 25th, not the 14th** \| `AGO_REPORT_NOV_2025.zip` -> `DIESEL_NOV_2025.xlsx`, middle period `2025-10-25` \| Truncated to month start -> `2025-10-01`, which is correct. Published date kept verbatim in `source_period_label`. `source_anomaly = 'PERIOD_HEADER_DAY_NOT_14'`. No global date rewriting (D-24). |
+| `MAX` / `MIN` cells at K1/L1 \| `Diesel_Report_July_2025.xlsx` \| Derived statistics over the zone averages. Excluded from `diesel_price_monthly`; raw cells untouched. |
+| Tied callout labels `Adamawa/Plateau`, `Kogi/Zamfara` \| diesel highest/lowest callout blocks \| Stay in the callout area. Never added to `ref_state_zone`, never split, never a geography value. |
 | Stale worksheet name `Selected Food Dec 2024` | `selected_food_table_Apr25.xlsx`, `selected_food_table_Mar_25.xlsx` | Sheet name ignored; period from column headers. `source_anomaly = 'STALE_SHEET_NAME'` |
 | Column renamed `Item Labels` | `selected_food_table_Feb_25.xlsx` | Accepted as an alias of `Item Label` |
 | Legacy `.xls` in a subfolder | `CPI_Report_March_2026.zip` | Requires `xlrd`; if unreadable, recorded MISSING |

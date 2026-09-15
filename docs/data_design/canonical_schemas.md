@@ -261,6 +261,28 @@ generate no canonical rows.
 Identical shape and identical key. Its distinguishing feature is that `geography_type` carries the
 heaviest load in the project: states, zones and `NATIONAL` all arrive in one unnamed source column.
 
+**Grain per release.** Unlike petrol, diesel's zone rows sit in the main table and carry **all three**
+period columns, where petrol's zone table has a single `Average Price` column. Each release therefore
+contributes **37 states + 6 zones + 1 national = 44 geographies × 3 periods = 132 rows**, giving
+**2,244 rows** across the 17 spreadsheet releases 2025-01 … 2026-05 — more per release than petrol's
+120.
+
+**The main column is nested.** Each zone heads a section of its own member states and `NATIONAL`
+closes the table. Verified across all 17 releases: identical pattern every time, no blank rows inside
+the block, and every state under the zone `ref_state_zone.csv` assigns it (0 mismatches).
+
+**Four parallel areas are excluded (D-25):** the duplicate side zone table in columns H/I, the `YoY`
+and `MoM` percentage columns, the highest/lowest callout blocks, and July 2025's stray `MAX` / `MIN`
+cells at K1/L1. Diesel has **no** canonical extreme-callout table, so its tied labels
+`Adamawa/Plateau` and `Kogi/Zamfara` never reach a geography field and are not in `ref_state_zone`.
+
+**Period dates are truncated, never corrected (D-24).** 50 of diesel's 51 period headers fall on day
+14; `DIESEL_NOV_2025.xlsx` prints `2025-10-25`. It maps to `observation_month = 2025-10-01` while
+`source_period_label` keeps `2025-10-25` verbatim.
+
+The six diesel PDFs are corroborative only. They cannot supply `source_cell_reference`, so they
+generate no canonical rows.
+
 ---
 
 ## 4. Cooking gas

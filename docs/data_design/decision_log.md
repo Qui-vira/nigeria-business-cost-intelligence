@@ -567,6 +567,62 @@ left untouched.
 
 ---
 
+## D-24 — A published period date is truncated, never corrected
+
+**Decision.** `observation_month` is the published Excel date truncated to month start. The
+day-of-month is never validated, never assumed and never rewritten. The published value is kept
+verbatim in `source_period_label`.
+
+**Evidence.** An earlier version of `cleaning_rulebook.md` §3 and §0.4 stated that diesel period
+headers are "datetimes dated the **14th** of the month". Inspection of all 17 diesel releases on
+2026-09-15 found **51 period headers: 50 on day 14, and one on day 25** —
+`AGO_REPORT_NOV_2025.zip` member `DIESEL_NOV_2025.xlsx` prints `2025-10-25` for its middle period.
+
+Truncation gives `2025-10-01`, which is the correct month, so the *rule* was sound while the *claim*
+was false. That is the whole point: a rule that only reads the month cannot be broken by a wrong day,
+whereas a rule that asserted "day must be 14" would have failed on a file whose data is fine.
+
+**Rejected alternative.** Normalising the date to the expected 14th. It would produce the same
+`observation_month`, and it would erase the evidence that NBS published something unusual — the next
+person would have no way to see it without reopening the workbook.
+
+**Consequence.** `source_period_label` carries `2025-10-25` into the clean table, the row is flagged
+`PERIOD_HEADER_DAY_NOT_14`, and validation asserts both that the anomaly maps to `2025-10-01` and that
+the original text survives. No other release may acquire the flag.
+
+---
+
+## D-25 — Diesel reads one unnamed column and ignores four parallel areas
+
+**Decision.** `diesel_price_monthly` is built from the **main geography column only** — column A,
+which has no header — taking the three datetime columns as prices. The duplicate side zone table, the
+`YoY` / `MoM` columns, the highest/lowest callout blocks and July 2025's stray `MAX` / `MIN` cells are
+documented and excluded.
+
+**Evidence.**
+- The main column is nested: each zone heads a section of its own states, and `NATIONAL` closes the
+  table. Verified across all 17 releases — the pattern is identical in every one, there are no blank
+  rows inside the block, and **every state sits under the zone `ref_state_zone.csv` assigns it, with
+  0 mismatches.** A dataset that did not build the reference table independently reproduces it.
+- The side table in columns H/I repeats the six zone current-month values. Compared against the main
+  column across all 17 releases: **0 value mismatches.** It is a duplicate, so it is corroboration,
+  not input — ingesting it would emit a second row for every zone and collide on the primary key.
+- `YoY` and `MoM` are percentages sitting in columns E and F. Filing them as prices would record
+  `-6.40` as a naira-per-litre observation. Note they are *columns* here and *footer rows* in petrol,
+  which is why a shared "skip the footer" rule would not have caught them.
+- `Diesel_Report_July_2025.xlsx` is the only diesel workbook with content past column I: unlabelled
+  values at **K1 and L1** equal to that month's South South maximum and South West minimum zone
+  averages. The July 2025 *petrol* file carries the same artefact.
+
+**Consequence.** Diesel yields **44 geographies × 3 periods × 17 releases = 2,244 rows**, more per
+release than petrol (132 vs 120) because diesel's zone rows carry all three periods while petrol's
+zone table carries one. The tied callout labels `Adamawa/Plateau` and `Kogi/Zamfara` never reach a
+geography field and are not added to `ref_state_zone` — the same treatment as petrol's `Ekiti/Oyo`
+under D-23. `SouthWest` occurs only at H7 of `AGO JANUARY 2026.xlsx`, inside the excluded side table,
+so the canonical path never meets it; the §0.2 normalisation remains as a safety rule.
+
+---
+
 ## Open items carried into Phase 6
 
 1. **`xlrd` is not installed**, so `CPI_Report_March_2026.zip` (legacy `.xls`) could not be read during
@@ -593,3 +649,8 @@ left untouched.
    `cleaning_rulebook.md` §2 but not extracted (D-23). If state-level extremes are wanted later, a
    `petrol_price_extreme_callout` table would need designing, including a rule for the tied
    `Ekiti/Oyo` label.
+9. **Diesel has no canonical extreme-callout table either.** Its highest/lowest blocks are documented
+   in `cleaning_rulebook.md` §3 but not extracted (D-25), and they carry two tied labels
+   (`Adamawa/Plateau`, `Kogi/Zamfara`). Any future callout table must cover petrol and diesel together.
+10. **The July 2025 stray `MAX` / `MIN` artefact appears in both the petrol and the diesel release.**
+   Worth a glance at the other July 2025 NBS products before they are cleaned.
