@@ -781,8 +781,45 @@ crashes the load.
    `geography_name = 'Nigeria'`, `geography_type = 'NATIONAL'`, `is_aggregate = TRUE`, and
    **`state` and `zone` both NULL**. It is not a state and must never be counted as one.
 
+**Verified structure — 17 spreadsheet releases, 2025-01 … 2026-05, inspected 2026-09-15.**
+Every workbook holds exactly **two visible sheets** and nothing else:
+
+| Sheet | Identified by | Dims (all 17) | Contents |
+|---|---|---|---|
+| Zone sheet, named `Transport <Month> <Year>` | **cell A1 = `Zone`** | **36 × 6** | 5 mode blocks × (1 national + 6 zones) = 35 data rows; cols 2–4 are three periods, cols 5–6 are `MoM`/`YoY` |
+| `State Transport` | **cell A1 = `State`** | **39 × 6** | 37 states/FCT + `Grand Total`; 5 mode columns; **one period only** |
+
+Confirmed absent in all 17 releases: **no merged cells, no highest/lowest callouts, no `MAX`/`MIN`
+working cells, no blank separator rows, no hidden sheets, and nothing below the main tables.**
+
+**Do not size a table from `max_column`.** `TRANSPORT_COST_Watch_FEB_2025.xlsx` reports 11 columns and
+`TRANSPORT COST Watch JUN_2025_.xlsx` reports 9, but **columns G onward are entirely empty** in both —
+the extra width is cell formatting only.
+
+**Deriving the release month.** The current-month header is wrong in one release, so it is never the
+source of truth. Two independent signals are correct in **17/17** and agree with each other:
+
+1. the **zone sheet name** (`Transport March 2025` → 2025-03), and
+2. **column 3's label + one month** (`Average of Feb-25` + 1 → 2025-03).
+
+The current-month header (column 4) agrees in only **16/17**. Validation fails if signals 1 and 2
+disagree.
+
+**Geography and mode labels.** State names are UPPER CASE and resolve through `ref_state_zone`;
+`NASSARAWA` (double-s) appears in **May 2026 only** and resolves to `Nasarawa` like every other alias.
+Mode headers resolve through `ref_transport_mode` by normalised prefix; the only variant is WATER,
+truncated at 50 characters in 16 releases and written in full in June 2025. **Zero unresolved
+geography labels and zero unmapped mode headers across all 17 releases.**
+
 **EXPECTED CLEAN OUTPUT** — `transport_fare_state_monthly` (state/national × mode × month) and
 `transport_fare_zone_monthly` (zone/national × mode × month).
+
+Per release: the zone sheet yields **5 modes × 7 geographies × 3 periods = 105 rows** and the state
+sheet **5 modes × 38 geographies × 1 period = 190 rows**. Across the 17 releases that is
+**1,785** zone rows and **3,230** state rows, **5,015** in total.
+
+The 14 Transport PDFs are corroborative only — they cannot supply a spreadsheet cell reference and so
+generate no canonical rows.
 
 **VALIDATION CHECK** — The monthly sheet yields exactly 5 modes × (1 national + 6 zones) = 35 rows per
 period. In `transport_fare_state_monthly`, each month has exactly one `NATIONAL` row **per mode**
@@ -790,6 +827,29 @@ period. In `transport_fare_state_monthly`, each month has exactly one `NATIONAL`
 March 2025's current-month column resolves to `2025-03-01` and its value equals the `Average of Mar-25`
 column of the April 2025 release; the two rows sharing the label `Average of Mar-24` carry different
 `source_cell_reference` values and different `observation_month` values. No mode is NULL.
+
+**Cross-sheet national reconciliation (hard check).** The zone sheet's mode-header row *is* the
+national average, and the state sheet's `Grand Total` is the same figure reached by a different
+route. For every release and mode the two must agree within a relative tolerance of **1e-12**.
+Verified across all **85** comparisons (5 modes × 17 releases): **45 byte-identical, 40
+precision-only, 0 substantive**, largest relative difference **6.6e-16** — one or two units in the
+last place of a double. Two independently parsed sheets checking each other is the strongest
+correctness signal this dataset offers, so it is enforced rather than merely reported.
+
+**Cross-release reconciliation.** The zone sheet restates the prior month and the same month a year
+earlier, so consecutive releases can be compared:
+
+| Comparison | Compared | Byte-identical | Precision-only | Substantive |
+|---|---|---|---|---|
+| Prior-month column vs the earlier release's own month | **560** | 559 | 1 | **0** |
+| Year-ago column vs the release 12 months earlier | **175** | 175 | 0 | **0** |
+
+The single sub-tolerance difference is 2025-06 → 2025-07, `BUS_INTRACITY`, South South:
+`977.6871373523608` against `977.687137352361`, a relative difference of 2.3e-16. It is a real string
+difference and is reported as precision-only, never as identical and never as a revision.
+
+The `State Transport` sheet publishes one period per release, so it cannot restate anything and is
+excluded from this comparison.
 
 ---
 
@@ -993,7 +1053,9 @@ clean row records what was done.
 | **Zone table moved to columns A/B, below the state table** | `PMS_Report_JANUARY_2026.zip` → `PMS_JANUARY_2025.xlsx` | Blocks located by content, not coordinate (D-22). All six zone rows cleaned normally. `source_anomaly = 'ZONE_BLOCK_BELOW_STATE_BLOCK'` |
 | `MAX` / `MIN` cells in columns I/J | `Fuel_Report_July_2025.xlsx` | Derived statistics over the zone averages. Excluded from `petrol_price_monthly` (D-23); raw cells untouched |
 | Tied extreme label `Ekiti/Oyo` | `PMS_FEB_2025.xlsx`, lowest-price callout block | Stays in the callout area. Never added to `ref_state_zone`, never split, never a geography value (D-23) |
-| Duplicate period header, current month mislabelled | `TRANSPORT_COST_Watch_MAR_2025.xlsx` | Resolve by column position → 2025-03. `source_anomaly = 'DUPLICATE_PERIOD_HEADER_RESOLVED_BY_POSITION'` |
+| Duplicate period header, current month mislabelled | `TRANSPORT_COST_Watch_MAR_2025.xlsx` | Resolve by column position -> 2025-03. Column 2 is genuinely Mar-2024, column 4 is Mar-2025 mislabelled; verified 35/35 against the February and April releases. `source_anomaly = 'DUPLICATE_PERIOD_HEADER_RESOLVED_BY_POSITION'` |
+| `NASSARAWA` (double-s) in transport | `TRANSPORT COST Watch MAY_2026_.xlsx`, `State Transport` | Resolves to `Nasarawa` through `ref_state_zone`. All 16 other transport releases print `NASARAWA`. Raw label preserved. |
+| Phantom columns from cell formatting | `TRANSPORT_COST_Watch_FEB_2025.xlsx` (11), `TRANSPORT COST Watch JUN_2025_.xlsx` (9) | Columns G onward are empty. Tables are sized from content, never from `max_column`. |
 | **Kebbi published as `Taraba` in the 12.5 kg block** | 12 files: all 2025 LPG releases | Corrected to `Kebbi` **only** when all **six** fingerprint conditions in §4a match - including the new condition that the 5 kg block on the same spreadsheet row reads `Kebbi`. `source_anomaly = 'LPG_12_5KG_KEBBI_LABELLED_TARABA'`; published text kept in `geography_raw_label`. No global Taraba->Kebbi rule. |
 | National row labelled `Grand Total`, not `Average` | LPG 2026-02, 2026-03, 2026-04 | Both labels classify as `NATIONAL` -> `Nigeria` (D-27). The main table ends at the first row that classifies national, never at a literal word. |
 | Right-hand banner reads `12KG` | LPG `GAS PRICE WATCH JANUARY 2026_table.xlsx` | Published text preserved as provenance; the block is identified by order and cleaned as 12.5 kg (D-26). Never treated as a third cylinder product. |

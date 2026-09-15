@@ -363,7 +363,11 @@ Every key field is displayed above, and the geography fields follow the model ex
 in a state count.
 
 No release discriminator is needed: `State Transport` publishes only the release month, so
-`observation_month = release_month` on every row.
+`observation_month = release_month` on every row. `release_month` is retained as a column for
+provenance and symmetry with the other tables, but is deliberately **not** part of the logical key.
+
+**Grain.** 5 modes × 38 geographies (37 states/FCT + `Grand Total`) × 1 period = **190 rows per
+release**, **3,230** across the 17 releases 2025-01 … 2026-05.
 
 `transport_mode_raw` (the original header sentence) is carried but omitted above for width.
 
@@ -382,6 +386,15 @@ No release discriminator is needed: `State Transport` publishes only the release
 > Both cells carry the **identical** label `Average of Mar-24`, so `source_period_label` cannot tell
 > them apart. `B2` is genuinely March 2024; `D2` is March 2025 mislabelled. The cell reference
 > disambiguates them; the wrong label is preserved verbatim on both.
+
+**Grain.** 5 modes × 7 geographies (1 national + 6 zones) × 3 periods = **105 rows per release**,
+**1,785** across the 17 releases. Periods are taken from columns 2, 3 and 4 **by position** — year-ago,
+prior month, current month — never from the header text.
+
+**Cross-sheet reconciliation.** The `NATIONAL` current-month fare in this table and the `Grand Total`
+in `transport_fare_state_monthly` are the same figure reached independently. They are asserted equal
+within a relative tolerance of 1e-12: 85 comparisons, 45 byte-identical, 40 precision-only, 0
+substantive.
 
 ---
 

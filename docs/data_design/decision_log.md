@@ -673,6 +673,57 @@ says.**
 
 ---
 
+## D-28 — Transport's release month comes from the sheet name, cross-checked, never from the current-month header
+
+**Decision.** `release_month` is parsed from the zone sheet's name (`Transport March 2025`) and
+cross-checked against column 3's label plus one month. If the two disagree, the run stops. The
+current-month header (column 4) is never used to derive the release month.
+
+**Evidence.** Across the 17 releases the sheet name is correct **17/17** and column 3 + 1 month is
+correct **17/17**, and the two agree with each other everywhere. Column 4's label is correct only
+**16/17**: `TRANSPORT_COST_Watch_MAR_2025.xlsx` prints `Average of Mar-24` in both column 2 **and**
+column 4. Taking the maximum parsed header there yields 2025-02 — a whole release filed under the
+wrong month, silently.
+
+That column 4 really is March 2025 was verified numerically, not assumed: its 35 values match the
+April 2025 release's `Average of Mar-25` column **35/35**, while column 2 matches it **0/35** and sits
+at the same magnitude as April's `Average of Apr-24`. Column 3 matches the February release's own
+month **35/35**.
+
+**Rejected alternative.** Trusting the sheet name alone. It is right in all 17 here, but three
+datasets in this project have already had a name or title falsified by a later release — petrol's
+member filename, petrol's title row, diesel's period day. A second independent signal costs nothing
+and converts a trusted string into a checked one.
+
+**Consequence.** This is the fourth dataset where a rule written around a literal label was falsified
+by the source. The habit now generalises across the project: **derive a period from position and
+structure, corroborate it with a second signal, and keep the published text as provenance.**
+
+---
+
+## D-29 — The two Transport sheets are reconciled against each other as a hard check
+
+**Decision.** For every release and transport mode, the zone sheet's `NATIONAL` current-month fare
+must equal the `State Transport` `Grand Total` within a relative tolerance of **1e-12**. A breach
+fails the run.
+
+**Evidence.** The two sheets are parsed by entirely separate code paths — one walks nested mode blocks
+down a single column, the other unpivots five mode columns across state rows — yet they publish the
+same national figure. Across all 85 comparisons (5 modes × 17 releases): **45 byte-identical, 40
+precision-only, 0 substantive**, with a largest relative difference of **6.6e-16**, one or two units
+in the last place of a double.
+
+**Rejected alternative.** Exact equality. It would fail on 40 of 85 comparisons for differences of a
+few parts in 10^16 — a rendering artefact of double precision, not disagreement. Rejecting the check
+entirely would be worse: it is the only place in this project where two independently parsed tables
+assert the same number, and it would catch a mode mis-mapping, a block-boundary error or a column
+mix-up in either sheet.
+
+**Consequence.** A structural error in either parser is caught by the other. The tolerance is the same
+1e-12 already used for diesel and LPG, so "substantive" means the same thing across the project.
+
+---
+
 ## Open items carried into Phase 6
 
 1. **`xlrd` is not installed**, so `CPI_Report_March_2026.zip` (legacy `.xls`) could not be read during
@@ -709,3 +760,16 @@ says.**
    state-level extremes are ever wanted across fuels, the three would need reconciling.
 12. **Seven 2025 months would lose Kebbi entirely from 12.5 kg without the §4a correction** — the
    state is absent from both the main table and the callouts in 2025-06 … 2025-12.
+13. **Transport is the only dataset whose two tables reconcile against each other** (D-29). No
+   equivalent cross-check exists for food or CPI; worth considering whether one can be constructed
+   when those are cleaned.
+14. **`NASSARAWA` has now been observed in CPI, diesel, petrol and transport.** The alias was
+   harvested from the raw files rather than authored, which is why each new appearance resolves
+   without a code change.
+15. **Technical debt - the fault-injection harness re-hashes the whole raw corpus per case.** Each
+   injected case calls the full validator, whose final check SHA-256s all 342 acquired raw files
+   (~1.6 GB). With 17 cases that is roughly 27 GB of hashing per run, and the Transport suite takes
+   several minutes as a result. The fix is to verify raw integrity **once per run** in a shared
+   harness and let individual cases reuse that verified result, except where a case deliberately
+   targets raw-integrity logic and must re-run it. Noted during Transport; **not implemented in that
+   commit** so the change is reviewed on its own rather than mixed into a dataset delivery.
