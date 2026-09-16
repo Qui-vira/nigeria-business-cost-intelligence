@@ -1,0 +1,2 @@
+draws,seed,observed_max_metrics,null_mean_max,p_max,observed_n_ge3,null_mean_n_ge3,p_ge3,set_sizes,permuted,preserved,p_rule
+10000,20260916,3,3.1135,0.9,4,1.8672,0.0724,"[1, 0, 1, 0, 7, 7, 7, 9, 3]",membership of each metric's persistent-high set,"set sizes, metric count, jurisdiction count","mean(null_statistic >= observed_statistic), one-sided upper tail"

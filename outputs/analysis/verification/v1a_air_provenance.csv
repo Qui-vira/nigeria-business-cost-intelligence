@@ -1,0 +1,6 @@
+observation_month,release_month,source_file,source_member,source_sheet,source_column_index,rows,geographies,min_row,max_row,distinct_period_labels,period_label
+2025-10-01,2025-10-01,Transport_Report_October_2025.zip,TRANSPORT_COST_Watch_OCT_2025.xlsx,State Transport,2,38,38,2,39,1,Transport October 2025
+2025-11-01,2025-11-01,Transport Fare Watch Report Nov_Dec_2025.zip,TRANSPORT COST Watch NOV_2025_.xlsx,State Transport,2,38,38,2,39,1,Transport November 2025
+2025-12-01,2025-12-01,Transport Fare Watch Report Nov_Dec_2025.zip,TRANSPORT COST Watch DEC_2025_.xlsx,State Transport,2,38,38,2,39,1,Transport December 2025
+2026-01-01,2026-01-01,Transport_report_JAN_2026.zip,TRANSPORT_COST_Watch_JAN_2026.xlsx,State Transport,2,38,38,2,39,1,Transport January 2026
+2026-02-01,2026-02-01,Transport_report_FEB_2026.zip,TRANSPORT_COST_Watch_FEB_2026.xlsx,State Transport,2,38,38,2,39,1,Transport February 2026
