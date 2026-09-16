@@ -254,7 +254,7 @@ The distinction is exact, and it determines the primary keys:
 | `transport_fare_state_monthly` | `State Transport` |
 | `cooking_gas_extreme_callout` | extremes blocks |
 
-`fx_nfem_daily` and `electricity_tariff_disco_monthly` are not built from monthly NBS releases and are
+`fx_nfem_daily` and `electricity_tariff_disco_period` are not built from monthly NBS releases and are
 outside this rule entirely.
 
 **WHY IT MATTERS** — Naively stacking the overlapping tables produces several rows per month that look
@@ -1126,63 +1126,125 @@ loudly for review rather than passing silently.
 
 ---
 
-## 8. NERC electricity tariffs — extraction design only
+## 8. NERC electricity tariffs
 
-**RAW PROBLEM** — **178 of 217 PDFs are image-only scans** with no text layer, including **all 55 of
-the 2026 orders**. Of the 39 text-based files, some are themselves prior OCR output with errors baked
-in (`IN THE MAilER OF`, `ORDER/NERC/2025/o03` with a letter *o* for zero, `A- . roved`). Table
-extraction quality is uneven: `IE_July_2025_064.pdf` has clean vector tables, `AEDC_February_2025_003.pdf`
-has text but no vector table structure. Effective dates are written in prose. Orders are issued per
-**DisCo**, whose licence areas do not map one-to-one to states.
+> **What the processed dataset is.** *A validated July 2025 cross-section of complete
+> text-extractable NERC MYTO tariff tables.* It is **not** a complete 2025–2026 NERC tariff history
+> and must never be described as one. 11 of 217 acquired orders are processed; the other 206 remain
+> outside processed tariff coverage until separately validated.
 
-**WHY IT MATTERS** — OCR digit errors on a tariff are silent and severe: `225.50` misread as `225.S0`
-or `226.50` changes a cost conclusion with no visible sign of failure.
+**RAW PROBLEM** — A MYTO supplementary order is an 11–25 page PDF with a stable skeleton, but the
+tariff table survives into the PDF's own text layer in only a small minority of them. Measured across
+all 217 files, examining **every** page that carries a tariff heading:
 
-**CLEANING RULE — future workflow, not executed now**
+| Tariff-table state in the text layer | Orders | Processed |
+|---|---|---|
+| **Complete — every class, every cell** | **11** | **yes** |
+| Partial — classes or cells lost | 27 | no |
+| Heading present, zero rows (`JED-MYTO-APR-2025.pdf`) | 1 | no |
+| No usable tariff-table text | 178 | no |
+| **Total PDFs acquired** | **217** | |
 
-1. **Route by file type.** Detect a text layer first. Use direct text/table extraction for the 39
-   text-based orders; OCR only the 134 scans. Record which path was used in `extraction_method`.
-2. **Locate the tariff table** by searching for the heading pattern
-   `Table 2 … Approved … Tariffs … (₦/kWh)`, expected on page 3 or 4, and record `source_page`.
-3. **Extract** `customer_class` (R1, R2, C1, D1, A1, MD1, MD2), `service_band` (A–E) and
-   `tariff_ngn_per_kwh`.
-4. **OCR safeguards:**
-   - retain per-value `ocr_confidence`; anything below a threshold is auto-flagged
-   - reject any tariff that fails a numeric sanity range agreed before extraction
-   - run two independent OCR passes and compare; disagreement on a digit forces manual review
-   - flag values containing characters that are common OCR confusions (`O`/`0`, `S`/`5`, `l`/`1`)
-   - compare each DisCo's month-on-month tariff change; an implausible jump is flagged, not accepted
-5. **Validation status gate — 100% human validation, no sampling.** Every extracted tariff starts
-   `UNVALIDATED`. A value may enter analysis only after a person has compared **that individual value**
-   against the original PDF page and set `VALIDATED`. A mismatch sets `REJECTED`.
+A further **22** files named `*_HOLDCO_YSS_*` (August and September 2026) are recorded
+`DOCUMENT_TYPE_UNVERIFIED`. They are image-only, so their document type cannot be read from their own
+content, and the acquisition metadata calling them "MYTO" is not evidence. They are not ingested.
 
-   **This is deliberately the stricter of the two rules considered.** An earlier draft allowed a
-   stratified sample plus 100% of low-confidence values; that is rejected. Sampling is a reasonable
-   control when errors are random, but OCR digit errors are neither random nor self-announcing:
-   `225.50` read as `226.50` carries high confidence, passes every automated check, and silently
-   changes a cost conclusion. A sample that misses it certifies the rest of the batch as sound.
+**WHY IT MATTERS** — A partial table is more dangerous than a missing one. It looks complete.
 
-   The automated checks in step 4 are **triage, not substitutes for validation.** They decide what to
-   look at first, not what can skip being looked at.
+### 8a. The order's own structure
 
-   **Cost, stated honestly:** 217 orders, each with a tariff grid of roughly one row per customer class
-   and band. This is a large manual workload and it is the main reason NERC is sequenced last. If that
-   workload proves unaffordable, the correct response is to **narrow the scope** — fewer DisCos, or
-   fewer months, fully validated — not to lower the bar to sampling. A smaller trustworthy dataset is
-   worth more than a complete unverified one.
-6. **No state mapping.** `state` is deliberately absent from the NERC schema. Any future DisCo-to-state
-   mapping must be a separately authored, separately verified reference table with its own
-   documentation — and even then, DisCo areas cross state boundaries, so it can never be exact.
+| Page | Content | Canonical? |
+|---|---|---|
+| 1 | Order number, DisCo, `COMMENCEMENT AND TERMINATION` clause | provenance + effective date |
+| 2–3 | **Table 1 — Key Tariff Review Indices** | **no** — model assumptions, in ₦/kWh |
+| 3 or 4 | **Table 2 — Approved Allowed Tariffs (₦/kWh)** | **yes** |
+| ~6 | **Table 3 — Monthly DisCo Remittance Obligation** | **no** — ₦'Million |
+| ~7 | Signature page | image in all 11 processed orders |
+| ~8 | Appendix 1: band → class → minimum supply hours | reference |
+| 9+ | Feeder appendices | separate grain, out of scope |
 
-**EXPECTED CLEAN OUTPUT** — `electricity_tariff_disco_monthly` at DisCo × effective month × customer
-class × band, with provenance, extraction method, confidence and validation status on every row.
+Table 2 is a **history table**: rows are tariff classes, **columns are period ranges**
+(`Apr 2024` · `May – Jun 2024` · `Jul 2024 – Jul 2025`). One order therefore publishes three
+tariffs per class, only one of which it puts into force.
 
-**VALIDATION CHECK** — Every row traceable to a `source_file` and `source_page`. No `VALIDATED` row
-without a recorded human check, and **no row enters analysis while `UNVALIDATED`** — the analysis view
-filters on `validation_status = 'VALIDATED'`, so an unchecked tariff is invisible to downstream work
-rather than quietly included. Coverage reconciles against `docs/acquisition/nerc_myto_coverage.csv`:
-217 orders, 12 DisCos, and the 15 known missing DisCo-months stay missing. Aba Power (APLE) has no
-order after February 2025 and is absent from every month of the 2026-09-13 extension.
+**CLEANING RULE**
+
+1. **The processed set is an explicit allow-list of 11 filenames, not a filter.** Nothing is admitted
+   by pattern, by month or by directory scan.
+2. **Route per page, never per file** (D-38). A file's character count says nothing about its tariff
+   page: `AEDC_AUG_2025_MYTO.pdf` carries 33 KB of text and an image-only tariff table, because its
+   feeder appendices are text and its order body is not.
+3. **Prove which table was read** (D-41). Locate the Table 1 and Table 3 captions, assert both sit on
+   pages other than the tariff page, and record the Table 2 caption verbatim on every row. A ₦/kWh
+   figure is not a tariff because it is a number in the right unit.
+4. **Require the DisCo's exact class structure; a partial table fails the order** (D-40). Every
+   expected class present, no unexpected class, every class carrying exactly three values, no blanked
+   cell. Never emit partial records.
+5. **The effective date comes only from the `COMMENCEMENT AND TERMINATION` clause** (D-39). Never the
+   filename month, never `nerc_myto_coverage.csv`'s assumed `effective_date`, never the website
+   publication date, never the first `effective from` in the document. If it cannot be resolved, fail
+   the order.
+6. **Keep all three period columns** (D-42), each with a parsed `period_start`/`period_end`, the
+   published header in `period_label_raw`, and `is_current_period` marking the column whose end month
+   equals the effective month. Repeated historical columns are never counted as new tariff changes.
+7. **Preserve the full tariff class.** Never collapse to service band. `service_band` and `mdclass` are
+   stored separately and are *derived from the published label*, never invented.
+8. **Never fabricate a class a DisCo does not publish.** YEDC has no Band E; a check asserts no Band E
+   row exists for it.
+9. `vat_treatment` is the constant `UNSTATED` (D-43).
+10. Resolve every DisCo through `ref_disco.csv`. **No DisCo is mapped to a state** — licence areas
+    cross state boundaries.
+11. Preserve `order_number_raw`; canonicalise only when the value matches `ORDER/NERC/YYYY/NNN`
+    exactly. An OCR-corrupted order number is never guessed.
+12. Preserve impossible published dates as evidence with an anomaly flag; never silently repair them.
+
+### 8b. The five orders rejected by name
+
+Previously classified as complete on a row-count heuristic. They are not complete, and none is
+processed:
+
+| Rejected order | Verified defect |
+|---|---|
+| `AEDC_February_2025_003.pdf` | `Life-line` carries no values; `B - MD2` has 2 of 3 |
+| `IE_February-2025_008.pdf` | `Life-line` blanked to underscores; `C - MD1` has 2 of 3 |
+| `AEDC-MYTO-APR-2025.pdf` | `A - MD1` and `B - MD1` labels absent, values merged into the preceding row; `Life-line` has 2 of 3 |
+| `EEDC-MYTO-APR-2025.pdf` | `E - MD1` label absent, values merged into `E - Non-MD` |
+| `IE-MYTO-APR-2025.pdf` | `E - MD1` label absent and merged; `A - MD1` and `A - MD2 Special` each 2 of 3 |
+
+The April failures are the worse kind: **where a label is lost the values are not**, they merge into
+the row above. `AEDC-MYTO-APR-2025.pdf` p4 prints
+`A - Non-MD 225.00 206.80 209.50 225.00 206.80 209.50` — its own triple followed by `A - MD1`'s. An
+extractor taking the first three numbers after each label emits a complete-looking 15-row table with
+two classes silently deleted and no gap to notice.
+
+### 8c. Tariff-class structure, per DisCo
+
+| Classes | DisCos | Note |
+|---|---|---|
+| 17 | AEDC, IE | includes `A - MD2 Special` |
+| 16 | BEDC, EEDC, EKEDP, IBEDC, JED, KAEDC, KEDCO, PHED | |
+| 13 | YEDC | **publishes no Band E at all** |
+
+Bands carry a published minimum daily supply: A 20 hrs, B 16, C 12, D 8, E 4; `Life-line` is R1,
+consumption ≤ 50 kWh/month.
+
+**EXPECTED CLEAN OUTPUT** — 17 + 17 + 13 + (8 × 16) = **175 complete tariff classes**, × 3 period
+columns = **525 tariff records**. Logical key
+`(source_file, disco_code, tariff_class, period_start, period_end)`.
+
+**VALIDATION CHECK** — 28 checks, the load-bearing ones being:
+
+- exactly 11 orders, all from the allow-list, all effective 2025-07-01;
+- none of the five named rejected orders and no `HOLDCO_YSS` file in the output;
+- exactly 175 classes and exactly 525 records — any deviation fails;
+- no Band E row for YEDC;
+- three distinct period spans, 175 current-period rows, and no historical column ever marked current;
+- the effective date differs from the website publication date on every row (2025-07-01 vs 2025-08-28);
+- no signing date invented where the signature page is not in the text layer;
+- `vat_treatment` is `UNSTATED` everywhere;
+- every written tariff re-reads identically from its source page;
+- the corpus classification still reads 11 / 27 / 1 / 178, so processed coverage cannot be quietly
+  overstated.
 
 ---
 
@@ -1218,5 +1280,12 @@ clean row records what was done.
 | Reported sheet extents of 50–51 rows and up to 12 columns | every food release | Formatting residue only — no content below row 43 or right of column 8. Tables sized from content, never from `max_row` / `max_column` |
 | Legacy `.xls` in a subfolder | `CPI_Report_March_2026.zip` | Requires `xlrd`; if unreadable, recorded MISSING |
 | 69,411 `#REF!` cells | 5 CPI workbooks, mostly `Table1 (2)` | `NULL` + `value_status = 'SOURCE_ERROR_REF'`; working sheets quarantined |
-| OCR text corruption | 39 text-based NERC PDFs | Flagged, dual-pass compared, human-validated |
-| No text layer | 134 NERC PDFs | OCR path with confidence scoring and validation gate |
+| OCR text corruption in the PDF text layer | NERC orders with a text layer | Not repaired. `KAEDC_NOV_2025_130.pdf` p9 reads `Musi!iu 0. OsP.ri`; `YEDC_MYTO_December_2025.pdf` reads `EFfective Date` and `1~ December 2025`. None is in the processed set |
+| **Tariff class lost from the text layer, values merged into the row above** | `AEDC-MYTO-APR-2025.pdf`, `EEDC-MYTO-APR-2025.pdf`, `IE-MYTO-APR-2025.pdf` p4 | Order rejected outright (D-40). `A - Non-MD 225.00 206.80 209.50 225.00 206.80 209.50` is its own triple plus `A - MD1`'s |
+| **Tariff cell blanked to underscores** | `AEDC_February_2025_003.pdf`, `IE_February-2025_008.pdf` p4 | Order rejected outright; `Life-line _______________` is not a value |
+| Impossible published signing date | `EEDC_February_2025_006.pdf` reads `Dated this 30th day of February 2025`; `KAEDC_February-2025_010.pdf` carries a December 2025 signing date on a February 2025 order | Preserved verbatim with an anomaly flag, never repaired. Neither file is in the processed set |
+| Signature page is an image | all 11 processed orders, page 7 | `order_signed_date` left empty with `signing_date_status = 'NOT_IN_TEXT_LAYER'`; never inferred from the effective month |
+| OCR-corrupted order number | `ORDER/NERC/2025/o03`, `ORDER/NERC/2025/ol`, bare `ORDER/NERC/2025/O` | `order_number_raw` preserved; `order_number` left empty unless it matches `ORDER/NERC/YYYY/NNN` exactly |
+| Document type not verifiable from content | 22 `*_HOLDCO_YSS_*` files, Aug and Sept 2026 | `DOCUMENT_TYPE_UNVERIFIED`; never ingested (D-45). The acquisition metadata calling them MYTO is not evidence |
+| One DisCo under three filename tokens | `EKEDP`, `EKEDC` (Apr 2025), `EKO` (Jun 2025) | Resolved through `ref_disco.csv`; `disco_raw_label` preserved |
+| No usable tariff-table text | 178 NERC PDFs | Outside processed coverage. An OCR path with confidence scoring and a 100% human-validation gate remains the design for any future extension; none was run for dataset #7 |

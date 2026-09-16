@@ -13,10 +13,9 @@ Every table is **long**: one row per observation, with the period in a column ra
 
 **On the example values below**
 
-Values marked **[real]** were read from the raw files during profiling and are reproduced unchanged.
-Values marked **[illustrative]** are invented to show the shape of a table that has not been built yet
-— this applies to the whole NERC schema, since no PDF has been extracted. Provenance columns are
-present on every table but usually omitted from the examples for width.
+Values marked **[real]** were read from the raw files and are reproduced unchanged. Values marked
+**[illustrative]** are invented to show the shape of a table that has not been built yet. Provenance
+columns are present on every table but usually omitted from the examples for width.
 
 ---
 
@@ -79,7 +78,7 @@ for provenance but is not needed for uniqueness:
 | `transport_fare_state_monthly` | `State Transport` carries the current month only |
 | `cooking_gas_extreme_callout` | Extremes blocks describe the current month only |
 | `fx_nfem_daily` | A single API snapshot, not a monthly release |
-| `electricity_tariff_disco_monthly` | One order per DisCo per effective month |
+| `electricity_tariff_disco_period` | One order per DisCo per effective month, each publishing three period columns |
 
 `is_primary_release` remains on the overlapping tables as a **convenience flag**
 (`observation_month = release_month`). It is never part of a key and is never relied upon to
@@ -544,22 +543,70 @@ date uniqueness is enforced only across the 419 `ACTIVE` ones.
 
 ## 8. NERC electricity tariffs
 
-### `electricity_tariff_disco_monthly` — **DESIGN ONLY, NOT BUILT**
+Built by `src/cleaning/clean_nerc_tariffs.py`. DisCos resolve through
+`data/reference/ref_disco.csv`.
 
-All values below are **[illustrative]**. No PDF has been extracted.
+> **What this table is.** *A validated July 2025 cross-section of complete text-extractable NERC MYTO
+> tariff tables* — 11 of 217 acquired orders. It is **not** a complete 2025–2026 NERC tariff history.
+> The other 206 orders are outside processed coverage: 27 partial, 1 heading-only, 178 with no usable
+> tariff text, plus 22 `HOLDCO_YSS` files whose document type is unverified (D-45).
 
-| disco | effective_month | order_identifier | customer_class | service_band | tariff_ngn_per_kwh | source_page | extraction_method | ocr_confidence | validation_status |
-|---|---|---|---|---|---|---|---|---|---|
-| IE | 2025-07-01 | ORDER/NERC/2025/064 | R2 | A | 225.0000 *[illustrative]* | 4 | TEXT_LAYER | *NULL* | VALIDATED |
-| IE | 2025-07-01 | ORDER/NERC/2025/064 | C1 | B | 210.5000 *[illustrative]* | 4 | TEXT_LAYER | *NULL* | UNVALIDATED |
-| KEDCO | 2026-05-01 | *(to be extracted)* | R2 | A | 231.0000 *[illustrative]* | 9 | OCR | 0.9640 | UNVALIDATED |
+### `electricity_tariff_disco_period`
 
-**Primary key:** `(disco, effective_month, customer_class, service_band)`
+| disco_code | tariff_class | service_band | mdclass | tariff_ngn_per_kwh | period_start | period_end | period_label_raw | is_current_period | order_effective_date | vat_treatment |
+|---|---|---|---|---|---|---|---|---|---|---|
+| IE | A - Non-MD | A | NON_MD | 225.00 **[real]** | 2024-04-01 | 2024-04-30 | `Apr 2024` | FALSE | 2025-07-01 | UNSTATED |
+| IE | A - Non-MD | A | NON_MD | 206.80 **[real]** | 2024-05-01 | 2024-06-30 | `May – Jun 2024` | FALSE | 2025-07-01 | UNSTATED |
+| IE | A - Non-MD | A | NON_MD | 209.50 **[real]** | 2024-07-01 | 2025-07-31 | `Jul 2024 – Jul 2025` | **TRUE** | 2025-07-01 | UNSTATED |
+| IE | Life-line | LIFELINE | NON_MD | 4.00 **[real]** | 2024-07-01 | 2025-07-31 | `Jul 2024 – Jul 2025` | **TRUE** | 2025-07-01 | UNSTATED |
+| YEDC | D - MD2 | D | MD2 | 54.93 **[real]** | 2024-07-01 | 2025-07-31 | `Jul 2024 – Jul 2025` | **TRUE** | 2025-07-01 | UNSTATED |
 
-One DisCo publishes a grid of tariffs each month, one per customer class and service band. A duplicate
-most likely means the same tariff table was parsed from two pages.
+**Logical key:** `(source_file, disco_code, tariff_class, period_start, period_end)` — **525 rows**.
 
-> **`state` is deliberately absent.** DisCo licence areas cross state boundaries.
+**One row is one published tariff for one class over one period**, not one rate per DisCo-month.
+Table 2 is a history table: rows are tariff classes, **columns are period ranges**. A single order
+publishes three tariffs per class and puts one of them into force, so `source_file` is in the key —
+without it two orders restating the same period would collide.
+
+`is_current_period` is TRUE where `period_end`'s month equals `order_effective_date`'s month. It is a
+selection convenience, never a substitute for the period columns: **the two historical columns are
+restatements, not monthly tariff changes**, and must not be counted as such (D-42).
+
+### Arithmetic
+
+| | |
+|---|---|
+| Orders processed | 11 |
+| Tariff classes | 17 (AEDC) + 17 (IE) + 13 (YEDC) + 8 × 16 = **175** |
+| Period columns per class | 3 |
+| **Tariff records** | 175 × 3 = **525** |
+| Current-period records | 175 |
+
+**YEDC publishes no Band E.** Its Table 2 has 13 classes and ends at `D - MD2`; no Band E row is
+fabricated for it. AEDC and IE publish a 17th class, `A - MD2 Special`, that the other eight do not.
+`service_band` and `mdclass` are split out of the published `tariff_class` and are never invented;
+`tariff_class_raw` keeps the label exactly as the page printed it, en dash and all.
+
+### Dates — three columns, never conflated
+
+| Column | Source | Value across the 11 |
+|---|---|---|
+| `order_effective_date` | `COMMENCEMENT AND TERMINATION` clause only (D-39) | 2025-07-01 |
+| `order_signed_date` | `Dated this …` signature block | *empty* — page 7 is an image in all 11 |
+| `website_publication_date` | NERC site, via `nerc_myto_coverage.csv` | 2025-08-28 |
+
+`signing_date_status` records **why** a signing date is absent (`NOT_IN_TEXT_LAYER`), and the row is
+flagged `SIGNING_PAGE_NOT_IN_TEXT_LAYER`. Nothing is inferred from the effective month. Impossible
+published dates found elsewhere in the corpus — `EEDC_February_2025_006.pdf` prints *"Dated this 30th
+day of February 2025"* — are preserved with an anomaly flag rather than repaired, wherever they are
+encountered.
+
+> **`state` is deliberately absent.** DisCo licence areas cross state boundaries (D-44), so
+> `ref_disco.csv` records `state_mapping = 'NOT_MAPPED'` for every DisCo and this table cannot be
+> joined to the state-level datasets.
+>
+> **`vat_treatment` is `UNSTATED` on every row.** The orders approve tariffs in ₦/kWh and say nothing
+> about VAT; nothing is inferred (D-43).
 >
 > **Every tariff requires individual human validation before use** — not a sample. Only rows with
 > `validation_status = 'VALIDATED'` may enter analysis. See D-12.
@@ -582,7 +629,7 @@ most likely means the same tariff table was parsed from two pages.
 | `cpi_index_monthly` | `release_month, observation_month, coverage, index_name, measure, index_base, is_working_sheet` | NATIONAL/URBAN/RURAL |
 | `cpi_state_index_monthly` | `release_month, observation_month, state, index_name, measure` | STATE |
 | `fx_nfem_daily` | `source_id` *(unique `observation_date` among ACTIVE rows)* | NATIONAL |
-| `electricity_tariff_disco_monthly` | `disco, effective_month, customer_class, service_band` | DISCO |
+| `electricity_tariff_disco_period` | `source_file, disco_code, tariff_class, period_start, period_end` | DISCO |
 | `ref_state_zone` | `alias_normalised` | STATE |
 
 Four geographic levels are preserved deliberately. They are **not** flattened into a single state

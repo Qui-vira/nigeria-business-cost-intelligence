@@ -1,0 +1,13 @@
+﻿disco_code,disco_official_name,observed_aliases,alias_variant_count,alias_normalised_keys,state_mapping,notes
+AEDC,Abuja Electricity Distribution Plc,AEDC | ABUJA,2,abuja | abuja electricity distribution plc | aedc,NOT_MAPPED,"Title page reads ABUJA ELECTRICITY DISTRIBUTION PLC. Licence area spans the FCT and parts of Niger, Kogi and Nasarawa."
+APLE,Aba Power Limited Electric,APLE,1,aba power limited electric | aple,NOT_MAPPED,Only one order in the corpus (February 2025). Not in the processed scope; class structure unverified.
+BEDC,Benin Electricity Distribution Plc,BEDC | BENIN,2,bedc | benin | benin electricity distribution plc,NOT_MAPPED,Licence area spans several states.
+EEDC,Enugu Electricity Distribution Plc,EEDC | ENUGU,2,eedc | enugu | enugu electricity distribution plc,NOT_MAPPED,Licence area spans several states.
+EKEDP,Eko Electricity Distribution Plc,EKEDP | EKEDC | EKO,3,ekedc | ekedp | eko | eko electricity distribution plc,NOT_MAPPED,"Three filename tokens for one DisCo: EKEDC appears only in the April 2025 filename, EKO only in June 2025."
+IBEDC,Ibadan Electricity Distribution Plc,IBEDC | IBADAN,2,ibadan | ibadan electricity distribution plc | ibedc,NOT_MAPPED,Licence area spans several states.
+IE,Ikeja Electric Plc,IE | IKEJA,2,ie | ikeja | ikeja electric plc,NOT_MAPPED,Title page reads IKEJA ELECTRICITY DISTRIBUTION PLC; the order text abbreviates it to Ikeja Electric Plc.
+JED,Jos Electricity Distribution Plc,JED,1,jed | jos electricity distribution plc,NOT_MAPPED,Licence area spans several states.
+KAEDC,Kaduna Electricity Distribution Plc,KAEDC | KADUNA,2,kaduna | kaduna electricity distribution plc | kaedc,NOT_MAPPED,Licence area spans several states.
+KEDCO,Kano Electricity Distribution Plc,KEDCO | KANO,2,kano | kano electricity distribution plc | kedco,NOT_MAPPED,Licence area spans several states.
+PHED,Port Harcourt Electricity Distribution Plc,PHED | PORTHARCOURT,2,phed | port harcourt electricity distribution plc | portharcourt,NOT_MAPPED,Licence area spans several states.
+YEDC,Yola Electricity Distribution Plc,YEDC | YOLA,2,yedc | yola | yola electricity distribution plc,NOT_MAPPED,"Publishes no Band E tariff class; its Table 2 has 13 classes, not 16."

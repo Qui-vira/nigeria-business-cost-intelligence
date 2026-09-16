@@ -265,8 +265,12 @@ One row = one trading day, nationally. **No state dimension at all.**
 | Text-based — parseable today | **39** |
 | **All 55 of the 2026 orders** | **image-only** |
 
-The 39 text-based orders are the February, April, May and July 2025 batches plus APLE February 2025.
-Every other month, and the whole of 2026, is a scan.
+> **Superseded by the dataset #7 build (D-38).** The counts above were taken over 173 files at
+> profiling time and measured the wrong thing: whether a *file* has a text layer, not whether its
+> *tariff table* does. Re-measured over all 217 files, examining every page carrying a tariff
+> heading: **11 complete tariff tables, 27 partial, 1 heading-only, 178 with no tariff text.** 89
+> files carry some text layer — including 33 of the 2026 orders, whose one text page is the
+> effective-date page, never the tariff table. Routing is per page, not per file.
 
 **Document structure (from the text-based sample: AEDC 2025-01, IE 2025-07, PHED 2025-11,
 EKEDP 2026-01, KEDCO 2026-05 — 5 DisCos, 5 months, both years):**

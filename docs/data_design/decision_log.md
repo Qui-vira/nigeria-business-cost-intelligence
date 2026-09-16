@@ -85,7 +85,7 @@ dashboard. A future analyst who never reads this file still cannot lose the rest
 
 ## D-04 — NERC stays at DisCo level
 
-**Decision.** `electricity_tariff_disco_monthly` has no `state` column. None will be derived in the
+**Decision.** `electricity_tariff_disco_period` has no `state` column. None will be derived in the
 cleaning phase.
 
 **Evidence.** NERC issues one MYTO supplementary order per **distribution company**, confirmed across
@@ -293,12 +293,14 @@ unaffordable, the correct response is to **narrow scope** — fewer DisCos or fe
 validated — rather than to lower the bar. A smaller trustworthy dataset is worth more than a complete
 unverified one, particularly in a portfolio project whose value is its defensibility.
 
-**Evidence.**
-- 178 of 217 orders are image-only scans requiring OCR, including every 2026 order.
-- Of the 39 text-based orders, several are themselves prior OCR output with errors already baked in:
+**Evidence.** *(counts corrected during the dataset #7 build - see D-38)*
+- Measured across every page carrying a tariff heading: **11** orders have a complete tariff table in
+  the text layer, **27** are partial, **1** is heading-only and **178** have no tariff text at all.
+  89 files carry *some* text layer, but a text layer is not a tariff table.
+- Several text layers are themselves prior OCR output with errors already baked in:
   `IN THE MAilER OF`, `ORDER/NERC/2025/o03` (letter *o* for zero), `A- . roved Allowed Tariffs`.
-- Table extraction quality is uneven even among text-based files: `IE_July_2025_064.pdf` has clean
-  vector tables; `AEDC_February_2025_003.pdf` has text but no table structure.
+- Quality is uneven even within one file: `AEDC_AUG_2025_MYTO.pdf` has 33 KB of text, an image-only
+  tariff page, and fully text feeder appendices.
 
 **Consequence.** An OCR digit error in a tariff is silent and severe — `225.50` misread as `226.50`
 changes a cost conclusion with nothing to signal the failure. Dual-pass OCR comparison, confidence
@@ -939,6 +941,195 @@ datasets into a reason for suspicion.
 **Consequence.** No already-processed petrol, diesel or transport output changes: the rule text was
 wrong, the data was not. Discovered during Food inspection and corrected before the Food cleaner was
 written.
+
+---
+
+## D-38 — NERC extraction routes per page, never per file
+
+**Decision.** The tariff table is located by caption and the *page* carrying it is then tested for
+extractable text. A file-level character count, text-layer flag or producer string never decides
+whether an order can be processed.
+
+**Evidence.** `AEDC_AUG_2025_MYTO.pdf` carries 33 KB of text and would pass any file-level test — but
+pages 1–8, including Table 2, are image-only and leak nothing but stray `₦` glyphs, while pages 9–25
+(feeder appendices) are full text. The reverse also occurs: 33 of the 2026 orders carry a one-page
+text layer, and that page is always the effective-date page, never the tariff table.
+
+**Rejected alternative.** The earlier approved rule, *"Route by file type. Detect a text layer first.
+Use direct extraction for the 39 text-based orders; OCR only the 134 scans."* Both counts were wrong
+and the unit of routing was wrong. 89 files carry some text; only 11 carry a usable tariff table.
+
+**Consequence.** The measured corpus classification is 11 complete / 27 partial / 1 heading-only /
+178 no tariff text, and the cleaner re-measures it on every run so processed coverage cannot be
+quietly overstated.
+
+---
+
+## D-39 — The effective date comes only from the commencement clause
+
+**Decision.** `order_effective_date` is read from the `COMMENCEMENT AND TERMINATION` clause and
+nowhere else. The filename month, `nerc_myto_coverage.csv`'s `effective_date`, the website
+publication date and any other `effective from` in the document are all rejected as sources. If the
+clause cannot be resolved, the order fails.
+
+**Evidence.** `effective from` occurs three or more times in a typical order, meaning different
+things: `AEDC_July_2025_059.pdf` says *"MYTO–2024 effective from 1st January 2024"* (the base order),
+*"effective May 2025"* (a transmission-fund provision), then *"effective 1st July 2025"*. A
+first-match regex takes 2024. Separately, `nerc_myto_coverage.csv` sets `effective_date = month` on
+all 232 rows — that column is the acquisition step's inference from the filename, not a value read
+from any PDF, and it is not evidence.
+
+Three dates exist and none equals another: the 11 processed orders take effect **2025-07-01**, and
+NERC published them on its website on **2025-08-28**, two months later.
+
+**Rejected alternative.** Using the coverage CSV's `effective_date`, which is already computed and
+agrees with the filename. It agrees because both come from the same guess.
+
+**Consequence.** `order_effective_date`, `order_signed_date` and `website_publication_date` are three
+separate columns and are never conflated. A check asserts the first two differ from the third.
+
+---
+
+## D-40 — A partial tariff table fails the order; it is never published as partial records
+
+**Decision.** An order is processed only if its Table 2 matches the DisCo's expected class structure
+exactly: every class present, no unexpected class, every class carrying exactly three values, no
+blanked cell. Anything less fails that order. Five orders previously believed complete are rejected
+by name.
+
+**Evidence.** The five were classified complete by counting regex row-hits (≥13). Checked properly:
+
+| Order | Defect |
+|---|---|
+| `AEDC_February_2025_003.pdf` | `Life-line` has no values; `B - MD2` has 2 of 3 |
+| `IE_February-2025_008.pdf` | `Life-line` blanked to underscores; `C - MD1` has 2 of 3 |
+| `AEDC-MYTO-APR-2025.pdf` | `A - MD1`, `B - MD1` labels absent and merged; `Life-line` 2 of 3 |
+| `EEDC-MYTO-APR-2025.pdf` | `E - MD1` label absent and merged |
+| `IE-MYTO-APR-2025.pdf` | `E - MD1` absent and merged; `A - MD1`, `A - MD2 Special` 2 of 3 |
+
+The April failures are the decisive ones. **Where a class label is lost its values are not** — they
+merge into the row above. `AEDC-MYTO-APR-2025.pdf` p4 prints
+`A - Non-MD 225.00 206.80 209.50 225.00 206.80 209.50`: its own triple followed by `A - MD1`'s. An
+extractor taking the first three numbers after each label emits a complete-looking 15-row table with
+two classes silently deleted and nothing to notice.
+
+**Rejected alternatives.** *Emit the surviving classes, flagged.* The merged rows mean surviving
+values may belong to a different class than the label above them; a flag does not fix a wrong
+attribution. *Hand-transcribe the five.* Defensible — every row is human-validated anyway — but it
+was not authorised, and mixing transcription into an automated build makes the provenance of
+individual values harder to audit, not easier.
+
+**Consequence.** The processed dataset covers 11 of 217 orders and says so in its own header. It is
+*"a validated July 2025 cross-section of complete text-extractable NERC MYTO tariff tables"* and is
+never described as a 2025–2026 tariff history.
+
+---
+
+## D-41 — The excluded tables are excluded by proof, not by assumption
+
+**Decision.** The cleaner locates the Table 1 and Table 3 captions, asserts both sit on pages other
+than the tariff page, and records the Table 2 caption verbatim on every output row.
+
+**Evidence.** Table 1 (`Key Tariff Review Indices`) publishes `Weighted Average Cost Reflective
+Tariff` and `Weighted Average Allowed Tariff` **in ₦/kWh** — the same unit as a real tariff, on a
+neighbouring page, in a table whose caption also contains the word "Tariff". IE's July order gives
+114.7 ₦/kWh there, a plausible-looking number that belongs to no customer class. Table 3 is
+₦'Million. Being a number in the right unit is not evidence of being a tariff.
+
+**Rejected alternative.** Excluding by page number. The tariff table sits on page 3 in the February
+and April orders and page 4 in the July orders, so a fixed page would be wrong a third of the time
+even inside the small set examined.
+
+**Consequence.** Fault injection confirms that a Table 1 weighted average or a Table 3 remittance
+figure inserted into the output is caught, and that an order whose tariff page also carries an
+excluded caption is refused rather than guessed at.
+
+---
+
+## D-42 — All three published period columns are kept, and none is a monthly tariff change
+
+**Decision.** Table 2's three columns (`Apr 2024`, `May – Jun 2024`, `Jul 2024 – Jul 2025`) are all
+extracted, each with a parsed `period_start`/`period_end`, the published header preserved in
+`period_label_raw`, and `is_current_period` marking the column whose end month equals the order's
+effective month. Repeated historical columns are never counted as new tariff changes.
+
+**Evidence.** Table 2 is a history table, not a current-rate table: rows are classes, columns are
+period ranges, and the third column's end month tracks the order's own month (`Jul 2024 – Jul 2025`
+in a July order, `Jul 2024 - May 2025` in a May order). Across the 175 processed classes, **140
+publish the same tariff in all three periods** and **35 change** — every one of them in Band A, and
+every one following the same path, 225.00 -> 206.80 -> 209.50.
+That is consistent with the orders' own statement that *"the allowed tariffs for Bands B—E customer
+categories shall remain frozen at the rates payable since December 2022"*.
+
+**Rejected alternative.** Keeping only the current column. It would discard the Apr 2024 and
+May–Jun 2024 rates, which appear nowhere else in the corpus, and would turn a three-period history
+into a single undated number.
+
+**Consequence.** 175 classes × 3 periods = 525 records, of which 175 are current. The en dash and the
+hyphen both appear in the same header position across orders, so periods are parsed structurally and
+the published text is kept verbatim.
+
+---
+
+## D-43 — VAT is recorded as UNSTATED, because the orders are silent
+
+**Decision.** `vat_treatment = 'UNSTATED'` on every row. Neither inclusion nor exclusion is inferred,
+and the build is not blocked to research it elsewhere.
+
+**Evidence.** Every text-bearing order in the corpus was searched for `VAT`, `tax`, `exclusive`,
+`inclusive`, `levy`, `surcharge` and `net of`. The only hits are a 0.5 % **gas** levy, NBET invoice
+netting, and a feeder literally named `EXCLUSIVE STORES`. The orders approve tariffs in ₦/kWh and say
+nothing about VAT.
+
+**Rejected alternative.** Recording `EXCLUSIVE` on the general understanding that Nigerian regulated
+tariffs are quoted before VAT. That may well be right, and it is exactly the kind of plausible,
+unsourced claim that becomes indistinguishable from a sourced one once it is in a column.
+
+**Consequence.** Anyone computing an electricity cost from this table knows they still have to
+establish the VAT treatment themselves.
+
+---
+
+## D-44 — DisCos resolve through a reference table and are never mapped to states
+
+**Decision.** `data/reference/ref_disco.csv` maps all 23 observed filename tokens to 12 canonical
+DisCo codes, carries each DisCo's official name as printed on its own order title page, and sets
+`state_mapping = 'NOT_MAPPED'` for every one. `disco_raw_label` preserves the token the source used.
+
+**Evidence.** One DisCo appears under up to three tokens: `EKEDP`, `EKEDC` (April 2025 filenames
+only) and `EKO` (June 2025 only). The June 2025 batch alone uses full city names — `ABUJA`, `BENIN`,
+`ENUGU`, `IBADAN`, `IKEJA`, `KADUNA`, `KANO`, `PORTHARCOURT`, `YOLA` — where every other month uses
+abbreviations. Official names were read from the orders rather than assumed: IE's title page reads
+*IKEJA ELECTRICITY DISTRIBUTION PLC* while its own body calls it *Ikeja Electric Plc*.
+
+**Rejected alternative.** A DisCo-to-state column. Licence areas cross state boundaries — AEDC alone
+serves the FCT and parts of Niger, Kogi and Nasarawa — so any single-state mapping would be wrong,
+and a wrong join is worse than an absent one.
+
+**Consequence.** Electricity cost cannot be joined to the state-level datasets in this project, and
+that limitation is explicit rather than hidden behind an approximate mapping.
+
+---
+
+## D-45 — Files whose document type cannot be read from their own content are not ingested
+
+**Decision.** The 22 files named `*_HOLDCO_YSS_*` (August and September 2026) are recorded
+`DOCUMENT_TYPE_UNVERIFIED` and never ingested. A check asserts none appears in the output.
+
+**Evidence.** All 22 are image-only with zero extractable text, so nothing in the document itself
+says what instrument it is. `HOLDCO` and `YSS` appear in no other filename in the corpus.
+`nerc_myto_coverage.csv` titles them "AEDC MYTO AUGUST 2026" and so on, but that title was written by
+the acquisition step, not read from the PDF.
+
+**Rejected alternative.** Treating them as MYTO orders because the acquisition metadata says so. That
+is the same class of error as trusting the coverage CSV's `effective_date` (D-39): a label the
+project generated about a source is not evidence about that source.
+
+**Consequence.** 10 % of the corpus is held in an explicitly unverified state rather than silently
+counted as tariff orders. Resolving it needs someone to open one and read it.
+
+---
+
 
 ---
 

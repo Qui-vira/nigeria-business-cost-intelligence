@@ -120,7 +120,7 @@ any transformation code. Each one would silently corrupt a naive pipeline.
 | **CPI state index levels cannot rank states by cost** | NBS prints the restriction directly beneath the table: market baskets differ state to state. |
 | **CPI contains 69,411 `#REF!` cells** | Almost all confined to rebasing working sheets; the presentation tables are clean. |
 | **CBN has six exact duplicate dates, and blanks that are not zeros** | One column is blank where data is absent; another holds a literal `0`. They mean different things. |
-| **178 of 217 NERC PDFs are image-only scans** | Including every 2026 order. Tariffs cannot be read without OCR, and OCR digit errors are silent. |
+| **Only 11 of 217 NERC orders have a complete, extractable tariff table** | 27 are partial, 1 heading-only, 178 have no tariff text. Processed NERC coverage is a July 2025 cross-section, not a tariff history. A partial table is the real hazard: it looks complete. |
 | **DisCo territories are not states** | Licence areas cross state boundaries, so electricity cannot honestly be mapped to states without a separate verified approximation. |
 
 ---
