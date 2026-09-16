@@ -1,0 +1,7 @@
+service_band,tariff_ngn_per_kwh,discos,spread,reference_period,breakeven_diesel_ngn_per_litre_at_3kwh,selfgen_ever_below_reference
+A,209.5,11,0.0,NERC July 2025 cross-section,628.5,False
+B,66.55,11,15.15,NERC July 2025 cross-section,199.65,False
+C,53.82,11,17.64,NERC July 2025 cross-section,161.46,False
+D,46.64,11,24.58,NERC July 2025 cross-section,139.92,False
+E,46.4,10,24.58,NERC July 2025 cross-section,139.2,False
+LIFELINE,4.0,11,0.0,NERC July 2025 cross-section,12.0,False

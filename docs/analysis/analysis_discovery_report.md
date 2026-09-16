@@ -6,7 +6,8 @@
 **Scripts:** [`a01_discovery.py`](../../src/analysis/a01_discovery.py) ·
 [`a02_source_verification.py`](../../src/analysis/a02_source_verification.py)
 **Validation:** **83 of 83 checks pass** (64 discovery + 19 verification)
-**Revision:** 3 — final evidence review. Material changes in §12.
+**Revision:** 4 — rank-stability reframing. Revision 3 was the final evidence review. Material
+changes in §12.
 **Status:** evidence only. No recommendations, no composite index, no dashboards.
 
 ### Geography terminology
@@ -139,9 +140,9 @@ constants.
 
 | Dataset | Grain | Appropriate | Not appropriate |
 |---|---|---|---|
-| Petrol, diesel | jurisdiction | Level, change, MoM, YoY, median/IQR/CV, volatility | **Rank-based claims (§7 F6b(a))**; summing across `geography_type` |
-| LPG | jurisdiction × cylinder | As above, **per cylinder size** | **Rank-based claims**; averaging cylinder sizes |
-| Transport | jurisdiction × mode | As above, **per mode**; rank and persistence for the rank-safe modes | **Averaging or combining modes**; treating fares as freight; **folding air into "local mobility"** |
+| Petrol, diesel | jurisdiction | Level, change, MoM, YoY, median/IQR/CV, volatility; single-month rank snapshots | **Persistent rank-based claims (§7 F6b(a))**; summing across `geography_type` |
+| LPG | jurisdiction × cylinder | As above, **per cylinder size** | **Persistent rank-based claims**; averaging cylinder sizes |
+| Transport | jurisdiction × mode | As above, **per mode**; rank and persistence for the rank-stable modes | **Averaging or combining modes**; treating fares as freight; **folding air into "local mobility"** |
 | CPI | jurisdiction × group × measure | **Change rates only** | **Index levels across jurisdictions — never** |
 | Food | ZONE + NATIONAL | Zone premium, dispersion, trend | Any jurisdiction attribution |
 | NERC | DISCO × class × band | Band comparison, DisCo spread, July 2025 level | Any time series; any jurisdiction mapping |
@@ -394,7 +395,7 @@ FACT and INTERPRETATION are separated throughout.
 > | **Persistent high** | `share_high ≥ 0.80` among eligible pairs |
 >
 > **Period:** 2025-02 → 2026-04 · **Coverage:** complete 9 × 37 × 15 grid = 4,995 observations
-> **Calculation:** §12 → `f40_rank_safety.csv`, `f35_quartile_stickiness.csv`, `f41_persistent_high_per_metric.csv`, `f39_persistence_by_cost_family.csv`, `f38_persistence_permutation.csv`
+> **Calculation:** §12 → `f40_rank_stability.csv`, `f35_quartile_stickiness.csv`, `f41_persistent_high_per_metric.csv`, `f39_persistence_by_cost_family.csv`, `f38_persistence_permutation.csv`
 
 **(a) Which metrics can support a rank-based claim at all?**
 
@@ -414,12 +415,12 @@ monthly move is as large as the whole spread, so the ranking reshuffles on ordin
 | Water transport | 2.95 | 67.80 | 0.04 | SAFE |
 
 > **Persistence is computed for all nine metrics and reported, but the business-facing conclusion is
-> drawn only from the four rank-safe ones.** For an unsafe metric, an absence of persistence
+> drawn only from the four rank-stable ones.** For an unsafe metric, an absence of persistence
 > **cannot be distinguished from rank noise** and is not evidence that costs are uniform there.
 
 **(b) Is high-cost status sticky month to month?**
 
-| Metric | Rank-safe | Base rate | P(high \| high) | P(high \| not) | Stickiness |
+| Metric | Rank-stable | Base rate | P(high \| high) | P(high \| not) | Stickiness |
 |---|---|---:|---:|---:|---:|
 | Water transport | ✔ | 0.270 | **0.957** | 0.016 | +94.1 pp |
 | Bus intercity | ✔ | 0.270 | 0.907 | 0.034 | +87.3 pp |
@@ -435,7 +436,7 @@ monthly move is as large as the whole spread, so the ranking reshuffles on ordin
 
 **(c) Jurisdictions persistently high, per metric**
 
-| Metric | Rank-safe | Jurisdictions persistently high |
+| Metric | Rank-stable | Jurisdictions persistently high |
 |---|---|---:|
 | Water transport | ✔ | 9 |
 | Bus intracity / intercity / Okada | ✔ | 7 each |
@@ -453,22 +454,22 @@ LOCAL_MOBILITY** (F6c).
 
 | | |
 |---|---|
-| Families owning ≥ 1 rank-safe metric (**testable**) | LOCAL_MOBILITY, INTERREGIONAL_TRANSPORT — **2 of 4** |
-| Families owning no rank-safe metric (**untestable**) | **LIQUID_FUEL, LPG** |
+| Families owning ≥ 1 rank-stable metric (**testable**) | LOCAL_MOBILITY, INTERREGIONAL_TRANSPORT — **2 of 4** |
+| Families owning no rank-stable metric (**untestable**) | **LIQUID_FUEL, LPG** |
 
 > **This is a real limit on scope, not a caveat.** For the two untestable families the absence of a
 > persistently dear jurisdiction is a statement about **the ranking**, not about costs.
 
-**Rank-safe metrics only (the defensible version):**
+**Rank-stable metrics only (the defensible version):**
 
 | | |
 |---|---:|
-| Persistently high on ≥ 1 rank-safe metric | 22 of 37 |
+| Persistently high on ≥ 1 rank-stable metric | 22 of 37 |
 | Persistently high within exactly **1** family | **20** |
 | Persistently high across **2+ testable families** | **2** — Ogun and Imo, both LOCAL_MOBILITY + INTERREGIONAL_TRANSPORT |
 | Maximum metrics on any one jurisdiction | 3 |
 
-Across all nine metrics (informational, includes rank-unsafe): 5 of 37 span 2+ families;
+Across all nine metrics (informational, includes rank-unstable): 5 of 37 span 2+ families;
 persistent-high jurisdictions per family are LOCAL_MOBILITY 17, INTERREGIONAL 9, LIQUID_FUEL 1,
 LPG 1.
 
@@ -499,12 +500,12 @@ LPG 1.
 > **A jurisdiction can be persistently expensive for a particular cost component without being
 > broadly expensive across unrelated cost families.**
 >
-> - **Within-metric persistence is strong and real** for every rank-safe metric — a jurisdiction
+> - **Within-metric persistence is strong and real** for every rank-stable metric — a jurisdiction
 >   dear on water transport this month is 95.7% likely to be dear next month.
 > - **20 of 22** persistently-dear jurisdictions are dear within a **single** cost family,
 >   overwhelmingly local mobility. Only Ogun and Imo span two testable families, and both do so by
 >   combining local mobility with intercity bus.
-> - **Scope is limited:** liquid fuel and LPG own no rank-safe metric, so for those families the
+> - **Scope is limited:** liquid fuel and LPG own no rank-stable metric, so for those families the
 >   question cannot be answered from ranks at all.
 >
 > "Expensive" therefore requires naming the cost.
@@ -715,18 +716,47 @@ forecasting.
 
 ## 12. What changed in this revision
 
+### Revision 4 — rank stability for persistent decision use
+
+This revision changes **language and framing only**. No figure, threshold, metric or conclusion in
+this report moved, and the validation count is unchanged.
+
+Earlier revisions described five of the nine price metrics as *"rank unsafe"*. That wording implied
+a verdict on the data, which was never the intent and is not what the test measures. It is now
+framed as **rank stability for persistent decision use**:
+
+- **Each published monthly ranking remains a valid snapshot.** The underlying values are correctly
+  extracted and correctly ordered, and the rank is accurate as of its observation month. Nothing in
+  this test questions any published figure.
+- **The move-to-spread test is a project decision-use heuristic** — the ratio of a typical monthly
+  move to the cross-jurisdiction spread it must traverse, with a 1.0 cut this project adopted for
+  consistency.
+- **It is used only to judge whether a ranking is stable enough to anchor a persistent decision** —
+  siting, sourcing, a standing supplier preference — where a name has to survive from one month to
+  the next to be worth acting on.
+- **It is not a statistical standard and not a data-quality test.** A metric marked UNSTABLE has
+  sound data and valid monthly ranks; what it lacks is a durable order.
+
+Accordingly `SAFE`/`UNSAFE` became `STABLE`/`UNSTABLE`, the column `rank_safe` became
+`stable_for_persistent_ranking`, and two evidence files were renamed
+(`f40_rank_stability.csv`, `v4_rank_stability.csv`). The consequence for F6b is unchanged: the
+persistence conclusion is still drawn only from the four stable metrics, and liquid fuel and LPG
+still own none, so that scope limit still stands.
+
+### Revision 3 — final evidence review
+
 | Was | Now |
 |---|---|
 | Persistence rule described informally | **Fully specified** (F6b): ranking method, both thresholds, tie handling, 12-month eligibility floor, observed-month denominator, missing-observation rule. Declared once in `nbci_analysis.py` |
-| Persistence reported for all 9 metrics equally | **Rank-safety gate added.** 5 of 9 metrics (LPG ×2, air, petrol, diesel) **cannot support rank-based claims**; the conclusion is drawn only from the 4 safe ones |
-| "Cross-family persistence is essentially absent — 1 of 37" | **Refined.** Under the finer family taxonomy the defensible figure is **2 of 22 spanning 2+ testable families**; 20 of 22 are single-family. And **only 2 of 4 families are testable at all** — liquid fuel and LPG own no rank-safe metric |
+| Persistence reported for all 9 metrics equally | **Rank-stablety gate added.** 5 of 9 metrics (LPG ×2, air, petrol, diesel) **cannot support rank-based claims**; the conclusion is drawn only from the 4 safe ones |
+| "Cross-family persistence is essentially absent — 1 of 37" | **Refined.** Under the finer family taxonomy the defensible figure is **2 of 22 spanning 2+ testable families**; 20 of 22 are single-family. And **only 2 of 4 families are testable at all** — liquid fuel and LPG own no rank-stable metric |
 | Permutation framed as near-proof | **Narrowed** (F6b(e)): what was permuted, what preserved, what deliberately not preserved, both statistics, 10,000 draws, seed, exact p-rule. Explicitly labelled *supporting test only*; the direct cross-family evidence is the business-facing result |
 | P1 air spike "verify before use" | **RESOLVED** (§8.1). Genuinely published; period alignment, the known duplicate-header defect, and extraction all ruled out on evidence; corroborated by the national row. Cause unknown; seasonality untestable (one December) |
 | P4 LPG churn "verify before use" | **RESOLVED** (§8.2). Ties, cylinder confusion, geography misalignment, restatement and extraction all ruled out. Cause is a compressed distribution (CV 2.42%). **Levels safe, ranks not** |
 | Air grouped with local transport | **Separated** (F6c). η² = 0.826 — 83% of air's variation is a common national movement. `LOCAL_MOBILITY` = okada, intracity bus, water only |
 | "Transport fares are a ratchet" | **"Fare stickiness despite petrol declines"** (F3). "Ratchet" retained only as declared informal shorthand |
 
-**Headlines that changed materially:** F6b's scope (rank-safety gate and the 2-of-4 testable
+**Headlines that changed materially:** F6b's scope (rank-stability gate and the 2-of-4 testable
 families); air's removal from local-mobility claims; P1 and P4 moving from *suspected* to
 *resolved*. **Preserved unchanged:** F1–F5, F7–F10, and the core conclusion —
 
@@ -774,7 +804,7 @@ displayed in this report.
 | `discovery/f35_quartile_stickiness.csv` | **F6b(b)** month-to-month stickiness of high-cost status |
 | `discovery/f38_persistence_permutation.csv` | **F6b(e)** permutation spec, statistics and p-values |
 | `discovery/f39_persistence_by_cost_family.csv` | **F6b(d)** cross-family result — the main business-facing finding |
-| `discovery/f40_rank_safety.csv` | **F6b(a)** the rank-safety gate that bounds the persistence conclusion |
+| `discovery/f40_rank_stability.csv` | **F6b(a)** the rank-stability gate that bounds the persistence conclusion |
 | `discovery/f41_persistent_high_per_metric.csv` | **F6b(c)** persistently-high count per metric |
 | `verification/a02_verification_log.txt` | **All 19 verification checks** and every trace, in full |
 | `verification/v1a_air_provenance.csv` | **§8.1** file / member / sheet / column per month |
@@ -783,7 +813,7 @@ displayed in this report.
 | `verification/v2a_mode_variance_decomposition.csv` | **F6c** η² — air is nationally, not locally, driven |
 | `verification/v3a_lpg_source_trace.csv` | **§8.2** full source trace for three extreme movers |
 | `verification/v3c_lpg_distribution.csv` | **§8.2** the compressed distribution that explains the churn |
-| `verification/v4_rank_instability.csv` | **§8.2 / F6b(a)** move-to-spread ratio for all nine metrics |
+| `verification/v4_rank_stability.csv` | **§8.2 / F6b(a)** move-to-spread ratio for all nine metrics |
 
 ### The 34 generated files not committed
 
@@ -826,7 +856,7 @@ Coverage: read-only enforcement (both passes), window agreement with the databas
 after filtering, duplicate analytical grain, named missing months, unexpected NULLs, jurisdiction
 coverage, one unit per metric, publication-selection rule, complete YoY grids, quartile sizes with
 tie tolerance, eligibility floor, denominator equals observed months, complete 9 × 37 × 15
-persistence grid, rank-safety partition, cost-family assignment and its agreement with the module's
+persistence grid, rank-stability partition, cost-family assignment and its agreement with the module's
 local-mobility definition, permutation p-value well-formedness, common endpoint month, NERC
 remaining unmapped, and — in pass 02 — provenance separation of the Nov/Dec members, the scope of
 the duplicate-header defect, national corroboration, and each ruled-out LPG cause.

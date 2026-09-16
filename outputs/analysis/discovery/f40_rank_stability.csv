@@ -1,4 +1,4 @@
-metric_code,mean_abs_mom_pct,mean_cv_pct,move_to_spread_ratio,rank_safe,label
+metric_code,mean_abs_mom_pct,mean_cv_pct,move_to_spread_ratio,stable_for_persistent_ranking,label
 DIESEL_PRICE_NGN_PER_LITRE,10.8267,9.719,1.114,False,Diesel (NGN/l)
 LPG_REFILL_12_5KG_NGN,10.9688,5.308,2.0665,False,LPG 12.5kg refill (NGN)
 LPG_REFILL_5KG_NGN,11.7628,5.5555,2.1173,False,LPG 5kg refill (NGN)

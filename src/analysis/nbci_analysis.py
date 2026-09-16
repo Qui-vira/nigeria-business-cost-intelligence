@@ -107,12 +107,28 @@ RANK_METHOD = "average"
 PERSISTENCE_THRESHOLD = 0.80
 MIN_ELIGIBLE_MONTHS = 12
 
-# A metric supports rank-based claims only if a typical monthly move is small
-# relative to the spread it must traverse. ratio = mean |MoM %| / mean CV %.
-# At or above 1.0 the ranking reshuffles on ordinary price movement and carries
-# little signal. Established by src/analysis/a02_source_verification.py (V4) and
+# RANK STABILITY - a PROJECT DECISION-USE HEURISTIC, not a data-quality verdict.
+#
+# Every published rank is a VALID SNAPSHOT of that month: the underlying values are
+# correctly extracted, correctly ranked, and correct as of their observation month.
+# Nothing here questions the data.
+#
+# The heuristic answers a narrower, practical question: will a rank computed this
+# month still describe the same jurisdiction next month, well enough to support a
+# PERSISTENT, RANK-BASED LOCATION DECISION - siting, sourcing, a standing supplier
+# preference? For that a rank has to be durable, not merely correct.
+#
+#   ratio = mean |month-over-month %| / mean cross-jurisdiction CV %
+#
+# At or above RANK_STABILITY_RATIO a typical monthly move is as large as the whole
+# spread the ranking has to traverse, so ordinary price movement reshuffles the
+# order. Such a metric is UNSTABLE FOR PERSISTENT RANKING - its snapshot ranks stay
+# valid, but they should not anchor a durable location decision.
+#
+# The 1.0 cut is a judgement this project has adopted for consistency, not a
+# statistical standard. Established by a02_source_verification.py (V4) and
 # recomputed independently wherever it is used.
-RANK_SAFETY_RATIO = 1.0
+RANK_STABILITY_RATIO = 1.0
 
 # Air and intercity bus are inter-regional services priced on carrier or route
 # networks; a02 (V2) measured 83% of air's month-to-month variation as a common

@@ -750,41 +750,42 @@ SECTION 12 - PERSISTENCE TEST: IS ANY JURISDICTION BROADLY EXPENSIVE?
   PASS  persistence input is the complete 9 x 37 x 15 grid  [actual=4995 expected=4995]
   PASS  quartile sizes stay within tolerance in every metric-month  [high 9-10, low 7-10, 24% of metric-months contain tied prices]
   (a) Can each metric support a rank-based claim? (ratio >= 1.0 means the ranking reshuffles on ordinary monthly movement)
-                  label  mean_abs_mom_pct  mean_cv_pct  move_to_spread_ratio  rank_safe
-   LPG 5kg refill (NGN)             11.76         5.56                  2.12      False
-LPG 12.5kg refill (NGN)             10.97         5.31                  2.07      False
-              Air (NGN)              9.37         6.64                  1.41      False
-         Petrol (NGN/l)              7.25         6.14                  1.18      False
-         Diesel (NGN/l)             10.83         9.72                  1.11      False
-    Bus intercity (NGN)              3.08        11.64                  0.26       True
-            Okada (NGN)              4.82        18.78                  0.26       True
-    Bus intracity (NGN)              4.25        17.51                  0.24       True
-  Water transport (NGN)              2.95        67.80                  0.04       True
-  PASS  at least three metrics support rank-based claims  [4 safe, 5 unsafe]
+                  label  mean_abs_mom_pct  mean_cv_pct  move_to_spread_ratio  stable_for_persistent_ranking
+   LPG 5kg refill (NGN)             11.76         5.56                  2.12                          False
+LPG 12.5kg refill (NGN)             10.97         5.31                  2.07                          False
+              Air (NGN)              9.37         6.64                  1.41                          False
+         Petrol (NGN/l)              7.25         6.14                  1.18                          False
+         Diesel (NGN/l)             10.83         9.72                  1.11                          False
+    Bus intercity (NGN)              3.08        11.64                  0.26                           True
+            Okada (NGN)              4.82        18.78                  0.26                           True
+    Bus intracity (NGN)              4.25        17.51                  0.24                           True
+  Water transport (NGN)              2.95        67.80                  0.04                           True
+  PASS  at least three metrics are stable enough for persistent rank use  [4 stable, 5 unstable]
 
-      RANK-SAFE  (4): Bus intercity (NGN), Bus intracity (NGN), Okada (NGN), Water transport (NGN)
-      NOT SAFE   (5): Diesel (NGN/l), LPG 12.5kg refill (NGN), LPG 5kg refill (NGN), Petrol (NGN/l), Air (NGN)
+      STABLE for persistent ranking   (4): Bus intercity (NGN), Bus intracity (NGN), Okada (NGN), Water transport (NGN)
+      UNSTABLE for persistent ranking (5): Diesel (NGN/l), LPG 12.5kg refill (NGN), LPG 5kg refill (NGN), Petrol (NGN/l), Air (NGN)
       Persistence is COMPUTED for all nine metrics and reported below, but
-      the business-facing conclusion is drawn only from the rank-safe ones.
+      the business-facing conclusion about PERSISTENT position is drawn
+      only from the rank-stable ones.
       For an unsafe metric, an absence of persistence CANNOT be distinguished
       from rank noise and is not evidence that costs are uniform there.
   PASS  no jurisdiction-metric pair falls below the 12-month eligibility floor  [actual=0 expected=0]
   PASS  denominator equals observed months, which is 15 for every pair here  [15-15]
 
   (b) Is high-cost status sticky month to month? (1 = always stays high)
-                  label  rank_safe  base_rate_high  p_high_given_high  p_high_given_not  stickiness_pp
-  Water transport (NGN)       True           0.270              0.957             0.016         94.127
-    Bus intercity (NGN)       True           0.270              0.907             0.034         87.275
-            Okada (NGN)       True           0.268              0.878             0.045         83.284
-    Bus intracity (NGN)       True           0.270              0.857             0.053         80.423
-              Air (NGN)      False           0.270              0.850             0.056         79.444
-         Diesel (NGN/l)      False           0.268              0.674             0.121         55.286
-   LPG 5kg refill (NGN)      False           0.270              0.600             0.148         45.185
-LPG 12.5kg refill (NGN)      False           0.270              0.593             0.151         44.206
-         Petrol (NGN/l)      False           0.270              0.571             0.159         41.270
+                  label  stable_for_persistent_ranking  base_rate_high  p_high_given_high  p_high_given_not  stickiness_pp
+  Water transport (NGN)                           True           0.270              0.957             0.016         94.127
+    Bus intercity (NGN)                           True           0.270              0.907             0.034         87.275
+            Okada (NGN)                           True           0.268              0.878             0.045         83.284
+    Bus intracity (NGN)                           True           0.270              0.857             0.053         80.423
+              Air (NGN)                          False           0.270              0.850             0.056         79.444
+         Diesel (NGN/l)                          False           0.268              0.674             0.121         55.286
+   LPG 5kg refill (NGN)                          False           0.270              0.600             0.148         45.185
+LPG 12.5kg refill (NGN)                          False           0.270              0.593             0.151         44.206
+         Petrol (NGN/l)                          False           0.270              0.571             0.159         41.270
   PASS  high-cost status is sticky for every metric (P(high|high) > P(high|not))
 
-  (c) Jurisdictions persistently HIGH, RANK-SAFE metrics only (4 metrics):
+  (c) Jurisdictions persistently HIGH, RANK-STABLE metrics only (4 metrics):
  state_name     zone_name  metrics_persistently_high                                                   which
        Ogun    South West                          3 Bus intercity (NGN); Okada (NGN); Water transport (NGN)
       Lagos    South West                          3 Bus intracity (NGN); Okada (NGN); Water transport (NGN)
@@ -807,7 +808,7 @@ Cross River   South South                          1                            
         Oyo    South West                          1                                     Bus intercity (NGN)
      Taraba    North East                          1                                     Bus intracity (NGN)
 
-  (d) Jurisdictions persistently LOW, rank-safe metrics only:
+  (d) Jurisdictions persistently LOW, rank-stable metrics only:
 state_name     zone_name  metrics_persistently_low                                      which
       Abia    South East                         2 Bus intracity (NGN); Water transport (NGN)
    Adamawa    North East                         2           Bus intracity (NGN); Okada (NGN)
@@ -828,16 +829,16 @@ state_name     zone_name  metrics_persistently_low                              
      Kwara North Central                         1                        Bus intercity (NGN)
 
   (e) Jurisdictions persistently high, per metric:
-                  label  rank_safe  persistently_high
-  Water transport (NGN)       True                  9
-    Bus intercity (NGN)       True                  7
-            Okada (NGN)       True                  7
-    Bus intracity (NGN)       True                  7
-              Air (NGN)      False                  3
-         Petrol (NGN/l)      False                  1
-   LPG 5kg refill (NGN)      False                  1
-         Diesel (NGN/l)      False                  0
-LPG 12.5kg refill (NGN)      False                  0
+                  label  stable  persistently_high
+  Water transport (NGN)    True                  9
+    Bus intercity (NGN)    True                  7
+            Okada (NGN)    True                  7
+    Bus intracity (NGN)    True                  7
+              Air (NGN)   False                  3
+         Petrol (NGN/l)   False                  1
+   LPG 5kg refill (NGN)   False                  1
+         Diesel (NGN/l)   False                  0
+LPG 12.5kg refill (NGN)   False                  0
   PASS  every price metric is assigned to exactly one cost family  [actual=['DIESEL_PRICE_NGN_PER_LITRE', 'LPG_REFILL_12_5KG_NGN', 'LPG_REFILL_5KG_NGN', 'PETROL_PRICE_NGN_PER_LITRE', 'TRANSPORT_AIR_NGN_PER_JOURNEY', 'TRANSPORT_BUS_INTERCITY_NGN_PER_JOURNEY', 'TRANSPORT_BUS_INTRACITY_NGN_PER_JOURNEY', 'TRANSPORT_OKADA_NGN_PER_JOURNEY', 'TRANSPORT_WATER_NGN_PER_JOURNEY'] expected=['DIESEL_PRICE_NGN_PER_LITRE', 'LPG_REFILL_12_5KG_NGN', 'LPG_REFILL_5KG_NGN', 'PETROL_PRICE_NGN_PER_LITRE', 'TRANSPORT_AIR_NGN_PER_JOURNEY', 'TRANSPORT_BUS_INTERCITY_NGN_PER_JOURNEY', 'TRANSPORT_BUS_INTRACITY_NGN_PER_JOURNEY', 'TRANSPORT_OKADA_NGN_PER_JOURNEY', 'TRANSPORT_WATER_NGN_PER_JOURNEY']]
   PASS  the LOCAL_MOBILITY family matches the module definition (air excluded)  [actual=['TRANSPORT_BUS_INTRACITY_NGN_PER_JOURNEY', 'TRANSPORT_OKADA_NGN_PER_JOURNEY', 'TRANSPORT_WATER_NGN_PER_JOURNEY'] expected=['TRANSPORT_BUS_INTRACITY_NGN_PER_JOURNEY', 'TRANSPORT_OKADA_NGN_PER_JOURNEY', 'TRANSPORT_WATER_NGN_PER_JOURNEY']]
 
@@ -845,8 +846,8 @@ LPG 12.5kg refill (NGN)      False                  0
       Families: LIQUID_FUEL, LPG, LOCAL_MOBILITY, INTERREGIONAL_TRANSPORT.
       Air is in INTERREGIONAL_TRANSPORT, never in LOCAL_MOBILITY (a02 V2).
 
-      families with >=1 rank-safe metric (TESTABLE)   : ['INTERREGIONAL_TRANSPORT', 'LOCAL_MOBILITY']
-      families with NO rank-safe metric (UNTESTABLE)  : ['LIQUID_FUEL', 'LPG']
+      families with >=1 rank-stable metric (TESTABLE)  : ['INTERREGIONAL_TRANSPORT', 'LOCAL_MOBILITY']
+      families with NO rank-stable metric (UNTESTABLE) : ['LIQUID_FUEL', 'LPG']
       For an untestable family, the absence of a persistently dear
       jurisdiction is a statement about the RANKING, not about costs.
 state_name   zone_name  n_metrics  n_families                                families
@@ -859,18 +860,18 @@ state_name   zone_name  n_metrics  n_families                                fam
       Ondo  South West          3           1                          LOCAL_MOBILITY
        Oyo  South West          2           1                 INTERREGIONAL_TRANSPORT
 
-      ALL NINE METRICS (informational, includes rank-unsafe):
+      ALL NINE METRICS (informational, includes rank-unstable):
         persistently high in 2+ families : 5 of 37
         persistent-high jurisdictions per family: {'INTERREGIONAL_TRANSPORT': 9, 'LIQUID_FUEL': 1, 'LOCAL_MOBILITY': 17, 'LPG': 1}
 
-      RANK-SAFE METRICS ONLY (the defensible version):
+      RANK-STABLE METRICS ONLY (the defensible version):
         testable families                : 2 of 4
         persistently high in 2+ families : 2 of 37
         persistently high in 1 family    : 20
 state_name  zone_name  n_metrics  n_families                                families
       Ogun South West          3           2 INTERREGIONAL_TRANSPORT; LOCAL_MOBILITY
        Imo South East          2           2 INTERREGIONAL_TRANSPORT; LOCAL_MOBILITY
-  PASS  two cost families own no rank-safe metric, so cross-family scope is partial  [actual=2 expected=2]
+  PASS  two cost families own no rank-stable metric, so cross-family scope is partial  [actual=2 expected=2]
   PASS  most persistently-dear jurisdictions are dear within a single cost family  [2 of 22 span 2+ testable families]
 
   (g) SUPPORTING TEST ONLY - permutation null.
@@ -901,9 +902,9 @@ state_name  zone_name  n_metrics  n_families                                fami
   PASS  permutation p-values are well formed  [p_max=0.9, p_ge3=0.0724]
 
   (h) WHICH CONCLUSION DOES THE EVIDENCE SUPPORT?
-      METRIC-SPECIFIC EXPENSIVE JURISDICTIONS. A jurisdiction can be persistently expensive for a particular cost component without being broadly expensive across unrelated cost families. Within-metric persistence is STRONG for every rank-safe metric. Most persistently-dear jurisdictions are dear within ONE cost family, overwhelmingly local mobility. The scope of this conclusion is limited: liquid fuel and LPG own no rank-safe metric, so for those families the question cannot be answered from ranks at all, and their absence from the cross-family result is a property of the ranking, not evidence that costs are uniform.
+      METRIC-SPECIFIC EXPENSIVE JURISDICTIONS. A jurisdiction can be persistently expensive for a particular cost component without being broadly expensive across unrelated cost families. Within-metric persistence is STRONG for every rank-stable metric. Most persistently-dear jurisdictions are dear within ONE cost family, overwhelmingly local mobility. The scope of this conclusion is limited: liquid fuel and LPG own no rank-stable metric, so for those families the question cannot be answered from ranks at all, and their absence from the cross-family result is a property of the ranking, not evidence that costs are uniform.
 
-      (rank-safe metrics: 4 of 9; testable families: 2 of 4; jurisdictions persistently high on >=1 rank-safe metric: 22; max on any one: 3; spanning 2+ testable families: 2)
+      (rank-stable metrics: 4 of 9; testable families: 2 of 4; jurisdictions persistently high on >=1 rank-stable metric: 22; max on any one: 3; spanning 2+ testable families: 2)
   PASS  at least one jurisdiction shows within-metric persistence  [23 jurisdictions across all metrics]
 
 ==============================================================================

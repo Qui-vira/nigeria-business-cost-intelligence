@@ -1,4 +1,4 @@
-metric_code,persistently_high,rank_safe,label
+metric_code,persistently_high,stable,label
 DIESEL_PRICE_NGN_PER_LITRE,0,False,Diesel (NGN/l)
 LPG_REFILL_12_5KG_NGN,0,False,LPG 12.5kg refill (NGN)
 LPG_REFILL_5KG_NGN,1,False,LPG 5kg refill (NGN)

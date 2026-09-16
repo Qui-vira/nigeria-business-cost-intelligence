@@ -1,0 +1,304 @@
+NIGERIA BUSINESS COST INTELLIGENCE - ANALYSIS PASS 03 (DECISION INPUTS)
+database: nigeria_business_cost   primary window: ('2025-02-01', '2026-04-01')
+  PASS  connection is READ-ONLY  [write refused, SQLSTATE 25006]
+  PASS  AVAILABLE_OBSERVATION_WINDOW matches this module's constant  [2025-01-01..2026-04-01 (16m)]
+  PASS  PRIMARY_RELEASE_COMMON_WINDOW matches this module's constant  [2025-02-01..2026-04-01 (15m)]
+  PASS  primary window is 15 months  [actual=15 expected=15]
+  PASS  panel unchanged since the committed milestone  [actual=9435 expected=9435]
+  PASS  panel covers all 37 jurisdictions  [actual=37 expected=37]
+
+==============================================================================
+D1 - HISTORICAL MOVEMENT FLAGS: how large is this month by past standards?
+==============================================================================
+  PURPOSE: to say how unusual a month is BY THE HISTORICAL STANDARD OF THIS
+  SERIES. Nothing more.
+
+  THESE ARE DESCRIPTIVE FLAGS, NOT BUSINESS ACTION THRESHOLDS:
+    ELEVATED = above the p90 of historical absolute monthly moves
+    EXTREME  = above the p95
+
+  A flag says a move is large relative to this series past. It does NOT
+  say a business should act, reprice or renegotiate. Whether a move
+  matters depends on that company cost exposure, its margin and its
+  ability to pass cost through - none of which is in this dataset. Turning
+  a flag into a trigger requires those three inputs first.
+
+  METHOD: distribution of each jurisdiction own month-over-month %
+  change, pooled across the 37 jurisdictions and the 14 month-pairs in the
+  primary window. Signed and absolute percentiles are both reported: a cost
+  FALLING hard is equally notable, so an absolute-only view would hide
+  half the events.
+
+  PASS  month-over-month grid is complete (9 metrics x 37 x 14)  [actual=4662 expected=4662]
+  Historical movement flags (|month-over-month %|), per cost:
+                            metric_code                   label  observations  median_abs_pct  p75_abs_pct  elevated_p90_abs_pct  extreme_p95_abs_pct  worst_rise_pct  worst_fall_pct
+          TRANSPORT_AIR_NGN_PER_JOURNEY               Air (NGN)           518            0.40         2.27                 39.46                60.70          148.34          -53.65
+             DIESEL_PRICE_NGN_PER_LITRE          Diesel (NGN/l)           518            6.72        13.12                 26.03                52.04           60.53          -29.10
+                     LPG_REFILL_5KG_NGN    LPG 5kg refill (NGN)           518            7.24        21.92                 29.43                32.21           38.19          -38.61
+                  LPG_REFILL_12_5KG_NGN LPG 12.5kg refill (NGN)           518            7.81        19.18                 26.70                29.55           35.47          -34.63
+             PETROL_PRICE_NGN_PER_LITRE          Petrol (NGN/l)           518            3.66        10.19                 21.86                24.63           34.36          -37.81
+TRANSPORT_BUS_INTRACITY_NGN_PER_JOURNEY     Bus intracity (NGN)           518            1.97         5.40                 11.23                16.39           43.05          -22.98
+TRANSPORT_BUS_INTERCITY_NGN_PER_JOURNEY     Bus intercity (NGN)           518            0.90         2.51                 10.19                16.37           35.48          -17.78
+        TRANSPORT_OKADA_NGN_PER_JOURNEY             Okada (NGN)           518            2.58         6.64                 11.20                16.02           79.51          -18.68
+        TRANSPORT_WATER_NGN_PER_JOURNEY   Water transport (NGN)           518            1.58         4.34                  7.25                 9.59           36.00          -12.99
+  PASS  the ELEVATED flag level never exceeds the EXTREME level for any cost
+  PASS  every flag level is built on the same 518 observations
+
+  Months in which the EXTREME flag was raised in the most jurisdictions:
+                  label observation_month  jurisdictions_flagged_extreme
+              Air (NGN)        2025-12-01                             26
+         Diesel (NGN/l)        2026-04-01                             25
+    Bus intercity (NGN)        2026-03-01                             21
+   LPG 5kg refill (NGN)        2025-11-01                             20
+    Bus intracity (NGN)        2026-03-01                             14
+LPG 12.5kg refill (NGN)        2025-11-01                             13
+         Petrol (NGN/l)        2026-03-01                             11
+  Water transport (NGN)        2025-12-01                             11
+         Petrol (NGN/l)        2026-04-01                              8
+    Bus intracity (NGN)        2025-12-01                              7
+LPG 12.5kg refill (NGN)        2026-03-01                              6
+            Okada (NGN)        2025-10-01                              6
+
+  EXTREME months are episodic, not spread evenly - months with any
+  EXTREME flag, out of the 14 month-pairs available:
+                  label  months_with_any_extreme
+              Air (NGN)                        1
+         Diesel (NGN/l)                        2
+   LPG 5kg refill (NGN)                        4
+LPG 12.5kg refill (NGN)                        4
+         Petrol (NGN/l)                        4
+    Bus intercity (NGN)                        4
+    Bus intracity (NGN)                        5
+  Water transport (NGN)                        8
+            Okada (NGN)                        9
+  PASS  EXTREME-flag months never exceed the 14 available month-pairs
+
+==============================================================================
+D2 - DIESEL SELF-GENERATION AGAINST A FIXED JULY 2025 REFERENCE TARIFF
+==============================================================================
+  QUESTION: how does the fuel cost of self-generation compare with a FIXED
+  GRID REFERENCE TARIFF, and how has that comparison moved as diesel rose?
+
+  THE TWO SIDES DO NOT COVER THE SAME PERIOD. Diesel runs monthly to
+  2026-05. The NERC tariff is a SINGLE JULY 2025 CROSS-SECTION and is held
+  FIXED throughout. This is therefore a comparison against a REFERENCE
+  BENCHMARK, not a like-for-like comparison of two current prices. If the
+  tariff has risen since July 2025, the true multiples are smaller than
+  those shown. This corpus cannot say whether it has.
+
+  ASSUMPTION 1 - GENERATOR EFFICIENCY (assumed, not measured): a diesel
+  generator is assumed to deliver 3.0-3.5 kWh per litre at load. The range
+  2.5-4.0 is carried through so the result can be read at any efficiency.
+  A business MUST substitute its own measured burn per hour divided by
+  load before using this.
+
+  ASSUMPTION 2 - REFERENCE TARIFF (fixed benchmark, July 2025): the grid
+  side is the NERC Band A tariff as published in the July 2025 order. It is
+  held constant across all months shown.
+
+  Neither side includes the generator itself, servicing, oil or downtime,
+  nor grid connection charges, fixed charges or outage losses.
+
+  GRAIN WARNING: diesel is jurisdiction-grain, NERC tariffs are DisCo-grain
+  and DisCos are not jurisdictions. This is NOT a geographic join. It
+  compares a cross-jurisdiction median diesel cost against a national band
+  benchmark. Band A is used as the reference precisely because it is the
+  one band with ZERO spread across all 11 DisCos (a01 F8), so no geographic
+  assignment is needed for it.
+
+  PASS  all six NERC service bands present  [actual=6 expected=6]
+  PASS  Band A has zero spread across DisCos, so the comparison needs no geography  [actual=0.0 expected=0.0]
+  Diesel fuel cost per kWh against the FIXED July 2025 Band A reference tariff of NGN 209.50/kWh.
+  FUEL ONLY - excludes the generator, servicing, oil and downtime.
+observation_month  diesel_ngn_per_litre  genset_kwh_per_litre  self_gen_ngn_per_kwh  band_a_reference_ngn_per_kwh             reference_period  multiple_of_reference_tariff
+       2025-09-01               1266.33                   2.5                506.53                         209.5 NERC July 2025 cross-section                          2.42
+       2025-09-01               1266.33                   3.0                422.11                         209.5 NERC July 2025 cross-section                          2.01
+       2025-09-01               1266.33                   3.5                361.81                         209.5 NERC July 2025 cross-section                          1.73
+       2025-09-01               1266.33                   4.0                316.58                         209.5 NERC July 2025 cross-section                          1.51
+       2026-04-01               2472.04                   2.5                988.82                         209.5 NERC July 2025 cross-section                          4.72
+       2026-04-01               2472.04                   3.0                824.01                         209.5 NERC July 2025 cross-section                          3.93
+       2026-04-01               2472.04                   3.5                706.30                         209.5 NERC July 2025 cross-section                          3.37
+       2026-04-01               2472.04                   4.0                618.01                         209.5 NERC July 2025 cross-section                          2.95
+       2026-05-01               3249.96                   2.5               1299.98                         209.5 NERC July 2025 cross-section                          6.21
+       2026-05-01               3249.96                   3.0               1083.32                         209.5 NERC July 2025 cross-section                          5.17
+       2026-05-01               3249.96                   3.5                928.56                         209.5 NERC July 2025 cross-section                          4.43
+       2026-05-01               3249.96                   4.0                812.49                         209.5 NERC July 2025 cross-section                          3.88
+
+  Break-even diesel price at 3.0 kWh/litre - below this the
+  generator would win. Cheapest diesel ever observed in the series is
+  NGN 1,266.33/litre (2025-09-01):
+service_band  tariff_ngn_per_kwh  discos  spread             reference_period  breakeven_diesel_ngn_per_litre_at_3kwh  selfgen_ever_below_reference
+           A              209.50      11    0.00 NERC July 2025 cross-section                                  628.50                         False
+           B               66.55      11   15.15 NERC July 2025 cross-section                                  199.65                         False
+           C               53.82      11   17.64 NERC July 2025 cross-section                                  161.46                         False
+           D               46.64      11   24.58 NERC July 2025 cross-section                                  139.92                         False
+           E               46.40      10   24.58 NERC July 2025 cross-section                                  139.20                         False
+    LIFELINE                4.00      11    0.00 NERC July 2025 cross-section                                   12.00                         False
+  PASS  against the July 2025 reference tariff, and at no band, does diesel self-generation fall below the reference at any month in the series  [cheapest diesel 1,266 vs highest break-even 628]
+  PASS  self-generation cost rose over the series while the reference tariff is held fixed at its July 2025 value  [1,433 -> 3,250 NGN/l]
+
+==============================================================================
+D3 - DID CPI TRACK OBSERVED TRANSPORT-FARE GROWTH?
+==============================================================================
+  QUESTION: transport allowances are commonly uprated by headline inflation.
+  Over the measured months, did CPI growth track observed fare growth?
+
+  WHAT THIS MEASURES: the gap between two published growth rates. A
+  positive gap means an allowance indexed ONLY to CPI would have LAGGED
+  observed fare growth, reducing the commuting purchasing power that
+  allowance provides. It is NOT a statement about total real pay, which
+  depends on salary, other allowances and actual commuting patterns that
+  this dataset does not contain.
+
+  METHOD: per jurisdiction, year-on-year growth in okada and intracity bus
+  fares against year-on-year CPI all-items, in the months where BOTH exist.
+
+  fare YoY months available : 5 (2026-01-01 .. 2026-05-01)
+  months usable (CPI too)   : 4
+  fare months with NO CPI   : ['2026-02-01']  <- the 2026-02 CPI YoY hole (a01 S4). Excluded, not imputed.
+
+  PASS  the known 2026-02 CPI YoY gap is excluded explicitly, not silently  [1 month(s) dropped for absent CPI]
+  PASS  fare-vs-CPI grid is complete over the usable months  [actual=296 expected=296]
+  Fare growth vs CPI growth, matched by jurisdiction and month:
+              label  observations  jurisdictions  months  median_fare_yoy  median_cpi_yoy  median_gap_pp  share_fare_above_cpi
+Bus intracity (NGN)           148             37       4            39.37           16.23          21.68                  0.91
+        Okada (NGN)           148             37       4            50.66           16.23          35.64                  0.99
+
+      READ AS: a CPI-indexed allowance would have lagged observed fare
+      growth by the median gap shown, reducing commuting purchasing power.
+      It is not a measure of real pay.
+  PASS  in both modes the median fare grew faster than CPI  [gaps [21.7, 35.6] pp]
+  PASS  fare growth exceeded CPI growth in the large majority of observations  [shares [0.912, 0.986]]
+
+==============================================================================
+D4 - EXPOSURE SENSITIVITY: what a cost move does per 1pp of cost share
+==============================================================================
+  DECISION: how much of a total-cost problem is each of these movements?
+  That depends on how much of YOUR cost base the item is - which is company
+  data we do not hold. So the multiplier is published instead of a total.
+  A business multiplies the figure by its own cost share.
+  This is arithmetic, not an index: nothing is normalised, weighted or
+  added across costs, and the shares are supplied by the reader.
+
+  Read as: a cost that is X% of your cost base and rose P% adds
+  X * (P/100) percentage points to total cost.
+
+                             window                             metric_code                   label  jurisdictions  median_pct_change  total_cost_impact_pp_per_1pp_share                              note
+  PRIMARY_WINDOW_2025_02_to_2026_04              DIESEL_PRICE_NGN_PER_LITRE          Diesel (NGN/l)             37              65.96                              0.6596                                  
+  PRIMARY_WINDOW_2025_02_to_2026_04         TRANSPORT_OKADA_NGN_PER_JOURNEY             Okada (NGN)             37              65.12                              0.6512                                  
+  PRIMARY_WINDOW_2025_02_to_2026_04 TRANSPORT_BUS_INTRACITY_NGN_PER_JOURNEY     Bus intracity (NGN)             37              49.32                              0.4932                                  
+  PRIMARY_WINDOW_2025_02_to_2026_04         TRANSPORT_WATER_NGN_PER_JOURNEY   Water transport (NGN)             37              42.86                              0.4286                                  
+  PRIMARY_WINDOW_2025_02_to_2026_04              PETROL_PRICE_NGN_PER_LITRE          Petrol (NGN/l)             37              33.25                              0.3325                                  
+  PRIMARY_WINDOW_2025_02_to_2026_04 TRANSPORT_BUS_INTERCITY_NGN_PER_JOURNEY     Bus intercity (NGN)             37              29.90                              0.2990                                  
+  PRIMARY_WINDOW_2025_02_to_2026_04                   LPG_REFILL_12_5KG_NGN LPG 12.5kg refill (NGN)             37              27.38                              0.2738                                  
+  PRIMARY_WINDOW_2025_02_to_2026_04                      LPG_REFILL_5KG_NGN    LPG 5kg refill (NGN)             37              24.35                              0.2435                                  
+  PRIMARY_WINDOW_2025_02_to_2026_04           TRANSPORT_AIR_NGN_PER_JOURNEY               Air (NGN)             37              21.80                              0.2180                                  
+TROUGH_TO_LATEST_2025_09_to_2026_05              DIESEL_PRICE_NGN_PER_LITRE          Diesel (NGN/l)             37             158.16                              1.5816                                  
+TROUGH_TO_LATEST_2025_09_to_2026_05              PETROL_PRICE_NGN_PER_LITRE          Petrol (NGN/l)             37              65.35                              0.6535                                  
+TROUGH_TO_LATEST_2025_09_to_2026_05         TRANSPORT_OKADA_NGN_PER_JOURNEY             Okada (NGN)             37              42.51                              0.4251                                  
+TROUGH_TO_LATEST_2025_09_to_2026_05 TRANSPORT_BUS_INTRACITY_NGN_PER_JOURNEY     Bus intracity (NGN)             37              36.97                              0.3697                                  
+TROUGH_TO_LATEST_2025_09_to_2026_05         TRANSPORT_WATER_NGN_PER_JOURNEY   Water transport (NGN)             37              26.30                              0.2630                                  
+TROUGH_TO_LATEST_2025_09_to_2026_05 TRANSPORT_BUS_INTERCITY_NGN_PER_JOURNEY     Bus intercity (NGN)             37              22.05                              0.2205                                  
+TROUGH_TO_LATEST_2025_09_to_2026_05           TRANSPORT_AIR_NGN_PER_JOURNEY               Air (NGN)             37              18.69                              0.1869                                  
+TROUGH_TO_LATEST_2025_09_to_2026_05                   LPG_REFILL_12_5KG_NGN LPG 12.5kg refill (NGN)              0                NaN                                 NaN series does not cover this window
+TROUGH_TO_LATEST_2025_09_to_2026_05                      LPG_REFILL_5KG_NGN    LPG 5kg refill (NGN)              0                NaN                                 NaN series does not cover this window
+  PASS  every covered sensitivity figure uses all 37 jurisdictions
+  PASS  LPG is correctly absent from the trough-to-latest window (ends 2026-04)  [actual=0 expected=0]
+
+  ILLUSTRATION (the share is an example, not a finding):
+    diesel at  5% of cost base, +158.2% -> +7.9 pp on total cost
+    diesel at 15% of cost base, +158.2% -> +23.7 pp on total cost
+    diesel at 30% of cost base, +158.2% -> +47.4 pp on total cost
+
+==============================================================================
+D5 - THE MONEY VALUE OF LOCATION, PER COST
+==============================================================================
+  DECISION: is there enough difference between jurisdictions for location to
+  be worth acting on for this cost - and if so, how much money is it?
+
+  RANK-STABILITY HEURISTIC ENFORCED (a02 V4). Every month ranking below is a
+  VALID SNAPSHOT of that month. For the five metrics whose order reshuffles
+  on ordinary monthly movement, the SPREAD is reported but no jurisdiction
+  is NAMED - not because the value is doubtful, but because the name would
+  not survive to the next month and so cannot anchor a PERSISTENT location
+  decision. This is a project decision-use heuristic, not a data-quality
+  verdict.
+
+  PASS  rank-stable metric list loaded from the a01 evidence  [actual=4 expected=4]
+                            metric_code                   label      month  jurisdictions  cheapest_ngn  dearest_ngn  spread_ngn  dearest_over_cheapest  stable_for_persistent_ranking                cheapest_jurisdiction                 dearest_jurisdiction
+        TRANSPORT_WATER_NGN_PER_JOURNEY   Water transport (NGN) 2026-04-01             37        980.88      6777.45     5796.57                   6.91                           True                                Borno                               Rivers
+        TRANSPORT_OKADA_NGN_PER_JOURNEY             Okada (NGN) 2026-04-01             37        730.24      1690.91      960.67                   2.32                           True                              Adamawa                               Kaduna
+TRANSPORT_BUS_INTRACITY_NGN_PER_JOURNEY     Bus intracity (NGN) 2026-04-01             37        850.98      1803.10      952.13                   2.12                           True                                 Abia                              Zamfara
+TRANSPORT_BUS_INTERCITY_NGN_PER_JOURNEY     Bus intercity (NGN) 2026-04-01             37       7900.10     10998.89     3098.79                   1.39                           True                                Kwara                                 Abia
+          TRANSPORT_AIR_NGN_PER_JOURNEY               Air (NGN) 2026-04-01             37     135650.75    183835.21    48184.46                   1.36                          False NOT NAMED - order unstable over time NOT NAMED - order unstable over time
+                     LPG_REFILL_5KG_NGN    LPG 5kg refill (NGN) 2026-04-01             37       7204.76      9745.10     2540.34                   1.35                          False NOT NAMED - order unstable over time NOT NAMED - order unstable over time
+                  LPG_REFILL_12_5KG_NGN LPG 12.5kg refill (NGN) 2026-04-01             37      19564.36     25596.71     6032.35                   1.31                          False NOT NAMED - order unstable over time NOT NAMED - order unstable over time
+             DIESEL_PRICE_NGN_PER_LITRE          Diesel (NGN/l) 2026-04-01             37       2180.28      2818.94      638.66                   1.29                          False NOT NAMED - order unstable over time NOT NAMED - order unstable over time
+             PETROL_PRICE_NGN_PER_LITRE          Petrol (NGN/l) 2026-04-01             37       1403.89      1599.05      195.16                   1.14                          False NOT NAMED - order unstable over time NOT NAMED - order unstable over time
+  PASS  exactly the four rank-stable metrics name a jurisdiction  [actual=4 expected=4]
+  PASS  no rank-unstable metric names a cheapest or dearest jurisdiction
+
+==============================================================================
+D6 - PERSISTENT LOCAL-MOBILITY POSITIONS (staff commute, last mile)
+==============================================================================
+  DECISION: for a business whose costs turn on people and goods moving
+  locally - office siting, rider pay, delivery-fee setting - which
+  jurisdictions are reliably dear, and which reliably cheap?
+
+  These three metrics are RANK-STABLE and LOCAL (a02 V2, V4), so naming
+  jurisdictions here is defensible. Air and intercity bus are inter-regional
+  and are deliberately excluded from this view.
+
+  PASS  local-mobility grid is complete (3 metrics x 37 x 15)  [actual=1665 expected=1665]
+  Persistently DEAR on local mobility (>= 80% of 15 months):
+ state_name     zone_name  modes_dear                                                   modes
+       Ondo    South West           3 Bus intracity (NGN); Okada (NGN); Water transport (NGN)
+      Lagos    South West           3 Bus intracity (NGN); Okada (NGN); Water transport (NGN)
+     Rivers   South South           2                      Okada (NGN); Water transport (NGN)
+       Ogun    South West           2                      Okada (NGN); Water transport (NGN)
+  Akwa Ibom   South South           1                                   Water transport (NGN)
+    Bayelsa   South South           1                                   Water transport (NGN)
+Cross River   South South           1                                   Water transport (NGN)
+      Delta   South South           1                                   Water transport (NGN)
+        Edo   South South           1                                   Water transport (NGN)
+      Kwara North Central           1                                     Bus intracity (NGN)
+     Kaduna    North West           1                                             Okada (NGN)
+        Imo    South East           1                                             Okada (NGN)
+      Enugu    South East           1                                     Bus intracity (NGN)
+   Nasarawa North Central           1                                     Bus intracity (NGN)
+     Taraba    North East           1                                     Bus intracity (NGN)
+       Yobe    North East           1                                             Okada (NGN)
+    Zamfara    North West           1                                     Bus intracity (NGN)
+
+  Persistently CHEAP on local mobility:
+state_name     zone_name  modes_cheap                                      modes
+      Abia    South East            2 Bus intracity (NGN); Water transport (NGN)
+   Adamawa    North East            2           Bus intracity (NGN); Okada (NGN)
+   Anambra    South East            2         Okada (NGN); Water transport (NGN)
+    Sokoto    North West            2           Bus intracity (NGN); Okada (NGN)
+     Abuja North Central            1                      Water transport (NGN)
+     Borno    North East            1                      Water transport (NGN)
+       Edo   South South            1                                Okada (NGN)
+     Gombe    North East            1                      Water transport (NGN)
+     Ekiti    South West            1                                Okada (NGN)
+      Kano    North West            1                        Bus intracity (NGN)
+     Kebbi    North West            1                      Water transport (NGN)
+    Rivers   South South            1                        Bus intracity (NGN)
+    Taraba    North East            1                      Water transport (NGN)
+  PASS  no jurisdiction is persistently dear AND cheap on the same mode  [actual=0 expected=0]
+  PASS  split positions measured (dear on one mode, cheap on another)  [3 jurisdictions: Edo, Rivers, Taraba]
+
+  SPLIT POSITIONS - dear on one local mode, cheap on another:
+    Edo            dear: Water transport (NGN)                                cheap: Okada (NGN)
+    Rivers         dear: Okada (NGN); Water transport (NGN)                   cheap: Bus intracity (NGN)
+    Taraba         dear: Bus intracity (NGN)                                  cheap: Water transport (NGN)
+    Even inside local mobility, 'expensive' has to name the mode.
+  PASS  the persistence view returns usable lists at both ends  [17 dear, 13 cheap]
+
+  Dear on ALL THREE local modes: Ondo, Lagos
+
+==============================================================================
+ANALYSIS PASS 03 VALIDATION: 27 of 27 checks pass
+==============================================================================
+
+outputs written to: outputs\analysis\decisions

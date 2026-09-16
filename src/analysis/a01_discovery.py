@@ -879,24 +879,27 @@ def section_12_persistence_test(panel, ck):
                            "mean_cv_pct": cvm}).reset_index()
     safety.columns = ["metric_code", "mean_abs_mom_pct", "mean_cv_pct"]
     safety["move_to_spread_ratio"] = safety.mean_abs_mom_pct / safety.mean_cv_pct
-    safety["rank_safe"] = safety.move_to_spread_ratio < na.RANK_SAFETY_RATIO
+    safety["stable_for_persistent_ranking"] = (safety.move_to_spread_ratio
+                                           < na.RANK_STABILITY_RATIO)
     safety["label"] = safety.metric_code.map(na.SHORT_LABEL)
     print("  (a) Can each metric support a rank-based claim? "
           "(ratio >= 1.0 means the ranking reshuffles on ordinary monthly movement)")
     show(safety.sort_values("move_to_spread_ratio", ascending=False)[
         ["label", "mean_abs_mom_pct", "mean_cv_pct", "move_to_spread_ratio",
-         "rank_safe"]].round(2))
-    na.write_csv(safety.round(4), OUT, "f40_rank_safety.csv")
-    SAFE = safety[safety.rank_safe].metric_code.tolist()
-    UNSAFE = safety[~safety.rank_safe].metric_code.tolist()
-    ck.check(len(SAFE) >= 3, "at least three metrics support rank-based claims",
-             f"{len(SAFE)} safe, {len(UNSAFE)} unsafe")
-    print(f"\n      RANK-SAFE  ({len(SAFE)}): "
-          f"{', '.join(na.SHORT_LABEL[m] for m in SAFE)}")
-    print(f"      NOT SAFE   ({len(UNSAFE)}): "
-          f"{', '.join(na.SHORT_LABEL[m] for m in UNSAFE)}")
+         "stable_for_persistent_ranking"]].round(2))
+    na.write_csv(safety.round(4), OUT, "f40_rank_stability.csv")
+    STABLE = safety[safety.stable_for_persistent_ranking].metric_code.tolist()
+    UNSTABLE = safety[~safety.stable_for_persistent_ranking].metric_code.tolist()
+    ck.check(len(STABLE) >= 3,
+             "at least three metrics are stable enough for persistent rank use",
+             f"{len(STABLE)} stable, {len(UNSTABLE)} unstable")
+    print(f"\n      STABLE for persistent ranking   ({len(STABLE)}): "
+          f"{', '.join(na.SHORT_LABEL[m] for m in STABLE)}")
+    print(f"      UNSTABLE for persistent ranking ({len(UNSTABLE)}): "
+          f"{', '.join(na.SHORT_LABEL[m] for m in UNSTABLE)}")
     print("      Persistence is COMPUTED for all nine metrics and reported below, but\n"
-          "      the business-facing conclusion is drawn only from the rank-safe ones.\n"
+          "      the business-facing conclusion about PERSISTENT position is drawn\n"
+          "      only from the rank-stable ones.\n"
           "      For an unsafe metric, an absence of persistence CANNOT be distinguished\n"
           "      from rank noise and is not evidence that costs are uniform there.")
 
@@ -920,7 +923,7 @@ def section_12_persistence_test(panel, ck):
     rec["share_low"] = rec.months_low / rec.months_observed
     rec["persistent_high"] = rec.eligible & (rec.share_high >= na.PERSISTENCE_THRESHOLD)
     rec["persistent_low"] = rec.eligible & (rec.share_low >= na.PERSISTENCE_THRESHOLD)
-    rec["rank_safe"] = rec.metric_code.isin(SAFE)
+    rec["stable_for_persistent_ranking"] = rec.metric_code.isin(STABLE)
     n_inelig = int((~rec.eligible).sum())
     ck.eq(n_inelig, 0,
           f"no jurisdiction-metric pair falls below the {na.MIN_ELIGIBLE_MONTHS}-month "
@@ -941,16 +944,17 @@ def section_12_persistence_test(panel, ck):
               .reset_index())
     stay["stickiness_pp"] = 100 * (stay.p_high_given_high - stay.p_high_given_not)
     stay["label"] = stay.metric_code.map(na.SHORT_LABEL)
-    stay["rank_safe"] = stay.metric_code.isin(SAFE)
+    stay["stable_for_persistent_ranking"] = stay.metric_code.isin(STABLE)
     print("\n  (b) Is high-cost status sticky month to month? (1 = always stays high)")
     show(stay.sort_values("stickiness_pp", ascending=False)[
-        ["label", "rank_safe", "base_rate_high", "p_high_given_high",
+        ["label", "stable_for_persistent_ranking", "base_rate_high",
+         "p_high_given_high",
          "p_high_given_not", "stickiness_pp"]].round(3))
     na.write_csv(stay.round(4), OUT, "f35_quartile_stickiness.csv")
     ck.check((stay.p_high_given_high > stay.p_high_given_not).all(),
              "high-cost status is sticky for every metric (P(high|high) > P(high|not))")
 
-    # ---- Multi-metric counts, rank-safe metrics only ------------------------
+    # ---- Multi-metric counts, rank-stable metrics only ----------------------
     def count_table(df, flag, name):
         t = (df[df[flag]]
                .groupby(["state_id", "state_name", "zone_name"])
@@ -961,26 +965,26 @@ def section_12_persistence_test(panel, ck):
         return t
 
     cnt_all = count_table(rec, "persistent_high", "metrics_persistently_high")
-    rec_safe = rec[rec.rank_safe]
+    rec_safe = rec[rec.stable_for_persistent_ranking]
     cnt = count_table(rec_safe, "persistent_high", "metrics_persistently_high")
-    print(f"\n  (c) Jurisdictions persistently HIGH, RANK-SAFE metrics only "
-          f"({len(SAFE)} metrics):")
+    print(f"\n  (c) Jurisdictions persistently HIGH, RANK-STABLE metrics only "
+          f"({len(STABLE)} metrics):")
     show(cnt[["state_name", "zone_name", "metrics_persistently_high", "which"]], 20)
     na.write_csv(cnt, OUT, "f36_persistent_high_multimetric.csv")
     na.write_csv(cnt_all, OUT, "f36b_persistent_high_all_metrics.csv")
     cntl = count_table(rec_safe, "persistent_low", "metrics_persistently_low")
-    print(f"\n  (d) Jurisdictions persistently LOW, rank-safe metrics only:")
+    print(f"\n  (d) Jurisdictions persistently LOW, rank-stable metrics only:")
     show(cntl[["state_name", "zone_name", "metrics_persistently_low", "which"]], 20)
     na.write_csv(cntl, OUT, "f37_persistent_low_multimetric.csv")
 
     per_metric = (rec.groupby(["metric_code"])
                     .agg(persistently_high=("persistent_high", "sum"),
-                         rank_safe=("rank_safe", "first"))
+                         stable=("stable_for_persistent_ranking", "first"))
                     .reset_index())
     per_metric["label"] = per_metric.metric_code.map(na.SHORT_LABEL)
     print("\n  (e) Jurisdictions persistently high, per metric:")
     show(per_metric.sort_values("persistently_high", ascending=False)[
-        ["label", "rank_safe", "persistently_high"]])
+        ["label", "stable", "persistently_high"]])
     na.write_csv(per_metric, OUT, "f41_persistent_high_per_metric.csv")
 
     # ---- Cost families ------------------------------------------------------
@@ -1010,36 +1014,36 @@ def section_12_persistence_test(panel, ck):
     print("      Air is in INTERREGIONAL_TRANSPORT, never in LOCAL_MOBILITY (a02 V2).")
 
     # WHAT IS ACTUALLY TESTABLE. A family can only contribute to a cross-family
-    # test if it owns at least one RANK-SAFE metric. Here it does not, for two of
+    # test if it owns at least one RANK-STABLE metric. Here it does not, for two of
     # the four families - so the question "is any jurisdiction broadly expensive
     # across the whole cost base" is only PARTIALLY answerable, and saying so is
     # part of the result rather than a caveat bolted onto it.
     safe_by_family = {}
-    for m in SAFE:
+    for m in STABLE:
         safe_by_family.setdefault(FAMILY[m], []).append(na.SHORT_LABEL[m])
     testable = sorted(safe_by_family)
     untestable = sorted(set(FAMILY.values()) - set(testable))
-    print(f"\n      families with >=1 rank-safe metric (TESTABLE)   : {testable}")
-    print(f"      families with NO rank-safe metric (UNTESTABLE)  : {untestable}")
+    print(f"\n      families with >=1 rank-stable metric (TESTABLE)  : {testable}")
+    print(f"      families with NO rank-stable metric (UNTESTABLE) : {untestable}")
     print("      For an untestable family, the absence of a persistently dear")
     print("      jurisdiction is a statement about the RANKING, not about costs.")
 
     show(fam[fam.n_metrics >= 2][["state_name", "zone_name", "n_metrics",
                                   "n_families", "families"]], 20)
     n_cross_all = int((fam.n_families >= 2).sum())
-    print(f"\n      ALL NINE METRICS (informational, includes rank-unsafe):")
+    print(f"\n      ALL NINE METRICS (informational, includes rank-unstable):")
     print(f"        persistently high in 2+ families : {n_cross_all} of {na.N_STATES}")
     print(f"        persistent-high jurisdictions per family: "
           f"{ph.groupby('family').state_id.nunique().to_dict()}")
 
-    ph_safe = ph[ph.metric_code.isin(SAFE)]
+    ph_safe = ph[ph.metric_code.isin(STABLE)]
     fam_safe = (ph_safe.groupby(["state_id", "state_name", "zone_name"])
                   .agg(n_metrics=("metric_code", "count"),
                        n_families=("family", "nunique"),
                        families=("family", lambda s: "; ".join(sorted(set(s)))))
                   .reset_index().sort_values(["n_families", "n_metrics"], ascending=False))
     n_cross_safe = int((fam_safe.n_families >= 2).sum())
-    print(f"\n      RANK-SAFE METRICS ONLY (the defensible version):")
+    print(f"\n      RANK-STABLE METRICS ONLY (the defensible version):")
     print(f"        testable families                : {len(testable)} of 4")
     print(f"        persistently high in 2+ families : {n_cross_safe} of {na.N_STATES}")
     print(f"        persistently high in 1 family    : "
@@ -1047,12 +1051,12 @@ def section_12_persistence_test(panel, ck):
     show(fam_safe[fam_safe.n_families >= 2][["state_name", "zone_name", "n_metrics",
                                              "n_families", "families"]], 20)
     fam["scope"] = "ALL_METRICS"
-    fam_safe["scope"] = "RANK_SAFE_ONLY"
+    fam_safe["scope"] = "RANK_STABLE_ONLY"
     na.write_csv(pd.concat([fam, fam_safe], ignore_index=True),
                  OUT, "f39_persistence_by_cost_family.csv")
     n_cross = n_cross_safe
     ck.eq(len(untestable), 2,
-          "two cost families own no rank-safe metric, so cross-family scope is partial")
+          "two cost families own no rank-stable metric, so cross-family scope is partial")
     ck.check(n_cross_safe < len(fam_safe),
              "most persistently-dear jurisdictions are dear within a single cost family",
              f"{n_cross_safe} of {len(fam_safe)} span 2+ testable families")
@@ -1122,18 +1126,18 @@ def section_12_persistence_test(panel, ck):
     verdict = ("METRIC-SPECIFIC EXPENSIVE JURISDICTIONS. A jurisdiction can be "
                "persistently expensive for a particular cost component without being "
                "broadly expensive across unrelated cost families. Within-metric "
-               "persistence is STRONG for every rank-safe metric. Most persistently-dear "
+               "persistence is STRONG for every rank-stable metric. Most persistently-dear "
                "jurisdictions are dear within ONE cost family, overwhelmingly local "
                "mobility. The scope of this conclusion is limited: liquid fuel and LPG "
-               "own no rank-safe metric, so for those families the question cannot be "
+               "own no rank-stable metric, so for those families the question cannot be "
                "answered from ranks at all, and their absence from the cross-family "
                "result is a property of the ranking, not evidence that costs are uniform.")
     if n_multi > 0:
-        verdict = ("PERSISTENT MULTI-METRIC HIGH-COST JURISDICTIONS exist across rank-safe "
+        verdict = ("PERSISTENT MULTI-METRIC HIGH-COST JURISDICTIONS exist across rank-stable "
                    "metrics: at least one is persistently high on 5+ of them.")
     print(f"      {verdict}")
-    print(f"\n      (rank-safe metrics: {len(SAFE)} of 9; testable families: {len(testable)} "
-          f"of 4; jurisdictions persistently high on >=1 rank-safe metric: {len(cnt)}; "
+    print(f"\n      (rank-stable metrics: {len(STABLE)} of 9; testable families: {len(testable)} "
+          f"of 4; jurisdictions persistently high on >=1 rank-stable metric: {len(cnt)}; "
           f"max on any one: "
           f"{int(cnt.metrics_persistently_high.max()) if len(cnt) else 0}; "
           f"spanning 2+ testable families: {n_cross})")

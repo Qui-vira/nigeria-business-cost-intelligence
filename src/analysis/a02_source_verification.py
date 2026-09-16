@@ -351,7 +351,7 @@ def verify_lpg_rank_swings(conn, ck):
     na.write_csv(comp, OUT, "v3c_lpg_distribution.csv")
 
     print("\n  VERDICT (LPG rank swings): GENUINE PUBLISHED PRICE MOVEMENTS IN A")
-    print("  DISTRIBUTION SO COMPRESSED THAT THE RANKING CARRIES ALMOST NO SIGNAL.")
+    print("  DISTRIBUTION SO COMPRESSED THAT THE ORDER IS UNSTABLE MONTH TO MONTH.")
     print("    Ruled out by evidence: ties, cylinder-size confusion, geography")
     print("    misalignment, restatement behaviour, extraction error. Each jurisdiction")
     print("    holds a stable source row across every release; the source COLUMN moved")
@@ -360,19 +360,28 @@ def verify_lpg_rank_swings(conn, ck):
     print("    The cause is arithmetic: in 2025-10 all 37 jurisdictions lay between")
     print("    NGN 17,611 and NGN 19,392 - a total spread of NGN 1,781, CV 2.4%. A price")
     print("    move of a few hundred naira therefore traverses most of the ranking.")
-    print("    CONSEQUENCE: LPG PRICE LEVELS ARE SAFE FOR ANALYSIS. LPG RANKS AND")
-    print("    RANK-BASED CLAIMS ARE NOT, and no jurisdiction-level 'cheapest/dearest")
-    print("    LPG' claim should be made. This independently explains why the persistence")
-    print("    test found ZERO jurisdictions persistently dear on LPG 12.5 kg.")
+    print("    CONSEQUENCE: LPG PRICE LEVELS ARE SAFE FOR ANALYSIS, and each month's LPG")
+    print("    ranking is a valid snapshot of that month. What LPG will NOT support is a")
+    print("    PERSISTENT rank-based claim - a standing 'cheapest LPG jurisdiction' would")
+    print("    not survive to the next month. This independently explains why the")
+    print("    persistence test found ZERO jurisdictions persistently dear on LPG 12.5 kg.")
     return comp
 
 
 # ===========================================================================
 def rank_instability_index(conn, ck):
-    head("V4 - RANK INSTABILITY: WHICH METRICS SUPPORT RANK-BASED CLAIMS AT ALL?")
-    print("  For each metric: the typical monthly price move, against the cross-\n"
+    head("V4 - RANK STABILITY: WHICH METRICS SUPPORT A PERSISTENT RANK-BASED CLAIM?")
+    print("  SCOPE OF THIS TEST. Every published rank is a VALID SNAPSHOT of its month:\n"
+          "  the values are correctly extracted and correctly ordered, and nothing here\n"
+          "  questions them. The question is narrower and practical - will a rank taken\n"
+          "  this month still describe the same jurisdiction next month, well enough to\n"
+          "  anchor a PERSISTENT location decision such as siting or a standing supplier\n"
+          "  preference?\n\n"
+          "  For each metric: the typical monthly price move, against the cross-\n"
           "  jurisdiction dispersion it has to traverse. churn = mean absolute change in\n"
-          "  a jurisdiction's rank from one month to the next, out of 37 positions.\n")
+          "  a jurisdiction's rank from one month to the next, out of 37 positions.\n\n"
+          "  The 1.0 cut is a PROJECT DECISION-USE HEURISTIC adopted for consistency,\n"
+          "  not a statistical standard and not a data-quality verdict.\n")
 
     p = na.q(conn, """
         SELECT metric_code, state_id, observation_month,
@@ -397,12 +406,14 @@ def rank_instability_index(conn, ck):
     out["move_to_spread_ratio"] = out.mean_abs_mom_pct / out.mean_cv_pct
     out["rank_churn_pct_of_field"] = 100 * out.mean_abs_rank_change / na.N_STATES
     out["label"] = out.metric_code.map(na.SHORT_LABEL)
-    out["rank_claims"] = out.move_to_spread_ratio.map(
-        lambda r: "UNSAFE" if r >= 1.0 else ("CAUTION" if r >= 0.5 else "SAFE"))
+    out["persistent_rank_use"] = out.move_to_spread_ratio.map(
+        lambda r: "UNSTABLE" if r >= na.RANK_STABILITY_RATIO
+        else ("BORDERLINE" if r >= 0.5 else "STABLE"))
     out = out.sort_values("move_to_spread_ratio", ascending=False)
     show(out[["label", "mean_abs_mom_pct", "mean_cv_pct", "move_to_spread_ratio",
-              "mean_abs_rank_change", "rank_churn_pct_of_field", "rank_claims"]].round(2))
-    na.write_csv(out.round(4), OUT, "v4_rank_instability.csv")
+              "mean_abs_rank_change", "rank_churn_pct_of_field",
+              "persistent_rank_use"]].round(2))
+    na.write_csv(out.round(4), OUT, "v4_rank_stability.csv")
 
     lpg = out[out.metric_code.str.startswith("LPG")]
     ck.check((lpg.move_to_spread_ratio > 1).all(),
@@ -412,12 +423,15 @@ def rank_instability_index(conn, ck):
         "TRANSPORT_OKADA_NGN_PER_JOURNEY", "TRANSPORT_WATER_NGN_PER_JOURNEY",
         "TRANSPORT_BUS_INTRACITY_NGN_PER_JOURNEY"])]
     ck.check((transport_local.move_to_spread_ratio < 0.5).all(),
-             "the three local-mobility modes are stable enough for rank-based claims",
+             "the three local-mobility modes are stable enough for persistent rank use",
              f"ratios {transport_local.move_to_spread_ratio.round(2).tolist()}")
     print("\n  READING: a ratio at or above 1.0 means a typical monthly move is as large")
-    print("  as the entire spread between jurisdictions, so the ranking reshuffles on")
-    print("  noise. Rank-based and persistence claims are reported only for metrics")
-    print("  marked SAFE.")
+    print("  as the entire spread between jurisdictions, so the ORDER reshuffles on")
+    print("  ordinary movement. Each month's rank remains a valid snapshot; what an")
+    print("  UNSTABLE metric will not support is a PERSISTENT, rank-based location")
+    print("  decision. Persistence claims are therefore drawn only from metrics marked")
+    print("  STABLE. This is a project decision-use heuristic, not a data-quality")
+    print("  verdict on the published values.")
     return out
 
 
