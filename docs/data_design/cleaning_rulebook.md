@@ -242,7 +242,7 @@ The distinction is exact, and it determines the primary keys:
 | `diesel_price_monthly` | datetime columns | 3 |
 | `cooking_gas_price_monthly` | 3 columns per cylinder block | 3 |
 | `transport_fare_zone_monthly` | monthly sheet | 3 |
-| `cpi_state_index_monthly` | `Table-5` | 3 |
+| `cpi_state_monthly` | `Table-5` | 3 index periods + 2 current-month change measures |
 | `cpi_index_monthly` | `Table1`–`Table4` | **the entire historical series**, restated every release |
 
 **Sheets that publish the release month only — no overlap**
@@ -1000,39 +1000,116 @@ excluded from this comparison.
 
 ## 6. CPI
 
-**RAW PROBLEM** — Ten sheets per workbook with headers on rows 2, 3 and 4 and column counts from 12
-to 65. Headers are **two stacked rows**: a group row and a measure row, so `Food` and `All Items`
-repeat across the sheet meaning a different period each time. The `(2)` / `(3)` sheets are rebasing
-working sheets carrying both the 1985 and 2024 bases, plus `Multipling Factor` and
-`Rereferencing Average` rows. **69,411 `#REF!` cells** exist, ~92% confined to `Table1 (2)`; the
-presentation tables contain zero. `Table-5` is the only state-level table, and carries NBS's printed
-warning against inter-state comparison. **March 2026 ships a legacy `.xls`** nested in a subfolder —
-unreadable without an `.xls` reader. **January 2025 does not exist.**
+> **What the processed dataset is.** The CPI **state** table (`Table-5`) only — Food and All Items,
+> by state, on the 2024 = 100 base, across 18 releases. The national, urban, rural and pre-rebasing
+> sheets in the same workbooks are deliberately **not** processed.
+
+**RAW PROBLEM** — Ten sheets per workbook (five before December 2025), headers on rows 2–4, column
+counts from 12 to 65. Headers are **two stacked rows**: a period row and a measure row, so `Food` and
+`All Items` each appear five times across `Table-5` meaning a different period each time.
+
+Measured across all 18 releases:
+
+| Hazard | Detail |
+|---|---|
+| `Table1` carries **two contradictory base titles** | row 1 `Base September 1985 = 100`, row 2 `Base: 2024 = 100` — in every release |
+| The `(2)` sheets are **dual-base** | `Table1 (2)` row 5 reads `Weights \| 1000 \| 100`; every measure appears twice, once per base, under identical headers |
+| **96,857 `#REF!` cells** | **all** in `Table1 (2)` — 13,922 per release 2025-12…2026-04, 13,723 thereafter |
+| `Table3 (3)` duplicates `Table3 (2)` | byte-identical, 380 rows, in all 7 era-B releases |
+| `Table2` **silently changes base** | in 2025-10 and 2025-11 it publishes a 1995-base series (All Items 1.93 → 128.89 over 370 rows) under a `Base Year 2024 = 100` title |
+| March 2026 ships a **legacy `.xls`** | genuine OLE2, nested in a subfolder; needs an `.xls` reader |
+| **January 2025 does not exist** | no standalone CPI report was released |
 
 **WHY IT MATTERS** — Reading one header row loses either the period or the measure. Reading the
-working sheets as data imports tens of thousands of broken cells and two incompatible bases.
+working sheets as data imports tens of thousands of broken cells and two incompatible bases. And an
+index of 145 sits beside a rate of 15 in the same table: without a `measure` and `unit` on every row
+the two are indistinguishable.
+
+### 6a. Scope and exclusions
+
+`Table-5` only. Nine sheets are excluded, and a check asserts that **every** non-`Table-5` sheet
+present is on this list, so a newly-added sheet fails the run rather than being ignored:
+
+`Table1`, `Table2`, `Table3`, `Table4` (national / urban / rural) and
+`Table1 (2)`, `Table2 (2)`, `Table3 (2)`, `Table3 (3)`, `Table4 (2)` (rebasing working sheets).
+
+The October/November 2025 `Table2` base rupture and the dual-base `(2)` sheets stay documented as
+profiling anomalies and raw evidence — outside the processed dataset.
 
 **CLEANING RULE**
 
-1. Parse only the presentation sheets by default: `Table1`, `Table2`, `Table3`, `Table4`, `Table-5`.
-   Parse `(2)`/`(3)` sheets only into a quarantined table flagged `is_working_sheet = TRUE`.
-2. Combine the two header rows: forward-fill the group row across its merged span, then concatenate
-   with the measure row. Strip embedded newlines and collapse repeated whitespace.
-3. Carry the year label down the month rows (forward-fill) to build `observation_month`.
-4. Map Excel errors to `NULL` with `value_status = 'SOURCE_ERROR_REF'`. Never to zero.
-5. Record `index_base` from the table title on every row.
-6. Install an `.xls` reader (`xlrd`) before cleaning, so March 2026 can be read. If it still cannot be
-   read, March 2026 is recorded as **MISSING**, not skipped silently.
-7. January 2025 remains MISSING. It is not interpolated from December 2024 and February 2025.
-8. Every `cpi_state_index_monthly` row carries
-   `comparability_rule = 'LEVEL_NOT_COMPARABLE_ACROSS_STATES'`.
+1. **Read `Table-5` by content**, never by sheet position. Route the reader by file type: `openpyxl`
+   for `.xlsx`, `xlrd` for the March 2026 `.xls`, normalising date cells so both produce datetimes.
+   Record which reader ran in `extraction_method`.
+2. **Establish the base from `Table-5` itself** (D-47). Every release must state
+   `(Base Period: 2024 = 100)` on its own sheet. The base is **never** inherited from `Table1`.
+3. **Carry `measure` and `unit` on every row** (D-48): `INDEX` / `INDEX_2024_100`, or
+   `CHANGE_MOM_PCT` / `CHANGE_YOY_PCT` with `PERCENT`. An index and a rate never share an unlabelled
+   numeric field.
+4. **Ingest published change rates; never recompute them** (D-49). The index-ratio identity is a
+   validation check with a documented tolerance and a documented exception — not a generator.
+5. **Terminate the state block on a label that stops resolving**, never on the literal word "Note"
+   (D-50). Row 42 is a footnote inside the label column.
+6. Keep `release_month` and `observation_month` separate: one release publishes three index months
+   and describes one of them with two change rates.
+7. Resolve states through `ref_state_zone`; keep `state_raw_label`; assert that `state` and `zone`
+   are the canonical resolution of that row's own raw label.
+8. Carry NBS's comparability warning on every row.
+9. Size tables from content; never trust `max_row` / `max_column`.
 
-**EXPECTED CLEAN OUTPUT** — `cpi_index_monthly` (national/urban/rural) and `cpi_state_index_monthly`
-(state), both long, both carrying base and status.
+### 6b. Two documented source defects
 
-**VALIDATION CHECK** — Zero `#REF!` values survive as numbers. `Table-5` yields 37 states per period.
-`index_base` is non-null on every row. A test asserts every state row carries the comparability flag.
-March 2026 either parses or is explicitly MISSING.
+**February 2026's year-ago column is labelled 2025-02 but holds 2025-01 data (D-51).**
+`cpi_1New_February2026.xlsx` `Table-5` row 3 column C reads `2025-02-01`; all 74 values beneath it are
+byte-identical to the published January 2025 column and **none** matches published February 2025. The
+March 2026 release is the control and matches its own year-ago month 74/74.
+
+> **Both the 74 year-ago `INDEX` cells and the 74 `CHANGE_YOY_PCT` cells are excluded from the
+> canonical output** — the annual rates are computed from that same disputed denominator. They are
+> not relabelled to January, not published as February, and not recomputed from another release. All
+> 148 excluded cells are kept as evidence with full provenance, flagged
+> `YEAR_AGO_PERIOD_LABEL_DATA_CONFLICT`.
+
+**April 2025 assigns 67 of 74 values to states two later releases contradict (D-52).**
+From Bayelsa (row 11) down, each April row carries the value the May 2025 and April 2026 releases
+assign to the **next** state — `Bayelsa 115.819464` in April is `Benue 115.819464` in both. April's
+own Monthly and Annual Change columns are internally consistent with its misaligned block to 1e-14,
+so the defect predates publication.
+
+> **The published values are kept exactly as NBS published them** — nothing shifted, replaced or
+> relabelled. All 74 April current-month `INDEX` rows carry `STATE_VALUE_ALIGNMENT_DISPUTED` and
+> `is_primary_release = FALSE`. The later restatements are untouched and remain separate
+> release-specific records. **This is a source alignment defect, not a revision.**
+
+The two later restatements agree with each other on 73 of 74. The exception, `Borno` / `FOOD` /
+observation 2025-04, is published as **three different values**: `114.69492` (2025-04),
+`146.650854` (2025-05), `136.650854` (2026-04).
+
+**EXPECTED CLEAN OUTPUT** — 18 releases × 37 states × 2 groups × (3 index periods + 2 change
+measures) = 6,660, less the 148 February 2026 exclusions = **6,512 rows**: **3,922** `INDEX`,
+**1,332** `CHANGE_MOM_PCT`, **1,258** `CHANGE_YOY_PCT`. 370 rows per release except 2026-02 with 222.
+Logical key `(release_month, observation_month, state, cpi_group, measure)`.
+
+**VALIDATION CHECK** — 43 checks. The load-bearing ones:
+
+- the 2024 = 100 base is stated on `Table-5` in all 18 releases;
+- 37 states per release, every label resolving, the footnote never ingested, the terminator row
+  always 42;
+- `Nassarawa` in exactly 6 releases and `Nasarawa` in 12 — not a one-way correction, since 2025-05
+  uses the correct spelling before three releases revert;
+- `measure` and `unit` always agree; index and change values are range-checked separately;
+- published `Monthly Change` equals the index ratio in **1,332 / 1,332** at 1e-12, and
+  `Annual Change` in **1,257 / 1,258**, the exception being `CPI_August25.xlsx` `Table-5` **J13** —
+  Borno All Items published as exactly `26.31` where every other value in that column carries 14–15
+  decimals, flagged `PUBLISHED_CHANGE_ROUNDED_TO_2DP` and preserved;
+- zero February 2026 year-ago `INDEX` or `CHANGE_YOY_PCT` rows survive, and all 148 excluded cells
+  are recorded as evidence;
+- all 74 April 2025 rows carry the dispute flag, are non-primary, and still equal a fresh read of the
+  April workbook;
+- **cross-release classification**: every repeated observation is `BYTE_IDENTICAL`, `PRECISION_ONLY`,
+  `KNOWN_SOURCE_STRUCTURE_CONFLICT` or `SUBSTANTIVE_REVISION`, with every pair compared rather than
+  each later publication against the first. A disagreement involving a documented defect is never
+  counted as a revision. Result: **1,936 / 1 / 135 / 0** of 2,072 — **zero substantive revisions**.
 
 ---
 
@@ -1278,8 +1355,14 @@ clean row records what was done.
 | Item label `Agric hen eggs` without its trailing comma | `Selected_food_table_Jan25.xlsx`, main sheet A2 | Reconciled through `ref_food_item.csv`; `item_label_raw` preserved (D-36) |
 | Zone sheet prints `Smoked fish` where the main sheet prints `Smoked fish (Mackerel)` | zone sheet A33, **all 17 releases** | Same item code via `ref_food_item.csv`; each sheet's own text kept in `item_label_raw` (D-36) |
 | Reported sheet extents of 50–51 rows and up to 12 columns | every food release | Formatting residue only — no content below row 43 or right of column 8. Tables sized from content, never from `max_row` / `max_column` |
-| Legacy `.xls` in a subfolder | `CPI_Report_March_2026.zip` | Requires `xlrd`; if unreadable, recorded MISSING |
-| 69,411 `#REF!` cells | 5 CPI workbooks, mostly `Table1 (2)` | `NULL` + `value_status = 'SOURCE_ERROR_REF'`; working sheets quarantined |
+| Legacy `.xls` in a subfolder | `CPI_Report_March_2026.zip` -> `March_2026/cpi_1New_March2026.xls` | Read with `xlrd` 2.0.2 (D-54); date cells arrive as Excel serials and are converted. `extraction_method` records the reader on every row |
+| **96,857 `#REF!` cells** | **all** in `Table1 (2)`, across the 7 era-B releases | The `(2)` sheets are excluded from the processed dataset entirely (D-46); no `#REF!` cell reaches any canonical table |
+| **Year-ago column labelled 2025-02 but holding 2025-01 data** | `cpi_1New_February2026.xlsx` `Table-5` row 3 col C | 74 index + 74 year-on-year cells excluded, kept as evidence, flagged `YEAR_AGO_PERIOD_LABEL_DATA_CONFLICT` (D-51) |
+| **State values misaligned from Bayelsa down** | `cpi_1New_Apr25.xlsx` `Table-5` rows 11-41 | Published as-is, flagged `STATE_VALUE_ALIGNMENT_DISPUTED`, demoted to `is_primary_release = FALSE` (D-52) |
+| Annual change hand-rounded to 2 dp | `CPI_August25.xlsx` `Table-5` **J13** = `26.31` | Preserved byte-exact, flagged `PUBLISHED_CHANGE_ROUNDED_TO_2DP`; never recomputed (D-49) |
+| `Table2` publishes a 1995-base series under a 2024-base title | `cpi_1New_October25.xlsx`, `cpi_1New_November25.xlsx` | Documented; `Table2` is outside the processed dataset (D-46) |
+| `Table3 (3)` byte-identical to `Table3 (2)` | all 7 era-B releases | Both excluded |
+| `Nassarawa` / `Nasarawa` alternating | CPI `Table-5`, 6 releases vs 12 | Resolved through `ref_state_zone`; raw label preserved and flagged |
 | OCR text corruption in the PDF text layer | NERC orders with a text layer | Not repaired. `KAEDC_NOV_2025_130.pdf` p9 reads `Musi!iu 0. OsP.ri`; `YEDC_MYTO_December_2025.pdf` reads `EFfective Date` and `1~ December 2025`. None is in the processed set |
 | **Tariff class lost from the text layer, values merged into the row above** | `AEDC-MYTO-APR-2025.pdf`, `EEDC-MYTO-APR-2025.pdf`, `IE-MYTO-APR-2025.pdf` p4 | Order rejected outright (D-40). `A - Non-MD 225.00 206.80 209.50 225.00 206.80 209.50` is its own triple plus `A - MD1`'s |
 | **Tariff cell blanked to underscores** | `AEDC_February_2025_003.pdf`, `IE_February-2025_008.pdf` p4 | Order rejected outright; `Life-line _______________` is not a value |

@@ -65,7 +65,7 @@ identity:
 | `diesel_price_monthly` | three datetime columns |
 | `cooking_gas_price_monthly` | three `Average of …` columns per cylinder block |
 | `transport_fare_zone_monthly` | monthly sheet, three `Average of …` columns |
-| `cpi_state_index_monthly` | Table-5, three period groups |
+| `cpi_state_monthly` | Table-5, three index periods plus two current-month change measures |
 | `cpi_index_monthly` | Table1–Table4 restate the **entire historical series** every month — the largest overlap in the project |
 
 **Tables that publish only the release month.** One row per observation; `release_month` is recorded
@@ -424,45 +424,101 @@ substantive.
 
 ## 6. CPI
 
-### `cpi_index_monthly`
+Built by `src/cleaning/clean_nbs_cpi.py`. States resolve through `data/reference/ref_state_zone.csv`.
+
+> **What this table is.** The CPI **state** table (`Table-5`) only — Food and All Items, by state, on
+> the 2024 = 100 base, across 18 releases. The national, urban, rural and pre-rebasing sheets in the
+> same workbooks are deliberately **not** processed (D-46); `cpi_index_monthly` below remains design
+> only.
+
+### `cpi_state_monthly`
+
+| release_month | observation_month | state | cpi_group | measure | value | unit | base_period | period_position | is_primary_release | source_anomaly |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 2026-07-01 | 2026-07-01 | Abia | ALL_ITEMS | `INDEX` | 153.0333 **[real]** | `INDEX_2024_100` | 2024=100 | CURRENT_MONTH | TRUE | |
+| 2026-07-01 | 2026-06-01 | Abia | ALL_ITEMS | `INDEX` | 150.32 **[real]** | `INDEX_2024_100` | 2024=100 | PRIOR_MONTH | FALSE | |
+| 2026-07-01 | 2025-07-01 | Abia | ALL_ITEMS | `INDEX` | 126.5987 **[real]** | `INDEX_2024_100` | 2024=100 | YEAR_AGO | FALSE | |
+| 2026-07-01 | 2026-07-01 | Abia | ALL_ITEMS | `CHANGE_YOY_PCT` | 20.8806 **[real]** | `PERCENT` | 2024=100 | CURRENT_MONTH | TRUE | |
+| 2026-07-01 | 2026-07-01 | Abia | ALL_ITEMS | `CHANGE_MOM_PCT` | 1.8050 **[real]** | `PERCENT` | 2024=100 | CURRENT_MONTH | TRUE | |
+| 2025-04-01 | 2025-04-01 | Benue | FOOD | `INDEX` | 146.650854 **[real]** | `INDEX_2024_100` | 2024=100 | CURRENT_MONTH | **FALSE** | `STATE_VALUE_ALIGNMENT_DISPUTED` |
+| 2025-08-01 | 2025-08-01 | Borno | ALL_ITEMS | `CHANGE_YOY_PCT` | 26.31 **[real]** | `PERCENT` | 2024=100 | CURRENT_MONTH | TRUE | `PUBLISHED_CHANGE_ROUNDED_TO_2DP` |
+
+**Logical key:** `(release_month, observation_month, state, cpi_group, measure)` — **6,512 rows**.
+
+**One row is one published number for one state, one group, one month and one measure.** `Table-5`
+publishes three index months per release and describes the current one with two change rates, so
+`release_month` is in the key: without it the prior-month row from this release would collide with
+the current-month row from the previous one.
+
+### Arithmetic
+
+| | Per release | × 18 | Excluded | Final |
+|---|---|---|---|---|
+| `INDEX` — 37 states × 2 groups × 3 periods | 222 | 3,996 | −74 | **3,922** |
+| `CHANGE_MOM_PCT` — 37 × 2 | 74 | 1,332 | — | **1,332** |
+| `CHANGE_YOY_PCT` — 37 × 2 | 74 | 1,332 | −74 | **1,258** |
+| **Total** | 370 | 6,660 | −148 | **6,512** |
+
+370 rows per release except **2026-02 with 222** (D-51).
+
+### `measure` and `unit` are mandatory, not decorative
+
+`Table-5` puts index levels and percentage changes in the same row under a two-row header. In the
+2026-07 release index values run 100.63–236.87 and change values −4.31–66.94: **the ranges overlap**,
+so magnitude alone cannot tell a level from a rate (D-48). A check asserts that `measure` and `unit`
+always agree — `INDEX` with `INDEX_2024_100`, both change measures with `PERCENT` — and the two are
+range-checked separately.
+
+`base_period` is `2024=100` on every row and is established from `Table-5`'s own base statement, never
+inherited from `Table1`, which carries two contradictory base titles in all 18 releases (D-47).
+
+### Two documented source defects
+
+| Defect | Handling |
+|---|---|
+| **February 2026's year-ago column** is labelled `2025-02` but holds the January 2025 values (74/74 byte-identical to January, 0/74 to February; March 2026 is the control at 74/74) | The 74 `INDEX` cells **and** the 74 `CHANGE_YOY_PCT` cells computed from that denominator are **excluded**. Not relabelled, not republished, not recomputed. All 148 cells kept as evidence with provenance, flagged `YEAR_AGO_PERIOD_LABEL_DATA_CONFLICT` (D-51) |
+| **April 2025** assigns 67 of 74 values to states that the May 2025 and April 2026 releases both contradict | Values kept **exactly as published**. All 74 current-month `INDEX` rows carry `STATE_VALUE_ALIGNMENT_DISPUTED` and `is_primary_release = FALSE`. The later restatements are untouched and remain separate records (D-52) |
+
+`Borno` / `FOOD` / observation 2025-04 is published as **three different values** across three
+releases — `114.69492`, `146.650854`, `136.650854` — and all three are kept.
+
+### Cross-release classification
+
+Every repeated observation is classified, **comparing every pair** rather than each later publication
+against the first — otherwise a disagreement between two later restatements is invisible (D-53):
+
+| Class | Count |
+|---|---|
+| `BYTE_IDENTICAL` | 1,936 |
+| `PRECISION_ONLY` | 1 |
+| `KNOWN_SOURCE_STRUCTURE_CONFLICT` | 135 |
+| **`SUBSTANTIVE_REVISION`** | **0** |
+| Compared | 2,072 |
+
+**NBS revised no published state CPI value in this corpus.** Tolerance 1e-12.
+
+> **`comparability_warning` is carried on every row** rather than kept in a document, so the NBS
+> restriction survives into SQL, the BI model and the dashboard:
+>
+> *"Indices may not be used for inter-state price comparison because market baskets differ state to
+> state."*
+>
+> Valid: `CHANGE_MOM_PCT` / `CHANGE_YOY_PCT` compared across states, and any measure tracked within
+> one state over time. **Invalid: ordering states by `INDEX` to claim one is more expensive.**
+
+### `cpi_index_monthly` — **DESIGN ONLY, NOT BUILT**
+
+The national / urban / rural design is retained below for a future dataset. It is not built, and the
+`(2)` rebasing sheets it describes are not processed (D-46).
 
 | observation_month | release_month | coverage | index_name | measure | value | value_status | index_base | is_working_sheet |
 |---|---|---|---|---|---|---|---|---|
 | 2026-05-01 | 2026-05-01 | NATIONAL | All Items | INDEX_MONTHLY | 140.683787 **[real]** | OK | 2024=100 | FALSE |
-| 2026-04-01 | 2026-05-01 | NATIONAL | All Items | INDEX_MONTHLY | 138.27 **[real]** | OK | 2024=100 | FALSE |
-| 2026-04-01 | 2026-05-01 | NATIONAL | All Items | CHANGE_MOM_PCT | 2.1312910266038614 **[real]** | OK | 2024=100 | FALSE |
 | 2025-12-01 | 2026-05-01 | NATIONAL | All Items | INDEX_MONTHLY | *NULL* | SOURCE_ERROR_REF | 1985=100 | TRUE |
 
-**Primary key:** `(release_month, observation_month, coverage, index_name, measure, index_base, is_working_sheet)`
-
-This is the widest key in the project, and every field earns its place:
-
-- `release_month` — Table1–Table4 restate the **whole historical series** in every release, so one
-  `observation_month` appears in all 21 CPI releases.
-- `index_base` — working sheets publish the same month and index on the 1985 and 2024 bases side by
-  side; without it those two legitimate values collide.
-- `is_working_sheet` — `Table3` and `Table3 (2)` can publish the same series; the flag keeps the
-  quarantined rebasing sheets separate from the presentation tables.
-
-### `cpi_state_index_monthly`
-
-| observation_month | release_month | state | zone | index_name | measure | value | index_base | comparability_rule |
-|---|---|---|---|---|---|---|---|---|
-| 2026-05-01 | 2026-05-01 | Abia | South East | ALL_ITEMS | INDEX_LEVEL | 146.51124608741446 **[real]** | 2024=100 | LEVEL_NOT_COMPARABLE_ACROSS_STATES |
-| 2026-05-01 | 2026-05-01 | Abia | South East | FOOD | INDEX_LEVEL | 142.83306042860238 **[real]** | 2024=100 | LEVEL_NOT_COMPARABLE_ACROSS_STATES |
-| 2026-04-01 | 2026-05-01 | Abia | South East | ALL_ITEMS | INDEX_LEVEL | 139.6376484593503 **[real]** | 2024=100 | LEVEL_NOT_COMPARABLE_ACROSS_STATES |
-| 2026-05-01 | 2026-05-01 | Abia | South East | ALL_ITEMS | CHANGE_YOY_PCT | 22.156809912767358 **[real]** | 2024=100 | LEVEL_NOT_COMPARABLE_ACROSS_STATES |
-
-**Primary key:** `(release_month, observation_month, state, index_name, measure)`
-
-Table-5 publishes three periods, so the April 2026 row above also appears in the April 2026 release.
-`release_month` keeps them distinct.
-
-> `comparability_rule` is carried on **every row** rather than kept in a document, so the NBS
-> restriction survives into SQL, the BI model and the dashboard.
->
-> Valid: `CHANGE_MOM_PCT` / `CHANGE_YOY_PCT` compared across states, and any measure tracked within one
-> state over time. Invalid: ordering states by `INDEX_LEVEL` to claim one is more expensive.
+**Primary key:** `(release_month, observation_month, coverage, index_name, measure, index_base,
+is_working_sheet)` — the widest in the project, because the working sheets publish the same month and
+index on the 1985 and 2024 bases in identically-headed adjacent columns.
 
 ---
 
@@ -627,7 +683,7 @@ encountered.
 | `transport_fare_state_monthly` | `observation_month, geography_type, geography_name, transport_mode` | STATE/NATIONAL |
 | `transport_fare_zone_monthly` | `release_month, observation_month, transport_mode, geography_type, geography_name` | ZONE/NATIONAL |
 | `cpi_index_monthly` | `release_month, observation_month, coverage, index_name, measure, index_base, is_working_sheet` | NATIONAL/URBAN/RURAL |
-| `cpi_state_index_monthly` | `release_month, observation_month, state, index_name, measure` | STATE |
+| `cpi_state_monthly` | `release_month, observation_month, state, cpi_group, measure` | STATE |
 | `fx_nfem_daily` | `source_id` *(unique `observation_date` among ACTIVE rows)* | NATIONAL |
 | `electricity_tariff_disco_period` | `source_file, disco_code, tariff_class, period_start, period_end` | DISCO |
 | `ref_state_zone` | `alias_normalised` | STATE |

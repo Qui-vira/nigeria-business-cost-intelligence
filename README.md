@@ -118,7 +118,7 @@ any transformation code. Each one would silently corrupt a naive pipeline.
 | **Cooking gas has two cylinder-size tables with identical headers** | 5 kg and 12.5 kg can only be told apart by column position, not by name — and the columns moved in 2026. |
 | **Transport March 2025 has a duplicated period header** | Two columns are both labelled `Average of Mar-24`; the second is really March 2025, proven by cross-checking the April release. |
 | **CPI state index levels cannot rank states by cost** | NBS prints the restriction directly beneath the table: market baskets differ state to state. |
-| **CPI contains 69,411 `#REF!` cells** | Almost all confined to rebasing working sheets; the presentation tables are clean. |
+| **CPI contains 96,857 `#REF!` cells** | Every one in a single rebasing working sheet, `Table1 (2)`; the presentation tables contain zero. Processed CPI is the state table only. |
 | **CBN has six exact duplicate dates, and blanks that are not zeros** | One column is blank where data is absent; another holds a literal `0`. They mean different things. |
 | **Only 11 of 217 NERC orders have a complete, extractable tariff table** | 27 are partial, 1 heading-only, 178 have no tariff text. Processed NERC coverage is a July 2025 cross-section, not a tariff history. A partial table is the real hazard: it looks complete. |
 | **DisCo territories are not states** | Licence areas cross state boundaries, so electricity cannot honestly be mapped to states without a separate verified approximation. |

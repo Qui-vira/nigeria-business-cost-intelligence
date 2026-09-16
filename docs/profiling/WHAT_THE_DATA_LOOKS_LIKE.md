@@ -123,8 +123,9 @@ effective date is written in a sentence rather than stored in a field.
 **2. CPI — the most complicated spreadsheet.** Ten different sheets per workbook, headers on row 2, 3
 or 4 depending on the sheet, and column counts ranging from 12 to 65. It uses **two stacked header
 rows**, so the word `Food` appears six times across the top and means a different period each time.
-There are also 69,411 Excel `#REF!` error cells — although, reassuringly, almost all of them sit in the
-behind-the-scenes rebasing sheets, and the presentation tables are clean.
+There are also 96,857 Excel `#REF!` error cells — although, reassuringly, **every single one** sits in
+one behind-the-scenes rebasing sheet, and the presentation tables are completely clean. (An earlier
+count of 69,411 "across 5 workbooks" was corrected when the whole corpus was measured sheet by sheet.)
 
 **3. Cooking gas — deceptively messy.** Each sheet is really **three tables stacked on top of each
 other**, plus a **fourth sitting beside it**: the 5 kg table on the left, the 12.5 kg table on the

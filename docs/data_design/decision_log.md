@@ -55,9 +55,10 @@ from another.
 
 ## D-03 — CPI index levels cannot rank states by cost
 
-**Decision.** Every row of `cpi_state_index_monthly` carries
-`comparability_rule = 'LEVEL_NOT_COMPARABLE_ACROSS_STATES'`. Ranking states by index level is
-prohibited in the design, not merely discouraged in a document.
+**Decision.** Every row of `cpi_state_monthly` carries NBS's restriction verbatim in
+`comparability_warning`. Ranking states by index level is prohibited in the design, not merely
+discouraged in a document. *(Built in dataset #8: the column name is `comparability_warning` and
+holds the sentence itself rather than a code, so the restriction is readable wherever the row goes.)*
 
 **Evidence.** NBS prints the restriction directly beneath Table-5:
 
@@ -140,7 +141,8 @@ official source saying so; where the reason for a blank is unknown the status is
   2025-01 … 2025-12 — and none in any 2026 release, because the items entered the basket in January
   2025. The count is **per release, not per month**. Their status is `NOT_REPORTED`, not
   `NOT_APPLICABLE`: the basket explanation is inferred, not stated by NBS (D-34).
-- CPI contains 69,411 `#REF!` cells — spreadsheet errors, not values.
+- CPI contains **96,857** `#REF!` cells — spreadsheet errors, not values — and every one is in
+  `Table1 (2)`, a sheet the processed dataset excludes entirely (count corrected in dataset #8).
 
 **Consequence.** Every measure column is paired with a status column, making absence queryable and its
 reason explicit. Filling blanks with zero would simultaneously invent transactions that never happened
@@ -229,7 +231,7 @@ that every NBS release publishes three periods.
 | `diesel_price_monthly` | `transport_fare_state_monthly` |
 | `cooking_gas_price_monthly` | `cooking_gas_extreme_callout` |
 | `transport_fare_zone_monthly` | |
-| `cpi_state_index_monthly` | |
+| `cpi_state_monthly` | |
 | `cpi_index_monthly` — restates the **whole historical series**, not three periods | |
 
 **Evidence.** Consecutive releases restate the same month — confirmed exactly in the petrol
@@ -1130,13 +1132,216 @@ counted as tariff orders. Resolving it needs someone to open one and read it.
 
 ---
 
+## D-46 — CPI dataset #8 is deliberately the state table only
+
+**Decision.** `data/processed/nbs/cpi_state_monthly.csv` is built from `Table-5` and nothing else.
+`Table1`, `Table2`, `Table3`, `Table4` and the five `(2)`/`(3)` rebasing sheets are excluded, and a
+check asserts that every non-`Table-5` sheet present is on the documented exclusion list — so a new
+sheet fails the run instead of being silently ignored.
+
+**Evidence.** The project's question is about states, and `Table-5` is the only state-level table in
+the corpus. It is also the only stable one: 42 × 12 content in all 18 releases, zero empty value
+cells, one header shape. The others are not: `Table2` grows from 30 rows to 431 and back to 63,
+`Table1`'s header row count moves, and the `(2)` sheets carry 96,857 `#REF!` cells with two bases in
+identically-headed adjacent columns.
+
+**Rejected alternative.** Building the national series too. It is larger, restated in full every
+release, and has the base ruptures; doing it in the same pass would put the one clean table at the
+mercy of the messiest ones.
+
+**Consequence.** Processed CPI coverage is state-level only. The national, urban and rural series
+remain raw evidence, documented and unprocessed.
+
+---
+
+## D-47 — The CPI base is established from Table-5 itself, never inherited
+
+**Decision.** Every release must state `(Base Period: 2024 = 100)` on its own `Table-5` sheet. The
+base is never read from `Table1` or assumed from a neighbouring sheet. A release that does not state
+it fails.
+
+**Evidence.** Every `Table1` sheet in all 18 releases carries **two contradictory base titles** —
+`Base September 1985 = 100` on row 1 and `Base: 2024 = 100` on row 2. Worse, `Table2` in the October
+and November 2025 releases publishes a 1995-base series (All Items running 1.93 to 128.89 over 370
+rows) under a `Base Year 2024 = 100` title. A base inherited from a neighbouring sheet would
+therefore be wrong twice over.
+
+**Rejected alternative.** Taking the base from the workbook title or from `Table1`. Both are
+demonstrably unreliable in this corpus.
+
+**Consequence.** `base_period` is on every row, and mixing an old-base value into the table fails
+validation.
+
+---
+
+## D-48 — An index and a rate never share an unlabelled numeric field
+
+**Decision.** Every CPI row carries `measure` and `unit`: `INDEX` with `INDEX_2024_100`, or
+`CHANGE_MOM_PCT` / `CHANGE_YOY_PCT` with `PERCENT`. A check asserts the two always agree.
+
+**Evidence.** `Table-5` publishes both in one row: three index columns then two percentage columns,
+all unlabelled beyond a two-row header. In the 2026-07 release index values run 100.63 to 236.87 and
+change values −4.31 to 66.94 — **overlapping ranges**, so magnitude alone cannot tell them apart.
+`Table1` is worse: index 145.27 sits two columns from a year-on-year rate of 15.43.
+
+**Rejected alternative.** Separate index and rate tables. That works, but it puts the distinction in
+the reader's head rather than in the data; a single long table with an explicit `measure` makes the
+mistake impossible to make silently.
+
+**Consequence.** Fault injection confirms that mislabelling an index as `PERCENT`, or a rate as
+`INDEX_2024_100`, is caught.
+
+---
+
+## D-49 — Published CPI change rates are ingested, never recomputed
+
+**Decision.** `CHANGE_MOM_PCT` and `CHANGE_YOY_PCT` are whatever NBS published. The index-ratio
+identity is a validation check with a tolerance of 1e-12 and a documented exception. A missing
+published rate is never generated.
+
+**Evidence.** The identity holds almost everywhere — `Monthly Change` matches `(current/prior − 1) ×
+100` in **1,332 of 1,332** comparisons, `Annual Change` in **1,257 of 1,258**. The single exception
+proves why the rule matters: `CPI_August25.xlsx` `Table-5` **J13** publishes Borno All Items annual
+change as exactly **`26.31`**, where the index ratio implies 26.314704443486182 and every other value
+in that column carries 14–15 decimal places. It is a hand-rounded cell. Recomputing it would
+"improve" a published national statistic.
+
+**Rejected alternative.** Replacing the rounded value with the computed one, or filling the excluded
+February 2026 rates from another release. Both publish a number NBS never published.
+
+**Consequence.** The value is preserved byte-exact and flagged
+`PUBLISHED_CHANGE_ROUNDED_TO_2DP`.
+
+---
+
+## D-50 — The state table ends where labels stop resolving, not on the word "Note"
+
+**Decision.** `Table-5`'s state block terminates at the first label that does not resolve through
+`ref_state_zone`. The terminator row and its text are recorded. Exactly 37 states must precede it.
+
+**Evidence.** Row 42 of every release holds NBS's own warning — *"Indices may not be used for
+inter-state price comparison because market baskets differ state to state"* — inside the **label
+column**, where a state name would be. Stopping on the literal word "Note" would work today and break
+the first time NBS rewords it; stopping on what a row *is* does not.
+
+**Rejected alternative.** A fixed row range. `Table-5` is 42 rows in all 18 releases, which is
+exactly the kind of stability that invites a hard-coded bound and then fails silently.
+
+**Consequence.** This is the fifth dataset in which terminating on structure rather than on a literal
+string was the correct call. The warning itself is carried onto every output row.
+
+---
+
+## D-51 — February 2026's year-ago column is excluded, not relabelled
+
+**Decision.** The 74 year-ago `INDEX` cells of the February 2026 release are excluded from the
+canonical output, and so are the 74 `CHANGE_YOY_PCT` cells computed from that denominator. They are
+**not** relabelled to January 2025, **not** published as February 2025, and **not** recomputed from
+another release. All 148 excluded cells are retained as evidence with full provenance and the flag
+`YEAR_AGO_PERIOD_LABEL_DATA_CONFLICT`.
+
+**Evidence.** `cpi_1New_February2026.xlsx` `Table-5` row 3 column C reads `2025-02-01`. All 74 values
+beneath it are byte-identical to the published **January 2025** column of the February 2025 release,
+and **none** matches published February 2025 — `Abia` Food reads `115.21`, which is January's value;
+February's is `117.850536`. The March 2026 release is the control and matches its own year-ago month
+74/74.
+
+**Rejected alternatives.** *Relabel to January 2025.* The header says February; publishing the data
+under a month the source does not claim substitutes our inference for NBS's label, and January 2025
+is already published in the February 2025 release's prior-month column, so nothing is gained.
+*Publish under February 2025, flagged.* That puts known-wrong values in the observation series, where
+a filter on the flag is the only thing standing between them and an average.
+
+**Consequence.** The canonical output is 6,512 rows, not 6,660. The February 2026 release still
+contributes its prior-month and current index months and its monthly change rates.
+
+---
+
+## D-52 — April 2025's disputed state alignment is published as-is, flagged and demoted
+
+**Decision.** The April 2025 current-month values are kept exactly as NBS published them — nothing
+shifted between states, nothing overwritten from a later release, no label silently corrected. All 74
+rows carry `STATE_VALUE_ALIGNMENT_DISPUTED` and `is_primary_release = FALSE`.
+
+**Evidence.** From Bayelsa (row 11) down, each April row carries the value the May 2025 and April
+2026 releases assign to the **next** state: April's `Bayelsa 115.819464` is `Benue 115.819464` in
+both later releases. 67 of the 74 state-group values are contradicted by both, and those two agree
+with each other on 73 of 74. April's own Monthly and Annual Change columns are internally consistent
+with its misaligned block to 1e-14, so the misalignment predates publication rather than being a
+parsing artefact.
+
+The one cell the later two also disagree on is `Borno` / `FOOD` / observation 2025-04, published as
+**three different values**: `114.69492`, `146.650854`, `136.650854`.
+
+**Rejected alternatives.** *Re-align to the later consensus.* That overrides published labels on the
+strength of a majority of two, and this project has never silently corrected a published label.
+*Exclude the release's current-month column.* Defensible, but it deletes data NBS published, and the
+later restatements already supply the corrected version alongside it.
+
+**Consequence.** Both versions remain, told apart by `release_month`, and the flag makes the
+disagreement queryable. `is_primary_release = FALSE` keeps the disputed values out of any "first
+publication" view without deleting them.
+
+---
+
+## D-53 — Cross-release differences are classified, and a known defect is never a revision
+
+**Decision.** Every repeated CPI observation is classified `BYTE_IDENTICAL`, `PRECISION_ONLY`,
+`KNOWN_SOURCE_STRUCTURE_CONFLICT` or `SUBSTANTIVE_REVISION`. **Every pair** is compared, not just
+each later publication against the first. A disagreement is only a substantive revision when neither
+side is a cell documented as a source-structure defect, and when its observation month is not one
+already documented as compromised. The tolerance stays 1e-12.
+
+**Evidence.** Comparing only against the first publication would have hidden the `Borno` / `FOOD`
+disagreement between the two *later* restatements of 2025-04 (D-52) — it is invisible unless later
+publications are compared with each other. Across 2,072 pairwise comparisons: **1,936
+byte-identical, 1 precision-only, 135 known-structure conflicts, 0 substantive revisions.** The
+single precision-only difference is Adamawa All Items, `124.01128017142601` vs `124.011280171426`, a
+relative difference of 1.1e-16.
+
+**Rejected alternative.** Loosening the tolerance until the large disagreements disappear. That would
+have buried two real source defects under a wider band instead of naming them.
+
+**Consequence.** NBS did not revise a single published state CPI value in this corpus. Every large
+disagreement is explained by one of the two documented defects, and the conclusion is stated that way
+rather than as "208 revisions".
+
+---
+
+## D-54 — `xlrd` was installed to read the one legacy `.xls` release
+
+**Decision.** `xlrd` 2.0.2 is installed in the project environment so `CPI_Report_March_2026.zip`
+→ `March_2026/cpi_1New_March2026.xls` can be read. The project has no dependency manifest, and one
+was not created for a single package; the version is recorded in the validation report and in
+`extraction_method` on every row it produced.
+
+**Evidence.** The file is a genuine OLE2 workbook (magic `d0cf11e0a1b11ae1`), not a mislabelled
+`.xlsx`. Without a reader it was the only gap in an otherwise contiguous 18-month window. Once read,
+March 2026 proved structurally identical to the other 17: 42 × 12, 37 states plus the footnote, three
+index periods (2025-03 / 2026-02 / 2026-03), both change columns, `(Base Period: 2024 = 100)`
+explicit, zero empty cells. The only difference is that date cells arrive as Excel serials and are
+converted.
+
+**Rejected alternative.** Excluding March 2026. It would have left a hole in the middle of the window
+for the sake of one missing library.
+
+**Consequence.** Open item 1 — *"`xlrd` is not installed, so `CPI_Report_March_2026.zip` could not be
+read"* — is closed.
+
+---
+
+
+---
+
 
 ---
 
 ## Open items carried into Phase 6
 
-1. **`xlrd` is not installed**, so `CPI_Report_March_2026.zip` (legacy `.xls`) could not be read during
-   profiling. It must be installed before cleaning, or March 2026 CPI is recorded MISSING.
+1. ~~**`xlrd` is not installed**, so `CPI_Report_March_2026.zip` (legacy `.xls`) could not be read
+   during profiling.~~ **DONE.** `xlrd` 2.0.2 installed during dataset #8 (D-54). March 2026 reads
+   correctly and proved structurally identical to the other 17 releases; no manifest was created for
+   a single package, so the version is recorded in the validation report and in `extraction_method`.
 2. ~~`ref_state_zone` has not been authored yet.~~ **DONE.** Built at
    `data/reference/ref_state_zone.csv` (39 unique keys, 37 canonical entities) with provenance in
    `data/reference/ref_state_alias_observed.csv` (77 raw spellings). Aliases were harvested from the

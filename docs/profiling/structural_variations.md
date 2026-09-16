@@ -201,19 +201,33 @@ Scope measured: **118 NBS files → 219 spreadsheet sheets** (218 readable, 1 no
 1. **Two-level headers.** In `Table-5` the period (`2026-05-01`) is on row 3 and `Food`/`All Items` on
    row 4, so the same header word repeats six times and means something different each time.
    Reading only one row loses the period; reading only the other loses the measure.
-2. **69,411 Excel `#REF!` error cells** across 5 workbooks — but they are **not spread evenly**.
-   In the May 2026 workbook, **92% of `Table1 (2)` is `#REF!`, while `Table1`, `Table2`, `Table3`,
-   `Table4` and `Table-5` contain zero errors.** The broken cells are confined to the rebasing working
-   sheets; the presentation tables are clean.
+2. **96,857 Excel `#REF!` error cells — every one of them in `Table1 (2)`.**
+   *(Corrected during dataset #8: the earlier figure of 69,411 "across 5 workbooks" undercounted and
+   mislocated them.)* Measured across all 17 `.xlsx` releases: 13,922 per release in 2025-12 …
+   2026-04 and 13,723 in 2026-05 … 2026-07, and **zero** in `Table1`, `Table2`, `Table3`, `Table4`
+   and `Table-5`. The broken cells are confined to one rebasing working sheet; the presentation
+   tables are clean.
 3. **`Table-5` carries NBS's own warning**, printed directly beneath the table:
    > *"Indices may not be used for inter-state price comparison because market baskets differ state to state."*
 
    This speaks directly to the project question. State CPI levels are **not** comparable between states;
    only each state's *change over time* is. This constraint must survive into the analysis.
 4. **March 2026 ships a legacy `.xls`**, nested inside a `March_2026/` subfolder — the only CPI release
-   that does both. It could not be opened during profiling because no `.xls` reader (`xlrd`) is installed.
-   **This is the single unreadable spreadsheet of the 219.**
-5. **January 2025 is missing entirely** (documented at acquisition — no such NBS release exists).
+   that does both. It could not be opened during profiling because no `.xls` reader was installed.
+   *(Resolved in dataset #8: `xlrd` 2.0.2 was installed (D-54) and the file reads correctly. Its
+   `Table-5` is structurally identical to the other 17 — 42 × 12, 37 states plus the footnote, three
+   index periods, both change columns, `(Base Period: 2024 = 100)` explicit, zero empty cells. The
+   only difference is that date cells arrive as Excel serials and are converted.)*
+
+5. **Two verified source defects in `Table-5`**, both found by cross-release comparison in dataset #8
+   and both documented rather than corrected:
+   - `cpi_1New_February2026.xlsx` labels its year-ago column `2025-02-01` but publishes the **January
+     2025** values — 74/74 byte-identical to January, 0/74 to February, with March 2026 as a 74/74
+     control (D-51).
+   - `cpi_1New_Apr25.xlsx` assigns 67 of 74 state values to the wrong state from Bayelsa down; the
+     May 2025 and April 2026 releases both contradict it and agree with each other on 73 of 74
+     (D-52).
+6. **January 2025 is missing entirely** (documented at acquisition — no such NBS release exists).
 
 ---
 
