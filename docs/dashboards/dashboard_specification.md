@@ -1,10 +1,12 @@
 # Dashboard Specification
 
-**Phase:** Dashboard specification (pass 04) — **specification only, nothing built**
+**Phase:** Dashboard specification (pass 04), now also the build record for the two tools that exist
 **Builds on:** `e299a68` business decision frameworks · `23cc35a` discovery · `1eaff93` database
 **Validation carried forward:** **110 / 110** (a01 64/64 · a02 19/19 · a03 27/27)
 **Tools in scope:** Microsoft Excel · Power BI · Tableau · IBM Cognos Analytics
-**Status:** for review. **No tool has been opened and no artefact has been built.**
+**Status:** Excel **built and validated** (105/105 structural + 25/25 Microsoft Excel compatibility).
+Power BI **built and validated** (89/89, all pages inspected rendered). Tableau and Cognos are
+specified here but **not built**.
 
 This document contains the six required outputs:
 
@@ -25,11 +27,41 @@ This document contains the six required outputs:
 
 They answer one question, from a validated evidence base:
 
-> **How are the costs of doing business changing across Nigerian states, and what should different
-> businesses do about it?**
+> **How are key external business cost pressures changing across Nigeria, how do they differ by
+> location where the data supports it, which types of businesses are they likely to matter more
+> for, and what should managers monitor or investigate in response?**
+
+The plain-English version, for anything public-facing:
+
+> NBCI shows how important external business costs are changing across Nigeria, which types of
+> businesses those costs are likely to matter more for, and what managers should investigate to
+> protect their margins.
 
 They are **not** a general Nigeria economics dashboard, not a forecasting tool, and not a
 cost-of-doing-business index. Everything shown traces to a committed, validated calculation.
+
+### 1.1.1 The capability boundary — binding, and machine-checked
+
+What these dashboards deliver today is **external cost intelligence, business exposure and guidance
+on what to investigate.** They do not deliver company financial data, market data, scenario modelling
+or company-specific profitability decisions. That distinction is carried as DATA in the model table
+`ref_capability`, shown on two pages of each tool, and asserted by `pbi_validate.ps1` checks D14–D17
+and `validate_excel_dashboard.py` layer D. It cannot shrink without a build failure.
+
+| Can, today | Cannot, today |
+|---|---|
+| Track selected external business cost pressures | Determine whether a specific company is profitable |
+| Show how those pressures change over time | Predict whether a company will lose money |
+| Compare locations where the source data supports geographic comparison | Identify the universally best jurisdiction to operate in |
+| Identify which types of business a particular cost pressure is likely to matter more for | Claim that a cheaper jurisdiction is a better business location |
+| Explain why a cost movement may matter to day-to-day operations | Calculate the effect of a cost change on a specific company's margin |
+| Show what management should monitor, measure, compare or investigate | Prescribe company-specific actions without financial and market data from that company |
+| Provide evidence for further business analysis | |
+
+**The earlier framing asked how the cost of doing business was changing and what businesses should DO
+about it.** It was dropped because it overstated all three of its parts: this measures nine bought-in
+costs rather than a whole cost base, not every source supports a location comparison, and prescribing
+an action for one company would need that company's own margins and market position.
 
 ## 1.2 Audience
 
@@ -38,6 +70,34 @@ cost-of-doing-business index. Everything shown traces to a committed, validated 
 | Business owner / operations manager | "What changed, does it affect me, what do I watch" | Pages 1, 6, 7 |
 | Analyst / finance | The numbers behind the headline, with grain and window | Pages 2–5 |
 | Reviewer / recruiter / data governance | Can this be trusted, what are its limits | Page 8 |
+
+### 1.2.1 The clarity test — binding on every page, chart and finding
+
+**Every major page and finding must be understandable to someone with no knowledge of
+economics, statistics, dashboards or data analysis.** Avoid jargon where plain English
+works. When a technical term is necessary, explain it immediately. A user should never have
+to interpret a chart before understanding its main message.
+
+This is not a request to weaken the analysis. It is a request to build **two layers**:
+
+| Layer | Who it is for | What it holds |
+|---|---|---|
+| **1. Anyone can understand it** | A business owner with no background | Plain English, a clear conclusion, a simple chart, obvious meaning |
+| **2. Analysts can inspect the evidence** | Analyst, finance, reviewer | Exact figures, methodology, calculations, filters, definitions, limits, validation |
+
+Separating communication from technical depth is stronger than simplifying the analysis,
+because nothing is lost: the methodology page still carries the full technical explanation.
+
+**A chart title states the conclusion, not the fields.** Not *"Diesel Median Price by
+Month"* but *"Diesel became much more expensive over this period"*, with the chart proving
+it, then **Why this matters** and **What to check in your business** underneath.
+
+**Worked examples of the standard:**
+
+| Do not write | Write |
+|---|---|
+| "Geographic dispersion is greater for local mobility metrics" | "Transport costs can differ a lot depending on where you operate" |
+| "Rank instability prevents persistent jurisdiction naming" | "The cheapest place changes too often for us to name one as the cheapest over time" |
 
 ## 1.3 Geography terminology — binding on every label
 
@@ -155,7 +215,7 @@ Each page defines the eleven required elements. Where an element is deliberately
 
 | Element | Definition |
 |---|---|
-| **Business question** | What has happened to the cost of doing business across Nigeria, and where is the pressure now? |
+| **Business question** | Which external costs have moved most, and who is exposed to them? |
 | **Intended user** | Owner / manager, first 60 seconds. No prior context assumed |
 | **KPI cards** | K01 diesel change trough→latest · K02 petrol change trough→latest · K03 latest median diesel · K04 jurisdictions covered · K05 costs tracked · K06 validation checks passed |
 | **Charts / visuals** | V1 small-multiple sparklines, one per price metric, median of 37 jurisdictions (**not** a combined line — G6, G8) · V2 horizontal bar, % change over the primary window, one bar per cost · V3 annotated single line for diesel with the 2025-09 trough and 2026-03 inflection marked |
@@ -165,7 +225,7 @@ Each page defines the eleven required elements. Where an element is deliberately
 | **Time window** | V1/V3 dataset-specific full primary history. V2 primary common window **2025-02 → 2026-04** |
 | **Publication rule** | Primary publications only (G10) |
 | **Business interpretation** | Energy costs are V-shaped and accelerating at the end of the series; transport fares rise steadily and do not fall back |
-| **Important limitation** | **This is not total cost of doing business.** No rent, wages, land, water, taxes or levies. Nine traded input costs plus inflation rates |
+| **Important limitation** | **This is not the total cost of doing business.** No rent, wages, land, water, taxes or levies. Nine bought-in costs plus inflation rates. It measures cost pressure, never profitability |
 
 ---
 
@@ -183,7 +243,7 @@ Each page defines the eleven required elements. Where an element is deliberately
 | **Time window** | Petrol/diesel 2025-01 → 2026-05; **LPG 2025-01 → 2026-04** — shown on the page (G14) |
 | **Publication rule** | Primary publications only |
 | **Business interpretation** | Fuel is close to a national price. The whole spread is ₦638.66/l for diesel and ₦195.16/l for petrol; the North–South premium has closed |
-| **Important limitation** | **All four fuel metrics are rank-unstable (G9): no jurisdiction may be named cheapest or dearest.** Spread is shown; names are not |
+| **Important limitation** | **For all four fuel metrics the order of jurisdictions keeps changing (G9): no jurisdiction may be named as the cheapest or the dearest OVER TIME.** Each single month's ranking is still a valid snapshot. The spread is shown; the lasting name is withheld |
 
 ---
 

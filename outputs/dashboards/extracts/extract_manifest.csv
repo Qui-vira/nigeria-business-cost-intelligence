@@ -1,3 +1,3 @@
 extract,source,rows,note,generated_utc
-ext_state_cost_panel.csv,mart.mv_state_cost_panel_monthly,8177,9435 less 1258 CPI INDEX rows (G2),2026-09-17 08:34:06 UTC
-ext_metric_medians.csv,derived from ext_state_cost_panel.csv,221,median/min/max/p25/p75 across 37 jurisdictions per metric-month,2026-09-17 08:34:06 UTC
+ext_state_cost_panel.csv,mart.mv_state_cost_panel_monthly,8177,9435 less 1258 CPI INDEX rows (G2),2026-09-17 16:16:40 UTC
+ext_metric_medians.csv,derived from ext_state_cost_panel.csv,221,median/min/max/p25/p75 across 37 jurisdictions per metric-month,2026-09-17 16:16:40 UTC

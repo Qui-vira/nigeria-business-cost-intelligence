@@ -38,7 +38,10 @@ import win32com.client as w32
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src" / "analysis"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 import nbci_analysis as na  # noqa: E402
+import pbi_findings   # noqa: E402  - the business-question content, shared with Power BI
+import pbi_narrative  # noqa: E402  - per-page band, the 15 rules, methodology facts
 
 EVID = ROOT / "outputs" / "analysis"
 OUTDIR = ROOT / "outputs" / "dashboards"
@@ -85,49 +88,8 @@ EVIDENCE = [
     ("tblSplit",      "decisions/d12_split_positions.csv"),
 ]
 
-ARCHETYPES = [
-    ("Logistics / delivery",
-     ["Diesel (NGN/l)", "Petrol (NGN/l)", "Bus intercity (NGN)"],
-     "Passenger fares are NOT freight rates. No wages, tyres, tolls, insurance "
-     "or vehicle finance.",
-     "Litres per km by vehicle class; fuel as a share of total cost; contract "
-     "repricing and surcharge clauses; route mix."),
-    ("Pharmacy / healthcare retail",
-     ["Diesel (NGN/l)", "Petrol (NGN/l)", "Bus intracity (NGN)", "Okada (NGN)"],
-     "EXTERNAL OPERATING-COST ENVIRONMENT ONLY. Profitability, margin and "
-     "viability CANNOT be calculated or inferred. No acquisition prices, no "
-     "pharmacy-specific consumption, no turnover. DisCos are not jurisdictions - "
-     "read the band off the bill.",
-     "Monthly kWh and band letter; genset burn per hour; measured outage hours; "
-     "cold-chain load; acquisition prices; supplier terms; revenue and margin."),
-    ("Restaurant / food service",
-     ["LPG 12.5kg refill (NGN)", "LPG 5kg refill (NGN)", "Diesel (NGN/l)",
-      "Bus intracity (NGN)"],
-     "Food has NO jurisdiction grain - six zones only. LPG series ends 2026-04. "
-     "Cylinder sizes are never averaged. No rent, wages, water or packaging.",
-     "LPG kg per month and cylinder mix; supplier prices at your own location; "
-     "menu cost cards; covers per day; rent and wage bill."),
-    ("Retail (non-food)",
-     ["Diesel (NGN/l)", "Bus intercity (NGN)", "Bus intracity (NGN)", "Okada (NGN)"],
-     "Nothing on what a retailer BUYS. CPI describes the CUSTOMER's squeeze, not "
-     "the retailer's cost base. Intercity fare is not a freight rate.",
-     "Rent and service charge; wholesale invoices and category margins; footfall "
-     "and conversion; basket composition; staff cost by site."),
-    ("Manufacturing / light production",
-     ["Diesel (NGN/l)", "LPG 12.5kg refill (NGN)", "LPG 5kg refill (NGN)"],
-     "No industrial tariff schedule, consumption or load profile. NERC is a "
-     "single July 2025 cross-section, not a tariff history. No raw materials, "
-     "plant, labour or land.",
-     "Monthly kWh and load profile; band and tariff actually paid; genset burn; "
-     "raw material invoices and import share; energy as a share of production cost."),
-    ("Service businesses (office-based)",
-     ["Okada (NGN)", "Bus intracity (NGN)", "Diesel (NGN/l)"],
-     "Salaries and rent - the two largest costs of a service business - are BOTH "
-     "absent. Published fares are averages for a journey, not any individual's "
-     "commute.",
-     "Headcount by location; home-to-work distances and modes; current allowance "
-     "policy; salary bands; rent and lease terms; remote/hybrid split."),
-]
+# The six archetypes now live in pbi_narrative.ARCHETYPES, shared with the Power BI
+# model, so a change to an archetype's boundary cannot reach one tool and not the other.
 
 
 # ===========================================================================
@@ -138,25 +100,51 @@ def build_extracts() -> dict[str, pd.DataFrame]:
     print("=" * 74)
     EXTRACTS.mkdir(parents=True, exist_ok=True)
 
-    conn = na.connect()
+    # PostgreSQL is the source of truth. When it is unreachable the build falls back to
+    # the committed extract rather than failing or - far worse - quietly producing
+    # different numbers: the extract is exactly what the last successful database read
+    # wrote, and its row count is asserted against the manifest, so a fallback build and
+    # a database build embed identical figures. The route taken is printed and carried
+    # into the workbook's own provenance line.
+    panel = None
+    source_note = "mart.mv_state_cost_panel_monthly"
     try:
-        panel = na.q(conn, """
-            SELECT state_name AS jurisdiction, zone_name AS zone,
-                   observation_month, metric_code, unit, source_dataset,
-                   metric_value::double precision AS value,
-                   in_primary_release_window
-            FROM mart.mv_state_cost_panel_monthly
-            ORDER BY metric_code, observation_month, state_name
-        """)
-    finally:
-        conn.close()
+        conn = na.connect()
+        try:
+            panel = na.q(conn, """
+                SELECT state_name AS jurisdiction, zone_name AS zone,
+                       observation_month, metric_code, unit, source_dataset,
+                       metric_value::double precision AS value,
+                       in_primary_release_window
+                FROM mart.mv_state_cost_panel_monthly
+                ORDER BY metric_code, observation_month, state_name
+            """)
+        finally:
+            conn.close()
+        full_rows = len(panel)
+        assert full_rows == 9435, f"panel row count changed: {full_rows}"
+        panel = panel[~panel.metric_code.isin(EXCLUDED_INDEX_CODES)].copy()
+        assert len(panel) == 8177, f"post-exclusion row count: {len(panel)}"
+        print(f"  panel from database          : {full_rows:,} rows")
+        print(f"  CPI INDEX rows excluded (G2) : {full_rows - len(panel):,}")
+    except Exception as exc:  # noqa: BLE001
+        cached = EXTRACTS / "ext_state_cost_panel.csv"
+        if not cached.exists():
+            raise SystemExit(
+                f"database unreachable ({exc}) and no committed extract at {cached}. "
+                "Cannot build without one of the two.") from exc
+        print(f"  DATABASE UNREACHABLE         : {type(exc).__name__}")
+        print(f"  falling back to the committed extract: {cached.name}")
+        panel = pd.read_csv(cached)
+        keep = ["jurisdiction", "zone", "observation_month", "metric_code", "unit",
+                "source_dataset", "value", "in_primary_release_window"]
+        panel = panel[keep].copy()
+        panel["in_primary_release_window"] = (
+            panel.in_primary_release_window.astype(str).str.lower() == "true")
+        full_rows = 9435
+        assert len(panel) == 8177, f"committed extract row count: {len(panel)}"
+        source_note = "committed extract ext_state_cost_panel.csv (database unreachable)"
 
-    full_rows = len(panel)
-    assert full_rows == 9435, f"panel row count changed: {full_rows}"
-    panel = panel[~panel.metric_code.isin(EXCLUDED_INDEX_CODES)].copy()
-    assert len(panel) == 8177, f"post-exclusion row count: {len(panel)}"
-    print(f"  panel from database          : {full_rows:,} rows")
-    print(f"  CPI INDEX rows excluded (G2) : {full_rows - len(panel):,}")
     print(f"  panel embedded in workbook   : {len(panel):,} rows")
 
     panel["label"] = panel.metric_code.map(na.SHORT_LABEL)
@@ -193,7 +181,7 @@ def build_extracts() -> dict[str, pd.DataFrame]:
                encoding="utf-8", lineterminator="\n")
     pd.DataFrame([
         {"extract": "ext_state_cost_panel.csv",
-         "source": "mart.mv_state_cost_panel_monthly", "rows": len(panel),
+         "source": source_note, "rows": len(panel),
          "note": f"{full_rows} less {full_rows-len(panel)} CPI INDEX rows (G2)",
          "generated_utc": ts},
         {"extract": "ext_metric_medians.csv",
@@ -269,10 +257,15 @@ def title(ws, row, text, sub=None, width=10):
     return row + 4
 
 
-def kpi_card(ws, row, col, label, formula, fmt, footnote, span=2):
+def kpi_card(ws, row, col, label, formula, fmt, footnote, span=2, evidence=""):
     """A KPI card whose number is a FORMULA, so it reconciles by construction.
 
     Registers its own cell address in KPI_REGISTER so validation is deterministic.
+
+    `evidence` is the committed file behind the number. It goes into the REGISTER on
+    Data_Evidence, never onto the card: "Evidence d8." means nothing to a reader who
+    has never opened the analysis folder, and the audit trail is not lost by moving it
+    one layer down.
     """
     body = ws.Range(ws.Cells(row, col), ws.Cells(row + 3, col + span - 1))
     body.Interior.Color = CARD_BG
@@ -301,7 +294,8 @@ def kpi_card(ws, row, col, label, formula, fmt, footnote, span=2):
         # .Address is a PROPERTY in this typed dispatch, not a method, and its
         # form varies by engine - build the A1 reference directly instead.
         "cell": f"{a1_col(col)}{row + 1}",
-        "number_format": fmt, "formula": formula.lstrip("="), "note": footnote})
+        "number_format": fmt, "formula": formula.lstrip("="), "note": footnote,
+        "evidence": evidence})
 
 
 def note(ws, row, text, kind="rule", width=10):
@@ -314,6 +308,248 @@ def note(ws, row, text, kind="rule", width=10):
     rng.Font.Color = INK
     rng.WrapText = True
     rng.VerticalAlignment = -4160
+    ws.Rows(row).RowHeight = 30
+    return row + 2
+
+
+# ---------------------------------------------------------------------------
+# DECISION-FIRST LAYER
+#
+# A business owner should not have to read a chart and work out what it means. Every
+# analytical sheet therefore carries the same four-part band, in the same order, in
+# plain English:
+#
+#     SIGNAL          what the data shows
+#     WHAT IT MEANS   the business implication
+#     WHAT TO REVIEW  the operating area that deserves attention
+#     BOUNDARY        what this data cannot tell us
+#
+# LANGUAGE RULE, BINDING: the dataset holds no company cost shares, margins or
+# pass-through ability, so no string here tells a business to reprice or relocate.
+# Every "what to review" line uses review / investigate / compare / reassess / put on
+# the agenda. Text comes from pbi_narrative.py, which also feeds the Power BI model, so
+# the two tools cannot drift apart.
+# ---------------------------------------------------------------------------
+BAND_PARTS = [
+    ("SIGNAL", "signal", "What does the data show?", INK),
+    ("WHAT IT MEANS", "meaning", "The business implication", INK),
+    ("WHAT TO REVIEW", "review", "What deserves attention", INK),
+    ("BOUNDARY", "boundary", "What this data cannot tell us", 0x1010C0),
+]
+
+
+def _wrapped_row_height(text: str, chars_per_line: int = 150) -> float:
+    lines = max(1, -(-len(text) // chars_per_line))
+    return max(28.0, lines * 12.0 + 6.0)
+
+
+def _prose(ws, row, label, sub, text, colour, width, band_bg):
+    """One labelled, wrapped prose row: label in column A, text merged across the rest."""
+    ws.Cells(row, 1).Value = label
+    ws.Cells(row, 1).Font.Bold = True
+    ws.Cells(row, 1).Font.Size = 9
+    ws.Cells(row, 1).Font.Color = colour
+    ws.Cells(row, 1).VerticalAlignment = -4160
+    if sub:
+        ws.Cells(row + 1, 1).Value = sub
+        ws.Cells(row + 1, 1).Font.Size = 8
+        ws.Cells(row + 1, 1).Font.Italic = True
+        ws.Cells(row + 1, 1).Font.Color = MUTED
+    body = ws.Range(ws.Cells(row, 2), ws.Cells(row + (1 if sub else 0), width))
+    body.Merge()
+    body.Value = text
+    body.Font.Size = 9
+    body.Font.Color = INK
+    body.WrapText = True
+    body.VerticalAlignment = -4160
+    body.Interior.Color = band_bg
+    h = _wrapped_row_height(text) / (2 if sub else 1)
+    ws.Rows(row).RowHeight = h
+    if sub:
+        ws.Rows(row + 1).RowHeight = h
+    return row + (2 if sub else 1)
+
+
+def row_below_content(ws, pad_rows=22):
+    """First row clear of everything already on the sheet.
+
+    Charts are Shapes and do not extend UsedRange, so a generous pad is added rather
+    than trusting UsedRange alone - a 300pt chart is roughly 20 rows.
+    """
+    ur = ws.UsedRange
+    return ur.Row + ur.Rows.Count + pad_rows
+
+
+def decision_block(ws, row, page_name, width=10):
+    """The four-part decision band for one page, drawn from the committed narrative."""
+    n = next(x for x in pbi_narrative.PAGE_NARRATIVE if x["page"] == page_name)
+    hdr = ws.Range(ws.Cells(row, 1), ws.Cells(row, width))
+    hdr.Merge()
+    hdr.Value = "WHAT THIS PAGE IS TELLING YOU"
+    hdr.Font.Bold = True
+    hdr.Font.Size = 11
+    hdr.Font.Color = WHITE
+    hdr.Interior.Color = NAVY
+    ws.Rows(row).RowHeight = 20
+    row += 1
+    for label, field, sub, colour in BAND_PARTS:
+        bg = WARN_BG if field == "boundary" else CARD_BG
+        row = _prose(ws, row, label, sub, n[field], colour, width, bg)
+    return row + 1
+
+
+def scope_block(ws, row, width=10):
+    """WHAT NBCI MEASURES, AND WHAT IT DOES NOT.
+
+    This is the single most important block in the workbook. Without it a reader draws the
+    one conclusion the data cannot support - that a jurisdiction with a lower measured cost
+    is a better place to do business. It leads the first sheet for that reason.
+    """
+    hdr = ws.Range(ws.Cells(row, 1), ws.Cells(row, width))
+    hdr.Merge()
+    hdr.Value = "READ THIS FIRST - what this workbook does and does not measure"
+    hdr.Font.Bold = True
+    hdr.Font.Size = 12
+    hdr.Font.Color = WHITE
+    hdr.Interior.Color = NAVY
+    ws.Rows(row).RowHeight = 22
+    row += 1
+
+    row = _prose(ws, row, "What it MEASURES", None, pbi_findings.WHAT_THIS_IS,
+                 INK, width, CARD_BG)
+    row = _prose(ws, row, "What it does NOT measure", None, pbi_findings.WHAT_THIS_IS_NOT,
+                 0x1010C0, width, WARN_BG)
+    row = _prose(ws, row, "Why that matters", None, pbi_findings.WHY_NOT,
+                 MUTED, width, WHITE)
+    row += 1
+
+    ws.Cells(row, 1).Value = ("Whether a location suits a business depends on all four of "
+                              "these. NBCI covers part of one of them:")
+    ws.Cells(row, 1).Font.Bold = True
+    ws.Cells(row, 1).Font.Size = 9
+    row += 1
+    eq = pbi_findings.build()["ref_scope"][["part", "examples", "in_nbci"]]
+    end = write_block(ws, row, 1, eq, "tblScope", style="TableStyleLight9")
+    for rr in range(row + 1, end + 1):
+        if "NOT measured" in str(ws.Cells(rr, 3).Value):
+            ws.Range(ws.Cells(rr, 1), ws.Cells(rr, 3)).Interior.Color = WARN_BG
+    return end + 2
+
+
+def capability_block(ws, row, width=10, table_name="tblCapability"):
+    """WHAT THIS PROJECT CAN AND CANNOT DO TODAY.
+
+    The scope block says what is measured. This says what may be concluded from it. They
+    are different questions, and a reader who gets the first right can still get the
+    second wrong - the classic version being "so which state should I move to?".
+    """
+    hdr = ws.Range(ws.Cells(row, 1), ws.Cells(row, width))
+    hdr.Merge()
+    hdr.Value = "WHAT THIS CAN AND CANNOT TELL YOU TODAY"
+    hdr.Font.Bold = True
+    hdr.Font.Size = 12
+    hdr.Font.Color = WHITE
+    hdr.Interior.Color = NAVY
+    ws.Rows(row).RowHeight = 22
+    row += 1
+
+    # Prose BEFORE the table. A merged range placed immediately under a ListObject
+    # raises -2147352567 from the COM bridge, so the variable-height prose goes first
+    # and the table closes the block.
+    row = _prose(ws, row, "What a later version would need", None,
+                 pbi_findings.WHAT_IT_WOULD_TAKE, MUTED, width, WHITE)
+    row += 1
+
+    cap = pbi_findings.build()["ref_capability"][["direction", "capability"]]
+    end = write_block(ws, row, 1, cap, table_name, style="TableStyleLight9")
+    for rr in range(row + 1, end + 1):
+        if "CANNOT" in str(ws.Cells(rr, 1).Value):
+            ws.Range(ws.Cells(rr, 1), ws.Cells(rr, 2)).Interior.Color = WARN_BG
+    return end + 2
+
+
+def findings_block(ws, row, width=10):
+    """'What should I pay attention to?' - six findings, six parts each.
+
+    Ordered the way a reader needs them: what we found, why it matters, who should pay
+    attention, what to review, what it cannot prove. The evidence file is named on every
+    one so any claim can be traced.
+    """
+    hdr = ws.Range(ws.Cells(row, 1), ws.Cells(row, width))
+    hdr.Merge()
+    hdr.Value = "What should I pay attention to?"
+    hdr.Font.Bold = True
+    hdr.Font.Size = 14
+    hdr.Font.Color = WHITE
+    hdr.Interior.Color = NAVY
+    ws.Rows(row).RowHeight = 26
+    row += 1
+    sub = ws.Range(ws.Cells(row, 1), ws.Cells(row, width))
+    sub.Merge()
+    sub.Value = ("Six validated findings. Each says what to REVIEW, not what to do - "
+                 "deciding what to do needs your own cost shares, margins and pricing "
+                 "ability, none of which is in this dataset.")
+    sub.Font.Size = 9
+    sub.Font.Italic = True
+    sub.Font.Color = MUTED
+    sub.WrapText = True
+    ws.Rows(row).RowHeight = 24
+    row += 2
+
+    parts = [
+        ("What we found", "found", INK, WHITE),
+        ("Why it matters", "matters", INK, CARD_BG),
+        ("Who should pay attention", "who", INK, WHITE),
+        ("What to review", "review", INK, CARD_BG),
+        ("Boundary - what this cannot prove", "boundary", 0x1010C0, WARN_BG),
+    ]
+    for f in pbi_findings.FINDINGS:
+        band = ws.Range(ws.Cells(row, 1), ws.Cells(row, width))
+        band.Merge()
+        band.Value = f"{f['rank']}.  {f['headline']}"
+        band.Font.Bold = True
+        band.Font.Size = 11
+        band.Font.Color = INK
+        band.Interior.Color = RULE_BG
+        ws.Rows(row).RowHeight = 20
+        row += 1
+        ws.Cells(row, 1).Value = "Business question"
+        ws.Cells(row, 1).Font.Size = 8
+        ws.Cells(row, 1).Font.Color = MUTED
+        q = ws.Range(ws.Cells(row, 2), ws.Cells(row, width))
+        q.Merge()
+        q.Value = f["question"]
+        q.Font.Size = 9
+        q.Font.Italic = True
+        q.Font.Color = MUTED
+        ws.Rows(row).RowHeight = 14
+        row += 1
+        for label, key, colour, bg in parts:
+            row = _prose(ws, row, label, None, f[key], colour, width, bg)
+        ws.Cells(row, 1).Value = "Evidence"
+        ws.Cells(row, 1).Font.Size = 8
+        ws.Cells(row, 1).Font.Color = MUTED
+        ev = ws.Range(ws.Cells(row, 2), ws.Cells(row, width))
+        ev.Merge()
+        ev.Value = f["evidence"]
+        ev.Font.Size = 8
+        ev.Font.Color = MUTED
+        ws.Rows(row).RowHeight = 13
+        row += 2
+    return row
+
+
+def one_line_block(ws, row, width=10):
+    """The sentence the whole workbook has to leave behind."""
+    box = ws.Range(ws.Cells(row, 1), ws.Cells(row, width))
+    box.Merge()
+    box.Value = pbi_findings.ONE_LINE
+    box.Font.Bold = True
+    box.Font.Size = 11
+    box.Font.Color = INK
+    box.Interior.Color = WARN_BG
+    box.WrapText = True
+    box.VerticalAlignment = -4160
     ws.Rows(row).RowHeight = 30
     return row + 2
 
@@ -427,37 +663,46 @@ def build(d):
 
         # ---------------- 1. Executive Overview -------------------------
         ws = wb.Worksheets.Add(Before=wsP)
-        ws.Name = "Executive Overview"
-        r = title(ws, 1, "Nigeria Business Cost Intelligence",
-                  "How the cost of doing business is changing across 36 states and the FCT  |  "
-                  f"extract generated {d['stamp']}")
+        ws.Name = "What is changing"
+        r = title(ws, 1, "What is changing in the costs businesses pay?",
+                  pbi_findings.SIMPLE_DESCRIPTION
+                  + f"  |  extract generated {d['stamp']}")
         kpis = [
             ("Diesel, trough to latest",
              '=INDEX(tblShock[median_pct],MATCH("DIESEL_PRICE_NGN_PER_LITRE",tblShock[metric_code],0))/100',
-             "+0.0%;-0.0%", "Median of each jurisdiction's own change, 2025-09 to 2026-05. "
-             "All 37 up. Evidence f31."),
+             "+0.0%;-0.0%", "The middle change across the 37 jurisdictions, September 2025 "
+             "to May 2026. Every one of them went up.", "f31"),
             ("Petrol, trough to latest",
              '=INDEX(tblShock[median_pct],MATCH("PETROL_PRICE_NGN_PER_LITRE",tblShock[metric_code],0))/100',
-             "+0.0%;-0.0%", "Same window and method. Evidence f31."),
+             "+0.0%;-0.0%", "Same months, same method.", "f31"),
             ("Jurisdictions covered", "=COUNTA(tblLocation[metric_code])*0+37", "0",
-             "36 states + the Federal Capital Territory."),
+             "The 36 states plus the Federal Capital Territory.", "s02"),
             ("Costs tracked", "=COUNTA(tblFlags[metric_code])+4", "0",
-             "9 price metrics + 4 CPI change rates. CPI index levels excluded (G2)."),
+             "Nine prices plus four inflation rates. CPI index levels are left out on "
+             "purpose - see 'Can I trust this'.", "s02"),
             ("Validation checks", "=64+19+27", "0",
-             "a01 64/64, a02 19/19, a03 27/27. All passing."),
+             "Every check in all three analysis passes is passing.", "a01/a02/a03"),
         ]
         c = 1
-        for lab, f, fmt, fn in kpis:
-            kpi_card(ws, r, c, lab, f, fmt, fn)
+        for lab, f, fmt, fn, evd in kpis:
+            kpi_card(ws, r, c, lab, f, fmt, fn, evidence=evd)
             c += 2
         r += 5
 
-        r = note(ws, r, "NOT a total cost of doing business. Nine traded input costs plus "
-                        "inflation rates. No rent, wages, land, water, taxes or levies - for most "
-                        "Nigerian small businesses rent and labour are the two largest line items.",
-                 "warn")
+        # Scope BEFORE anything else: the one misreading this workbook must prevent is
+        # "lower measured cost = better place to do business". The capability boundary
+        # follows immediately, because knowing what is measured is not the same as
+        # knowing what may be concluded from it.
+        r = scope_block(ws, r)
+        r = capability_block(ws, r)
 
-        ws.Cells(r, 1).Value = "Change over the primary common window (2025-02 to 2026-04)"
+        # Then the findings. A reader should meet the conclusions in plain English first
+        # and use the chart as evidence, rather than be handed a chart and asked to derive
+        # the conclusions themselves.
+        r = findings_block(ws, r)
+
+        ws.Cells(r, 1).Value = ("How much each cost changed over the 14 months every dataset "
+                                "covers (2025-02 to 2026-04)")
         ws.Cells(r, 1).Font.Bold = True
         r += 1
         # label and pct_change kept ADJACENT so the chart source is one contiguous
@@ -470,40 +715,50 @@ def build(d):
         ws.Range(ws.Cells(r + 1, 2), ws.Cells(end, 2)).NumberFormat = '+0.0"%";-0.0"%"'
         ws.Range(ws.Cells(r + 1, 3), ws.Cells(end, 4)).NumberFormat = "#,##0.00"
 
-        ch = ws.Shapes.AddChart2(-1, xlBarClustered, 400, 250, 460, 260).Chart
+        # Anchor the chart to a cell rather than to absolute page coordinates: the
+        # decision-first section above is prose of variable length, so a fixed Top would
+        # land the chart on top of it.
+        ch = ws.Shapes.AddChart2(-1, xlBarClustered,
+                                 20, ws.Cells(end + 2, 1).Top, 460, 260).Chart
         ch.SetSourceData(ws.Range(ws.Cells(r, 1), ws.Cells(end, 2)))
         ch.HasTitle = True
-        ch.ChartTitle.Text = "% change over the primary window, by cost"
+        ch.ChartTitle.Text = ("Some costs rose far more than others over the same "
+                              "14 months (% change)")
         ch.HasLegend = False
+        r = end + 16          # clear of the chart
+        r = decision_block(ws, r, "What is changing?")
+        r = one_line_block(ws, r)
         ws.Columns("A:A").ColumnWidth = 26
         ws.Columns("B:J").ColumnWidth = 13
-        print("  Executive Overview")
+        print("  What is changing (scope + 6 findings + evidence chart + band)")
 
         # ---------------- 2. Fuel Costs ---------------------------------
         wsF = wb.Worksheets.Add(After=ws)
-        wsF.Name = "Fuel Costs"
-        r = title(wsF, 1, "Fuel Costs",
-                  "Petrol, diesel and LPG  |  geography grain: STATE (37 jurisdictions), "
-                  "shown as a cross-jurisdiction median")
-        kpi_card(wsF, r, 1, "Diesel spread, 2026-04",
+        wsF.Name = "Fuel and energy"
+        r = title(wsF, 1, "What am I paying for fuel and power?",
+                  "Petrol, diesel and cooking gas, plus what a generator really costs  |  "
+                  "one figure per month: the middle value across the 37 jurisdictions")
+        kpi_card(wsF, r, 1, "Diesel: dearest minus cheapest place",
                  '=INDEX(tblLocation[spread_ngn],MATCH("DIESEL_PRICE_NGN_PER_LITRE",tblLocation[metric_code],0))',
-                 '"NGN "#,##0.00', "Dearest minus cheapest jurisdiction. Evidence d8.")
-        kpi_card(wsF, r, 3, "Petrol spread, 2026-04",
+                 '"NGN "#,##0.00', "The whole country fits inside this gap.", evidence="d8")
+        kpi_card(wsF, r, 3, "Petrol: dearest minus cheapest place",
                  '=INDEX(tblLocation[spread_ngn],MATCH("PETROL_PRICE_NGN_PER_LITRE",tblLocation[metric_code],0))',
-                 '"NGN "#,##0.00', "The whole national range. Evidence d8.")
-        kpi_card(wsF, r, 5, "Petrol dearest / cheapest",
+                 '"NGN "#,##0.00', "The whole national range.", evidence="d8")
+        kpi_card(wsF, r, 5, "Petrol: how many times dearer",
                  '=INDEX(tblLocation[dearest_over_cheapest],MATCH("PETROL_PRICE_NGN_PER_LITRE",tblLocation[metric_code],0))',
-                 '0.00"x"', "Fuel is close to a national price. Evidence d8.")
-        kpi_card(wsF, r, 7, "North premium, petrol, 2026-04",
+                 '0.00"x"', "Fuel is close to a single national price.", evidence="d8")
+        kpi_card(wsF, r, 7, "Petrol: how much more the North pays",
                  '=INDEX(tblNorthSouth[north_premium_pct],MATCH(1,INDEX((tblNorthSouth[metric_code]="PETROL_PRICE_NGN_PER_LITRE")*(tblNorthSouth[observation_month]=DATE(2026,4,1)),0),0))/100',
-                 "+0.00%;-0.00%", "Was +17.24% at 2025-02. The gap has closed. Evidence f26.")
+                 "+0.00%;-0.00%", "It was +17.24% in February 2025. The gap has closed.",
+                 evidence="f26")
         r += 5
-        r = note(wsF, r, "RANK STABILITY (G9): all four fuel metrics are UNSTABLE for persistent "
-                         "ranking - a typical monthly move is larger than the whole spread between "
-                         "jurisdictions. Each month's ranking is a VALID SNAPSHOT; what it will not "
-                         "support is a standing 'cheapest fuel jurisdiction'. Spread is shown; no "
-                         "jurisdiction is named. This is a decision-use heuristic, not a data-quality "
-                         "issue.", "warn")
+        r = note(wsF, r, "WHICH PLACE IS CHEAPEST KEEPS CHANGING (G9): for all four fuel costs, a "
+                         "typical one-month price move is bigger than the whole gap between the "
+                         "cheapest and the dearest jurisdiction, so the order reshuffles. Each "
+                         "month's ranking is still a VALID SNAPSHOT of that month. What the data "
+                         "cannot do is reliably name one jurisdiction as the cheapest OVER TIME. "
+                         "The gap is shown; the lasting name is withheld. This is about decisions "
+                         "that last, not about data quality.", "warn")
         r = note(wsF, r, "COVERAGE (G14): petrol and diesel run to 2026-05; LPG ends 2026-04. "
                          "LPG 5 kg and 12.5 kg are separate series and are never averaged (G8).")
 
@@ -513,30 +768,36 @@ def build(d):
         ch = wsF.Shapes.AddChart2(-1, xlLineMarkers, 420, 250, 520, 300).Chart
         ch.SetSourceData(pt.TableRange1)
         ch.HasTitle = True
-        ch.ChartTitle.Text = "Median fuel price across 37 jurisdictions (NGN)"
+        ch.ChartTitle.Text = ("Fuel prices ended the period higher than they started "
+                              "(middle value across 37 jurisdictions, NGN)")
         sc = wb.SlicerCaches.Add2(pt, "label")
         sc.Slicers.Add(wsF, None, "slFuel", "Fuel (no total - fuels are never summed)",
                        420, 10, 200, 150)
-        print("  Fuel Costs (PivotTable + PivotChart + slicer)")
+        decision_block(wsF, row_below_content(wsF), "Fuel and energy")
+        print("  Fuel and energy (PivotTable + PivotChart + slicer + decision band)")
 
         # ---------------- 3. Transport Costs ----------------------------
         wsT = wb.Worksheets.Add(After=wsF)
-        wsT.Name = "Transport Costs"
-        r = title(wsT, 1, "Transport Costs",
-                  "Five modes, reported separately  |  geography grain: STATE (37 jurisdictions)")
-        kpi_card(wsT, r, 1, "Okada rose while petrol fell",
+        wsT.Name = "Moving people and goods"
+        r = title(wsT, 1, "What am I paying to move people and goods?",
+                  "Fares went up and did not come back down when fuel got cheaper  |  "
+                  "five modes, each reported on its own, across the 37 jurisdictions")
+        kpi_card(wsT, r, 1, "Okada fares that rose anyway",
                  '=INDEX(tblSticky[share_fare_rose_pct],MATCH("TRANSPORT_OKADA_NGN_PER_JOURNEY",tblSticky[metric_code],0))/100',
-                 "0.0%", "Of 81 jurisdiction-month pairs where petrol was cheaper YoY. Evidence f29.")
-        kpi_card(wsT, r, 3, "Intracity bus, same test",
+                 "0.0%", "Out of 81 cases where petrol cost less than a year earlier.",
+                 evidence="f29")
+        kpi_card(wsT, r, 3, "City bus fares that rose anyway",
                  '=INDEX(tblSticky[share_fare_rose_pct],MATCH("TRANSPORT_BUS_INTRACITY_NGN_PER_JOURNEY",tblSticky[metric_code],0))/100',
-                 "0.0%", "Fare reductions did not accompany petrol reductions. Evidence f29.")
-        kpi_card(wsT, r, 5, "Okada fare growth vs CPI",
+                 "0.0%", "Fares did not come down when petrol did.", evidence="f29")
+        kpi_card(wsT, r, 5, "How far okada outran inflation",
                  '=INDEX(tblFareCPI[median_gap_pp],MATCH("TRANSPORT_OKADA_NGN_PER_JOURNEY",tblFareCPI[metric_code],0))',
                  '+0.0" pp";-0.0" pp"',
-                 "A CPI-indexed allowance would have LAGGED fare growth by this much. Evidence d6.")
-        kpi_card(wsT, r, 7, "Observations behind it",
+                 "An allowance raised by inflation alone would have fallen behind by this much.",
+                 evidence="d6")
+        kpi_card(wsT, r, 7, "How many readings this rests on",
                  '=INDEX(tblSticky[state_month_obs],MATCH("TRANSPORT_OKADA_NGN_PER_JOURNEY",tblSticky[metric_code],0))',
-                 "0", "35 jurisdictions across only 4 months - NOT independent events.")
+                 "0", "35 jurisdictions across only 4 months, so these are not separate events.",
+                 evidence="f29")
         r += 5
         r = note(wsT, r, "MODES ARE NEVER COMBINED (G6). The PivotTable below reads a "
                          "transport-only source and has GRAND TOTALS SWITCHED OFF, so no 'all modes' "
@@ -544,7 +805,7 @@ def build(d):
                          "SIDE, never summed. A journey by air and a journey by okada are different "
                          "products with different units of service.", "warn")
         r = note(wsT, r, "AIR IS NOT LOCAL MOBILITY (G7). 82.6% of air's month-to-month variation is "
-                         "a common national movement (evidence v2a) - it is carrier-priced on route "
+                         "a common national movement - it is priced by the airlines across route "
                          "networks. LOCAL MOBILITY means okada + intracity bus + water only. Air and "
                          "intercity bus are inter-regional and are named as such.", "warn")
         r = note(wsT, r, "These are PASSENGER FARES, not freight rates. No causal claim is made: "
@@ -556,37 +817,46 @@ def build(d):
         ch = wsT.Shapes.AddChart2(-1, xlLineMarkers, 420, 300, 520, 300).Chart
         ch.SetSourceData(pt.TableRange1)
         ch.HasTitle = True
-        ch.ChartTitle.Text = "Median fare by mode across 37 jurisdictions (NGN)"
+        ch.ChartTitle.Text = ("Fares climbed steadily and did not fall back "
+                              "(middle fare across 37 jurisdictions, NGN)")
         sc = wb.SlicerCaches.Add2(pt, "label")
         sc.Slicers.Add(wsT, None, "slMode", "Mode (multi-select shows modes side by side, never summed)",
                        420, 10, 200, 270)
-        print("  Transport Costs (PivotTable + PivotChart + slicer)")
+        decision_block(wsT, row_below_content(wsT), "Moving people and goods")
+        print("  Moving people and goods (PivotTable + PivotChart + slicer + decision band)")
 
         # ---------------- 4. Geographic Differences ---------------------
         wsG = wb.Worksheets.Add(After=wsT)
-        wsG.Name = "Geographic Differences"
-        r = title(wsG, 1, "Geographic Differences",
-                  "Where location actually changes what you pay  |  grain: STATE, "
-                  "with ZONE food shown separately and never merged")
-        kpi_card(wsG, r, 1, "Water transport, dearest/cheapest",
+        wsG.Name = "Where costs differ"
+        r = title(wsG, 1, "How does the external cost environment differ between locations?",
+                  "Where you are changes some costs a lot and others hardly at all. A "
+                  "cheaper place is not a better place  |  food is shown by zone, "
+                  "separately, and is never merged with the state figures")
+        kpi_card(wsG, r, 1, "Water fares: how many times dearer",
                  '=INDEX(tblLocation[dearest_over_cheapest],MATCH("TRANSPORT_WATER_NGN_PER_JOURNEY",tblLocation[metric_code],0))',
-                 '0.00"x"', "Rank-stable: jurisdictions may be named. Evidence d8.")
-        kpi_card(wsG, r, 3, "Okada, dearest/cheapest",
+                 '0.00"x"', "This order holds month to month, so places can be named.",
+                 evidence="d8")
+        kpi_card(wsG, r, 3, "Okada: how many times dearer",
                  '=INDEX(tblLocation[dearest_over_cheapest],MATCH("TRANSPORT_OKADA_NGN_PER_JOURNEY",tblLocation[metric_code],0))',
-                 '0.00"x"', "Rank-stable. Evidence d8.")
-        kpi_card(wsG, r, 5, "Petrol, dearest/cheapest",
+                 '0.00"x"', "This order holds month to month too.", evidence="d8")
+        kpi_card(wsG, r, 5, "Petrol: how many times dearer",
                  '=INDEX(tblLocation[dearest_over_cheapest],MATCH("PETROL_PRICE_NGN_PER_LITRE",tblLocation[metric_code],0))',
-                 '0.00"x"', "Rank-UNSTABLE: spread shown, no jurisdiction named.")
-        kpi_card(wsG, r, 7, "Rank-stable metrics",
+                 '0.00"x"', "This order keeps changing, so the gap is shown but no place is "
+                 "named.", evidence="d8")
+        kpi_card(wsG, r, 7, "Costs with a stable order",
                  '=COUNTIF(tblRankStab[stable_for_persistent_ranking],TRUE)',
-                 "0", "Of 9. Only these support a persistent location decision.")
+                 "0", "Of 9. Only these hold their order month to month.")
         r += 5
-        r = note(wsG, r, "RANK STABILITY IS A PERSISTENT-DECISION HEURISTIC, NOT A DATA-QUALITY TEST "
-                         "(G9). Every published monthly ranking is a valid snapshot - correctly "
-                         "extracted, correctly ordered. The move-to-spread ratio only asks whether "
-                         "that order would survive to next month well enough to anchor a standing "
-                         "siting or supplier decision. The 1.0 cut is a project convention.", "warn")
-        wsG.Cells(r, 1).Value = "The money value of location, per cost (2026-04)"
+        r = note(wsG, r, "HOW TO READ EVERY COMPARISON ON THIS SHEET. "
+                         + pbi_findings.LOCATION_FRAMING["one_factor"] + " "
+                         + pbi_findings.LOCATION_FRAMING["rule"], "warn")
+        r = note(wsG, r, "THIS IS ABOUT DECISIONS THAT LAST, NOT ABOUT DATA QUALITY. Every published "
+                         "monthly ranking is correct for its own month. The question here is only "
+                         "whether that order would still hold next month, well enough to base a "
+                         "lasting choice of site or supplier on it. The test behind it is on the "
+                         "'Can I trust this' sheet.", "warn")
+        wsG.Cells(r, 1).Value = ("What choosing one place over another is actually worth, "
+                                 "cost by cost (2026-04)")
         wsG.Cells(r, 1).Font.Bold = True
         r += 1
         loc = d["tblLocation"][["label", "cheapest_ngn", "dearest_ngn", "spread_ngn",
@@ -627,29 +897,35 @@ def build(d):
                     "tblGeoFoodZone", style="TableStyleLight11")
         wsG.Columns("A:A").ColumnWidth = 30
         wsG.Columns("B:H").ColumnWidth = 16
-        print("  Geographic Differences")
+        decision_block(wsG, row_below_content(wsG), "Where costs differ")
+        print("  Where costs differ (+ reframing + decision band)")
 
         # ---------------- 5. Business Decision Signals ------------------
         wsS = wb.Worksheets.Add(After=wsG)
-        wsS.Name = "Decision Signals"
-        r = title(wsS, 1, "Business Decision Signals",
-                  "How unusual is a month by this series' own history  |  grain: STATE")
-        kpi_card(wsS, r, 1, "Diesel EXTREME level",
+        wsS.Name = "How unusual is this month"
+        r = title(wsS, 1, "Is this month's price move unusual?",
+                  "Each cost is judged against its own past, not against the others  |  a flag says a move is large, not that you should act on it")
+        kpi_card(wsS, r, 1, "Diesel: what counts as EXTREME",
                  '=INDEX(tblFlags[extreme_p95_abs_pct],MATCH("DIESEL_PRICE_NGN_PER_LITRE",tblFlags[metric_code],0))/100',
-                 "0.0%", "p95 of |month-over-month %|, 518 observations. Evidence d1.")
-        kpi_card(wsS, r, 3, "Diesel ELEVATED level",
+                 "0.0%", "A move bigger than this happens about once in twenty months.",
+                 evidence="d1")
+        kpi_card(wsS, r, 3, "Diesel: what counts as ELEVATED",
                  '=INDEX(tblFlags[elevated_p90_abs_pct],MATCH("DIESEL_PRICE_NGN_PER_LITRE",tblFlags[metric_code],0))/100',
-                 "0.0%", "p90. Descriptive, not an action trigger.")
-        kpi_card(wsS, r, 5, "Self-gen vs reference tariff",
+                 "0.0%", "A move bigger than this happens about once in ten months. It "
+                 "describes the month, it does not tell you to act.", evidence="d1")
+        kpi_card(wsS, r, 5, "Generator cost vs grid power",
                  '=INDEX(tblSelfGen[multiple_of_reference_tariff],MATCH(1,INDEX((tblSelfGen[observation_month]=DATE(2026,5,1))*(tblSelfGen[genset_kwh_per_litre]=3),0),0))',
-                 '0.00"x"', "Diesel NGN/kWh at 3.0 kWh/l vs the FIXED July 2025 Band A reference.")
-        kpi_card(wsS, r, 7, "Break-even diesel price",
+                 '0.00"x"', "What a generator cost per unit against grid power, at 3 units per "
+                 "litre.", evidence="d3")
+        kpi_card(wsS, r, 7, "Diesel price that would break even",
                  '=INDEX(tblBreakeven[breakeven_diesel_ngn_per_litre_at_3kwh],MATCH("A",tblBreakeven[service_band],0))',
-                 '"NGN "#,##0.00', "Below this, self-generation would win. Cheapest ever seen: NGN 1,266.33.")
+                 '"NGN "#,##0.00', "Below this price a generator would be cheaper. The cheapest "
+                 "diesel ever seen here was NGN 1,266.33.", evidence="d4")
         r += 5
-        r = note(wsS, r, "MOVEMENT FLAGS ARE DESCRIPTIVE, NOT ACTION TRIGGERS. ELEVATED = above the "
-                         "p90 of this series' own historical absolute monthly moves; EXTREME = above "
-                         "the p95. A flag says a move is large by past standards. It does NOT say a "
+        r = note(wsS, r, "FLAGS DESCRIBE THE MONTH. THEY DO NOT TELL YOU TO ACT. ELEVATED means a "
+                         "move bigger than about nine out of ten months in this cost's own past; "
+                         "EXTREME means bigger than about nineteen out of twenty. A flag says a move "
+                         "is large by past standards. It does NOT say a "
                          "business should act, reprice or renegotiate - that needs your cost exposure, "
                          "margin and pass-through ability, none of which is in this dataset.", "warn")
         r = note(wsS, r, "NERC IS A FIXED JULY 2025 REFERENCE COMPARISON (G4), not a live tariff. "
@@ -659,11 +935,20 @@ def build(d):
                          "multiples are SMALLER than shown. Generator efficiency is an ASSUMPTION "
                          "(2.5-4.0 kWh/litre), not a measurement.", "warn")
 
-        wsS.Cells(r, 1).Value = "Flag levels per cost (|month-over-month %|, 518 observations each)"
+        wsS.Cells(r, 1).Value = ("How big a monthly move has to be before it counts as "
+                                 "unusual, cost by cost (518 readings behind each one)")
         wsS.Cells(r, 1).Font.Bold = True
         r += 1
+        # Raw column names are the last place analyst vocabulary hides on a first-layer
+        # sheet. The percentile definitions stay on 'Can I trust this'.
         fl = d["tblFlags"][["label", "observations", "median_abs_pct", "elevated_p90_abs_pct",
-                            "extreme_p95_abs_pct", "worst_rise_pct", "worst_fall_pct"]]
+                            "extreme_p95_abs_pct", "worst_rise_pct", "worst_fall_pct"]].rename(
+            columns={"label": "Cost", "observations": "Readings behind it",
+                     "median_abs_pct": "Typical monthly move, %",
+                     "elevated_p90_abs_pct": "Counts as ELEVATED above, %",
+                     "extreme_p95_abs_pct": "Counts as EXTREME above, %",
+                     "worst_rise_pct": "Biggest rise seen, %",
+                     "worst_fall_pct": "Biggest fall seen, %"})
         end = write_block(wsS, r, 1, fl, "tblSigFlags", style="TableStyleLight9")
         wsS.Range(wsS.Cells(r + 1, 3), wsS.Cells(end, 5)).NumberFormat = '0.00"%"'
         wsS.Range(wsS.Cells(r + 1, 6), wsS.Cells(end, 7)).NumberFormat = '+0.0"%";-0.0"%"'
@@ -682,7 +967,8 @@ def build(d):
         ch = wsS.Shapes.AddChart2(-1, xlColumnClustered, 560, 320, 480, 280).Chart
         ch.SetSourceData(pt.TableRange1)
         ch.HasTitle = True
-        ch.ChartTitle.Text = "Jurisdictions flagged EXTREME, by cost and month"
+        ch.ChartTitle.Text = ("Unusual months arrive in clusters, not evenly "
+                              "(jurisdictions flagged EXTREME, by cost and month)")
         sc = wb.SlicerCaches.Add2(pt, "metric_code")
         sc.Slicers.Add(wsS, None, "slFlagMetric", "Cost", 560, 10, 200, 290)
 
@@ -699,13 +985,14 @@ def build(d):
                     date_cols=("observation_month",))
         wsS.Columns("A:A").ColumnWidth = 30
         wsS.Columns("B:H").ColumnWidth = 15
-        print("  Decision Signals (PivotTable + PivotChart + slicer + conditional formatting)")
+        decision_block(wsS, row_below_content(wsS), "How unusual is this month?")
+        print("  How unusual is this month (PivotTable + PivotChart + slicer + decision band)")
 
         # ---------------- 6. Business Archetypes ------------------------
         wsA = wb.Worksheets.Add(After=wsS)
-        wsA.Name = "Business Archetypes"
-        r = title(wsA, 1, "Business Archetypes",
-                  "Which costs matter for which business - and what this data cannot tell you")
+        wsA.Name = "Who this matters more for"
+        r = title(wsA, 1, "Which kinds of business does this matter more for?",
+                  "The same price rise hurts different businesses by different amounts  |  find the closest match, then check it against your own numbers")
         r = note(wsA, r, "EVERY archetype is missing RENT and LABOUR - for most Nigerian small "
                          "businesses the two largest line items. Nothing here is a total cost of "
                          "doing business, and there is NO composite index: the costs are reported "
@@ -722,47 +1009,51 @@ def build(d):
         wsA.Range(wsA.Cells(r + 1, 3), wsA.Cells(end, 3)).FormatConditions.AddDatabar()
         r = end + 2
 
-        for name, metrics, boundary, needed in ARCHETYPES:
-            hdr = wsA.Range(wsA.Cells(r, 1), wsA.Cells(r, 8))
+        # Six questions per archetype, ending with the company data that would be
+        # needed before any actual decision - which this dataset cannot supply.
+        arch_parts = [
+            ("1.  WHICH NBCI COSTS MATTER HERE", "costs", INK, CARD_BG),
+            ("2.  WHAT THE DATA CURRENTLY SHOWS", "signals", INK, WHITE),
+            ("3.  WHY THAT COULD MATTER OPERATIONALLY", "why", INK, CARD_BG),
+            ("4.  WHAT MANAGEMENT SHOULD INVESTIGATE INTERNALLY", "review", INK, WHITE),
+            ("5.  BOUNDARY - what this cannot tell you", "boundary", 0x1010C0, WARN_BG),
+            ("6.  COMPANY DATA NEEDED BEFORE ANY DECISION", "needed", 0x1010C0, WARN_BG),
+        ]
+        metric_label = {c: l for c, l in na.SHORT_LABEL.items()}
+        for a in pbi_findings.ARCHETYPES:
+            hdr = wsA.Range(wsA.Cells(r, 1), wsA.Cells(r, 10))
             hdr.Merge()
-            hdr.Value = name
+            hdr.Value = a["archetype"]
             hdr.Font.Bold = True
             hdr.Font.Size = 12
             hdr.Font.Color = WHITE
             hdr.Interior.Color = NAVY
+            wsA.Rows(r).RowHeight = 20
             r += 1
-            wsA.Cells(r, 1).Value = "Costs this data can speak to"
-            wsA.Cells(r, 1).Font.Bold = True
-            wsA.Cells(r, 2).Value = " | ".join(metrics)
+            costs = " | ".join(metric_label.get(c, c) for c in a["metric_codes"].split("|"))
+            r = _prose(wsA, r, "NBCI costs shown", None, costs, MUTED, 10, WHITE)
+            for label, field, colour, bg in arch_parts:
+                r = _prose(wsA, r, label, None, a[field], colour, 10, bg)
             r += 1
-            wsA.Cells(r, 1).Value = "BOUNDARY - what it cannot tell you"
-            wsA.Cells(r, 1).Font.Bold = True
-            wsA.Cells(r, 1).Font.Color = 0x1010C0
-            b = wsA.Range(wsA.Cells(r, 2), wsA.Cells(r, 8))
-            b.Merge()
-            b.Value = boundary
-            b.WrapText = True
-            b.Interior.Color = WARN_BG
-            wsA.Rows(r).RowHeight = 34
-            r += 1
-            wsA.Cells(r, 1).Value = "Data you would need to add"
-            wsA.Cells(r, 1).Font.Bold = True
-            n = wsA.Range(wsA.Cells(r, 2), wsA.Cells(r, 8))
-            n.Merge()
-            n.Value = needed
-            n.WrapText = True
-            wsA.Rows(r).RowHeight = 28
-            r += 2
-        wsA.Columns("A:A").ColumnWidth = 30
-        wsA.Columns("B:H").ColumnWidth = 16
-        print(f"  Business Archetypes ({len(ARCHETYPES)} archetypes)")
+
+        decision_block(wsA, r + 1, "Who this matters more for")
+        print(f"  Who this matters more for ({len(pbi_findings.ARCHETYPES)} kinds of business, 6 questions each)")
 
         # ---------------- 7. Methodology --------------------------------
         wsMe = wb.Worksheets.Add(After=wsA)
-        wsMe.Name = "Methodology"
-        r = title(wsMe, 1, "Methodology, Rules and Limitations",
+        wsMe.Name = "Can I trust this"
+        r = title(wsMe, 1, "Can I trust this, and where does it stop?",
                   "Read this before quoting any number from this workbook")
+        r = capability_block(wsMe, r, table_name="tblCapabilityMethod")
         sections = [
+            ("THE QUESTION THIS PROJECT ANSWERS",
+             pbi_findings.CORE_QUESTION + "  The short version: "
+             + pbi_findings.SIMPLE_DESCRIPTION + "  An earlier version of this project asked "
+             "how the COST OF DOING BUSINESS was changing and what businesses should DO "
+             "about it. That was more than the data can carry: this measures nine bought-in "
+             "costs rather than a whole cost base, not every source is state-level, and "
+             "telling one company what to do would need that company's own margins and "
+             "market position."),
             ("DATA SOURCES",
              "National Bureau of Statistics (NBS): petrol, diesel, cooking gas (LPG), transport "
              "fares, food prices, Consumer Price Index. Central Bank of Nigeria (CBN): NFEM "
@@ -807,8 +1098,9 @@ def build(d):
              "cross-jurisdiction CV%. At or above 1.0 the order reshuffles on ordinary movement. "
              "STABLE (4): water transport, bus intercity, okada, bus intracity. UNSTABLE (5): "
              "air, diesel, LPG 5 kg, LPG 12.5 kg, petrol - for these the SPREAD is shown but NO "
-             "jurisdiction is named as dearest or cheapest. The 1.0 cut is a project convention, "
-             "not a statistical standard."),
+             "jurisdiction is named as the dearest or the cheapest OVER TIME. Naming one would be "
+             "a claim that the order persists, and it does not. The 1.0 cut is a project "
+             "convention, not a statistical standard."),
             ("MOVEMENT FLAG DEFINITIONS",
              "Built from each jurisdiction's own month-over-month percentage change, pooled across "
              "37 jurisdictions x 14 month-pairs = 518 observations per cost. ELEVATED = above the "
@@ -882,7 +1174,8 @@ def build(d):
             wsMe.Rows(r).RowHeight = max(30, 12 * (len(body) // 110 + 1))
             r += 2
         wsMe.Columns("A:I").ColumnWidth = 14
-        print("  Methodology")
+        decision_block(wsMe, row_below_content(wsMe), "Can I trust this?")
+        print("  Can I trust this (+ decision band)")
 
         # ---------------- finish ----------------------------------------
         # KPI register: the in-workbook KPI dictionary and the validator's index.
@@ -901,7 +1194,7 @@ def build(d):
                 w.Tab.Color = 0xBFBFBF if w.Name.startswith("Data_") else NAVY
             except Exception:
                 pass
-        wb.Worksheets("Executive Overview").Activate()
+        wb.Worksheets("What is changing").Activate()
         wb.SaveAs(str(WORKBOOK), FileFormat=xlsxFormat)
         wb.Close(SaveChanges=False)
         print(f"\n  saved -> {WORKBOOK.relative_to(ROOT)}")

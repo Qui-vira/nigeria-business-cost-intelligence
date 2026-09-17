@@ -27,9 +27,11 @@ ROOT = Path(__file__).resolve().parents[2]
 WORKBOOK = ROOT / "outputs" / "dashboards" / "NBCI_Cost_Dashboard.xlsx"
 EVID = ROOT / "outputs" / "analysis"
 
-DASH_SHEETS = ["Executive Overview", "Fuel Costs", "Transport Costs",
-               "Geographic Differences", "Decision Signals",
-               "Business Archetypes", "Methodology"]
+# Sheets are named for the business question they answer, not for the dataset they
+# happen to use. The analytical detail is unchanged; the way in is not.
+DASH_SHEETS = ["What is changing", "Fuel and energy", "Moving people and goods",
+               "Where costs differ", "How unusual is this month",
+               "Who this matters more for", "Can I trust this"]
 DATA_SHEETS = ["Data_Panel", "Data_Medians", "Data_Evidence"]
 ERROR_LITERALS = ("#REF!", "#VALUE!", "#DIV/0!", "#NAME?", "#NULL!", "#NUM!")
 
@@ -203,33 +205,33 @@ def layer_c_com_recalc(ck):
 
         # KPI cards recalculated and compared with the committed evidence.
         cases = [
-            ("Executive Overview", "Diesel, trough to latest",
+            ("What is changing", "Diesel, trough to latest",
              ev(shock, "metric_code", "DIESEL_PRICE_NGN_PER_LITRE", "median_pct") / 100),
-            ("Executive Overview", "Petrol, trough to latest",
+            ("What is changing", "Petrol, trough to latest",
              ev(shock, "metric_code", "PETROL_PRICE_NGN_PER_LITRE", "median_pct") / 100),
-            ("Fuel Costs", "Diesel spread, 2026-04",
+            ("Fuel and energy", "Diesel: dearest minus cheapest place",
              ev(loc, "metric_code", "DIESEL_PRICE_NGN_PER_LITRE", "spread_ngn")),
-            ("Fuel Costs", "Petrol spread, 2026-04",
+            ("Fuel and energy", "Petrol: dearest minus cheapest place",
              ev(loc, "metric_code", "PETROL_PRICE_NGN_PER_LITRE", "spread_ngn")),
-            ("Fuel Costs", "Petrol dearest / cheapest",
+            ("Fuel and energy", "Petrol: how many times dearer",
              ev(loc, "metric_code", "PETROL_PRICE_NGN_PER_LITRE", "dearest_over_cheapest")),
-            ("Transport Costs", "Okada rose while petrol fell",
+            ("Moving people and goods", "Okada fares that rose anyway",
              ev(sticky, "metric_code", "TRANSPORT_OKADA_NGN_PER_JOURNEY", "share_fare_rose_pct") / 100),
-            ("Transport Costs", "Okada fare growth vs CPI",
+            ("Moving people and goods", "How far okada outran inflation",
              ev(farecpi, "metric_code", "TRANSPORT_OKADA_NGN_PER_JOURNEY", "median_gap_pp")),
-            ("Geographic Differences", "Water transport, dearest/cheapest",
+            ("Where costs differ", "Water fares: how many times dearer",
              ev(loc, "metric_code", "TRANSPORT_WATER_NGN_PER_JOURNEY", "dearest_over_cheapest")),
-            ("Geographic Differences", "Rank-stable metrics",
+            ("Where costs differ", "Costs with a stable order",
              float(rank.stable_for_persistent_ranking.sum())),
-            ("Decision Signals", "Diesel EXTREME level",
+            ("How unusual is this month", "Diesel: what counts as EXTREME",
              ev(flags, "metric_code", "DIESEL_PRICE_NGN_PER_LITRE", "extreme_p95_abs_pct") / 100),
-            ("Decision Signals", "Diesel ELEVATED level",
+            ("How unusual is this month", "Diesel: what counts as ELEVATED",
              ev(flags, "metric_code", "DIESEL_PRICE_NGN_PER_LITRE", "elevated_p90_abs_pct") / 100),
         ]
         expected_selfgen = float(selfgen.loc[
             (selfgen.observation_month == "2026-05-01") &
             (selfgen.genset_kwh_per_litre == 3.0), "multiple_of_reference_tariff"].iloc[0])
-        cases.append(("Decision Signals", "Self-gen vs reference tariff", expected_selfgen))
+        cases.append(("How unusual is this month", "Generator cost vs grid power", expected_selfgen))
 
         # Read the KPI register the builder wrote: (sheet, kpi, cell). Locating a
         # card by its registered address is deterministic - no label matching.
@@ -269,8 +271,8 @@ def layer_c_com_recalc(ck):
            "all populated" if not empty else f"{empty[:3]}")
 
         # PivotTables: valid source ranges and non-empty results.
-        for sheet, pname in [("Fuel Costs", "ptFuel"), ("Transport Costs", "ptTransport"),
-                             ("Decision Signals", "ptFlags")]:
+        for sheet, pname in [("Fuel and energy", "ptFuel"), ("Moving people and goods", "ptTransport"),
+                             ("How unusual is this month", "ptFlags")]:
             ws = wb.Worksheets(sheet)
             try:
                 pt = ws.PivotTables(pname)
@@ -283,7 +285,7 @@ def layer_c_com_recalc(ck):
 
         # Transport pivot must NOT be able to produce an all-modes total (G6).
         try:
-            pt = wb.Worksheets("Transport Costs").PivotTables("ptTransport")
+            pt = wb.Worksheets("Moving people and goods").PivotTables("ptTransport")
             ck(pt.ColumnGrand is False and pt.RowGrand is False,
                "transport pivot has grand totals OFF (no all-modes total, G6)",
                f"ColumnGrand={pt.ColumnGrand} RowGrand={pt.RowGrand}")
@@ -318,7 +320,7 @@ def layer_c_com_recalc(ck):
            f"{chart_ct} charts, {bad} empty")
 
         # G9: rank-unstable metrics must not name a jurisdiction.
-        ws = wb.Worksheets("Geographic Differences")
+        ws = wb.Worksheets("Where costs differ")
         named_unstable = 0
         for rw in range(1, 120):
             a = ws.Cells(rw, 1).Value
@@ -338,6 +340,131 @@ def layer_c_com_recalc(ck):
         xl.Quit()
 
 
+def layer_d_decision_first(ck):
+    """The workbook must EXPLAIN, not just compute.
+
+    A reader with no analytics background should open the first sheet and, within about a
+    minute, be able to name three things this project found and say why they might matter
+    to a business. These checks assert that the structure carrying that is actually in the
+    saved file - and, just as importantly, that the language stays inside what the evidence
+    supports and never equates a lower measured cost with a better place to trade.
+    """
+    import sys as _sys
+    _sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import pbi_findings
+    import pbi_narrative
+
+    print("\n" + "=" * 74)
+    print("LAYER D - EXPLANATION, FRAMING AND LANGUAGE")
+    print("=" * 74)
+    wb = load_workbook(WORKBOOK, data_only=False)
+
+    def sheet_text(name):
+        return "\n".join(
+            str(c.value) for row in wb[name].iter_rows() for c in row
+            if isinstance(c.value, str))
+
+    first = sheet_text("What is changing")
+
+    # --- 1. The scope framing, which is the point of the whole redesign -----
+    ck(pbi_findings.WHAT_THIS_IS in first,
+       "first sheet states WHAT NBCI measures")
+    ck(pbi_findings.WHAT_THIS_IS_NOT in first,
+       "first sheet states WHAT IT DOES NOT measure")
+    ck(pbi_findings.WHY_NOT in first,
+       "first sheet explains why cost alone does not decide a location")
+    ck(pbi_findings.ONE_LINE in first,
+       "first sheet carries the one-line summary: cost pressure, not profitability")
+    for part, _examples, _in in pbi_findings.THE_EQUATION:
+        ck(part in first, f"scope equation names '{part}'")
+    ck("NOT measured here" in first,
+       "scope equation marks the parts NBCI does not cover")
+
+    # --- 2. The findings ----------------------------------------------------
+    # --- 1b. The capability boundary ---------------------------------------
+    # Knowing what is measured is not the same as knowing what may be concluded from
+    # it. Both halves are asserted, on the first sheet and on the methodology sheet.
+    trust = sheet_text("Can I trust this")
+    ck(pbi_findings.CORE_QUESTION in trust,
+       "methodology sheet states the project's core question in full")
+    ck(pbi_findings.SIMPLE_DESCRIPTION in first,
+       "first sheet carries the plain-English description of the project")
+    for s in pbi_findings.CAN_DO:
+        ck(s in first and s in trust, f"capability stated on both sheets: {s[:46]}")
+    for s in pbi_findings.CANNOT_DO:
+        ck(s in first and s in trust, f"limit stated on both sheets: {s[:46]}")
+    ck(pbi_findings.WHAT_IT_WOULD_TAKE in first and pbi_findings.WHAT_IT_WOULD_TAKE in trust,
+       "both sheets separate what exists now from what a later version would need")
+
+    ck("What should I pay attention to?" in first,
+       "first sheet asks 'What should I pay attention to?'")
+    for f in pbi_findings.FINDINGS:
+        missing = [k for k in ("headline", "question", "found", "matters", "who",
+                               "review", "boundary", "evidence") if f[k] not in first]
+        ck(not missing, f"finding {f['rank']} complete: {f['headline'][:48]}",
+           "all six parts + evidence" if not missing else f"missing {missing}")
+
+    # --- 3. Every dashboard sheet keeps the four-part band ------------------
+    for sname in DASH_SHEETS:
+        t = sheet_text(sname).upper()
+        missing = [lab for lab in ("SIGNAL", "WHAT IT MEANS", "WHAT TO REVIEW", "BOUNDARY")
+                   if lab not in t]
+        ck(not missing, f"{sname}: all four decision parts present",
+           "all four" if not missing else f"missing {missing}")
+
+    # --- 4. Archetypes: six questions each ----------------------------------
+    arch_t = sheet_text("Who this matters more for")
+    for a in pbi_findings.ARCHETYPES:
+        missing = [k for k in ("costs", "signals", "why", "review", "boundary", "needed")
+                   if a[k] not in arch_t]
+        ck(a["archetype"] in arch_t and not missing,
+           f"archetype explained in full: {a['archetype']}",
+           "all six parts" if not missing else f"missing {missing}")
+    for heading in ("1.  WHICH NBCI COSTS MATTER HERE",
+                    "2.  WHAT THE DATA CURRENTLY SHOWS",
+                    "3.  WHY THAT COULD MATTER OPERATIONALLY",
+                    "4.  WHAT MANAGEMENT SHOULD INVESTIGATE INTERNALLY",
+                    "6.  COMPANY DATA NEEDED BEFORE ANY DECISION"):
+        ck(heading in arch_t, f"archetype heading present: {heading.strip()}")
+
+    # --- 5. LANGUAGE GUARD --------------------------------------------------
+    # The dataset holds no company cost shares, margins, pass-through ability or revenue.
+    # Nothing may instruct a business to act, and nothing may equate a lower measured cost
+    # with a better place to do business - the single misreading this redesign prevents.
+    review_verbs = ("review", "investigate", "compare", "measure", "reassess", "revisit",
+                    "examine", "put ", "consider", "verify", "identify", "read ",
+                    "obtain", "budget", "treat ", "do not")
+    weak = [f["rank"] for f in pbi_findings.FINDINGS
+            if not any(v in f["review"].lower() for v in review_verbs)]
+    ck(not weak, "every finding's 'what to review' uses review-language",
+       "all compliant" if not weak else f"{weak}")
+    weak_a = [a["archetype"] for a in pbi_findings.ARCHETYPES
+              if not any(v in a["review"].lower() for v in review_verbs)]
+    ck(not weak_a, "every archetype's review text uses review-language",
+       "all compliant" if not weak_a else f"{weak_a}")
+
+    banned = ("you should raise", "you must raise", "raise your prices",
+              "increase your prices", "you should relocate", "you must relocate",
+              "move your business", "we recommend that you", "guaranteed",
+              "best state", "best place", "cheapest state",
+              "cheaper place to do business", "expand here", "leave this state")
+    hits = []
+    for sname in DASH_SHEETS:
+        low = sheet_text(sname).lower()
+        for b in banned:
+            if b in low:
+                hits.append(f"{sname}: '{b}'")
+    ck(not hits, "no prescriptive language, and no cost-equals-quality claim",
+       "clean" if not hits else f"{hits}")
+
+    # --- 6. The boundary is never silently dropped --------------------------
+    for sname in DASH_SHEETS:
+        t = sheet_text(sname)
+        ck(any(k in t for k in ("cannot", "CANNOT", "not tell", "NOT measure", "absent",
+                                "NO ")),
+           f"{sname}: states a limitation in plain words")
+
+
 def main():
     if not WORKBOOK.exists():
         print("workbook not found - run build_excel_dashboard.py first")
@@ -348,6 +475,7 @@ def main():
     layer_a_ooxml(ck)
     layer_b_openpyxl(ck)
     layer_c_com_recalc(ck)
+    layer_d_decision_first(ck)
     return 1 if ck.summary() else 0
 
 

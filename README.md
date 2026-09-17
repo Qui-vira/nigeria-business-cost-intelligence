@@ -1,11 +1,14 @@
 # Nigeria Business Cost Intelligence
 
-Integrating eight official Nigerian government datasets into a defensible view of how the cost of
-doing business is changing — and being explicit about what the data can and cannot support.
+NBCI shows how important external business costs are changing across Nigeria, which types of
+businesses those costs are likely to matter more for, and what managers should investigate to
+protect their margins.
+It is built from eight official Nigerian government datasets, and it is explicit about what the
+data can and cannot support.
 
-**Status:** data acquisition, preservation, profiling and schema design are complete. The cleaning
-pipeline, database, analysis and dashboards are not yet built. Nothing below is claimed as finished
-unless the status table says so.
+**Status:** acquisition, cleaning, the PostgreSQL layer, the analysis and two dashboards (Excel and
+Power BI) are complete and validated. Tableau and Cognos are not built. Nothing below is claimed as
+finished unless the status table says so.
 
 ---
 
@@ -13,16 +16,44 @@ unless the status table says so.
 
 **Central question**
 
-> **How are the costs of doing business changing across Nigerian states, and what should different
-> businesses do about it?**
+> **How are key external business cost pressures changing across Nigeria, how do they differ by
+> location where the data supports it, which types of businesses are they likely to matter more
+> for, and what should managers monitor or investigate in response?**
 
 A business in Nigeria pays for stock, fuel, power, transport and imported goods. Each of those costs
 is measured by a different government agency, published on a different schedule, in a different file
 format, and — critically — at a different level of geographic detail.
 
 This project acquires those sources, preserves them unchanged, documents exactly what is in them, and
-designs a clean data model that integrates them **without inventing geographic detail the sources do
+builds a clean data model that integrates them **without inventing geographic detail the sources do
 not provide.**
+
+### What this can and cannot tell you
+
+This distinction is deliberate and it is enforced in the code, not just written down here. Both
+dashboards carry the list below as data, and both builds fail if a page ever claims otherwise.
+
+| It can | It cannot |
+|---|---|
+| Track selected external business cost pressures | Determine whether a specific company is profitable |
+| Show how those pressures change over time | Predict whether a company will lose money |
+| Compare locations where the source data supports geographic comparison | Identify the universally best jurisdiction to operate in |
+| Identify which types of business a particular cost pressure is likely to matter more for | Claim that a cheaper jurisdiction is a better business location |
+| Explain why a cost movement may matter to day-to-day operations | Calculate the effect of a cost change on a specific company's margin |
+| Show what management should monitor, measure, compare or investigate | Prescribe company-specific actions without financial and market data from that company |
+| Provide evidence for further business analysis | |
+
+**What this delivers today is external cost intelligence, business exposure and guidance on what to
+investigate.** Turning that into company-specific decision support would need things this project
+does not hold: a company's own financial data, its market assumptions, and scenario modelling built
+on both. That is a possible later version, not something this one does.
+
+**An earlier version of this README asked how the *cost of doing business* was changing and what
+businesses should *do* about it.** That asked more than the data can carry, for three reasons. It
+measures nine bought-in costs, not a whole cost base — there is no rent, no wages, no land, no taxes
+and no stock in it. Not every source is state-level, so location comparison is valid for some costs
+and not others. And telling one company what to do would need that company's own cost shares,
+margins and market position, none of which is here.
 
 ---
 
@@ -99,7 +130,11 @@ absences are real gaps and which are simply not yet due, is in
 | PostgreSQL analytical layer | ✅ Complete — audited 245/245 |
 | Analysis discovery + source verification | ✅ Complete — 64/64 and 19/19 |
 | Business decision analysis | ✅ Complete — 27/27 |
-| Dashboards | 🟨 Specification in progress |
+| Dashboard specification | ✅ Complete |
+| Excel dashboard | ✅ Complete — 105/105 structural + 25/25 Microsoft Excel compatibility |
+| Power BI dashboard | ✅ Complete — 89/89, all pages inspected rendered |
+| Tableau dashboard | ⬜ Not started |
+| IBM Cognos work | ⬜ Not started — gated on environment access |
 | Business recommendations | ⬜ Not started — gated on review |
 
 ---
@@ -139,6 +174,14 @@ The project deliberately preserves four levels rather than flattening everything
 
 **This is not one giant state-level dataset, and it should not be presented as one.** Every measure
 carries its true geographic grain so that a chart can never imply detail the source never published.
+
+**Location is one factor here, not the point of the project.** The geographic analysis answers *how
+does the external cost environment differ between locations?* It never answers *where is the best
+location to run a business?* A cheaper jurisdiction is not a better one, a dearer jurisdiction is not
+a worse one, and a dearer jurisdiction does not mean a business loses money there. Whether a business
+does well somewhere also depends on revenue opportunity, customer demand, purchasing power, market
+size, competition, rent, wages, supplier access, infrastructure and the company's own operating
+model — none of which is in this dataset.
 
 ---
 
@@ -322,9 +365,9 @@ The finished repository is intended to include the following. Items marked ⬜ a
 | Automated validation checks | ✅ Complete — 110/110 analysis, 245/245 audit |
 | Analysis evidence reports | ✅ Complete — discovery + business decision analysis |
 | Reproducibility instructions | ✅ Complete — see *Reproducibility* |
-| Dashboard specification | 🟨 In progress |
-| Excel workbook | ⬜ Planned |
-| Power BI dashboard | ⬜ Planned |
+| Dashboard specification | ✅ Complete |
+| Excel workbook | ✅ Complete — 7 question-led sheets + 3 data sheets, validated |
+| Power BI dashboard | ✅ Complete — PBIP project, 7 pages, 98 visuals, validated |
 | Tableau dashboard | ⬜ Planned |
 | IBM Cognos work | ⬜ Planned |
 | Dashboard screenshots | ⬜ Planned |
@@ -351,9 +394,14 @@ The finished repository is intended to include the following. Items marked ⬜ a
 - **AI-assisted analytical workflow** — using AI tooling for systematic investigation while
   independently verifying every claim against the source files
 
+- **Analytical communication** — every dashboard page states its conclusion in plain English before
+  any chart is shown, with the exact figures, method and limits kept on a second layer for analysts
+- **Dashboard engineering** — an Excel workbook and a Power BI PBIP project built and validated by
+  script, with the analysis rules enforced structurally rather than by convention
+
 **To be demonstrated in later stages**
 
-- Python / pandas · PostgreSQL · SQL analysis · Power BI · Tableau · IBM Cognos
+- Tableau · IBM Cognos
 
 ---
 
