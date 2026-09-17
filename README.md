@@ -94,12 +94,13 @@ absences are real gaps and which are simply not yet due, is in
 | Cleaning-rule design | ✅ Complete |
 | Decision log | ✅ Complete |
 | Git version control | ✅ Complete |
-| Cleaning pipeline | ⬜ Not started |
-| Processed datasets | ⬜ Not started |
-| PostgreSQL database | ⬜ Not started |
-| SQL analysis | ⬜ Not started |
-| Dashboards | ⬜ Not started |
-| Business recommendations | ⬜ Not started |
+| Cleaning pipelines (all 8 datasets) | ✅ Complete |
+| Processed datasets | ✅ Complete |
+| PostgreSQL analytical layer | ✅ Complete — audited 245/245 |
+| Analysis discovery + source verification | ✅ Complete — 64/64 and 19/19 |
+| Business decision analysis | ✅ Complete — 27/27 |
+| Dashboards | 🟨 Specification in progress |
+| Business recommendations | ⬜ Not started — gated on review |
 
 ---
 
@@ -152,13 +153,15 @@ carries its true geographic grain so that a chart can never imply detail the sou
 | 5 | Document structural differences and source defects | ✅ Done |
 | 6 | Design canonical long-format schemas | ✅ Done |
 | 7 | Define cleaning and validation rules before transformation | ✅ Done |
-| 8 | Build reproducible Python cleaning pipelines | ⬜ Upcoming |
-| 9 | Load clean data into PostgreSQL | ⬜ Upcoming |
-| 10 | Analyse using SQL and Python | ⬜ Upcoming |
-| 11 | Build dashboards | ⬜ Upcoming |
-| 12 | Produce business recommendations | ⬜ Upcoming |
+| 8 | Build reproducible Python cleaning pipelines | ✅ Done — all 8 datasets |
+| 9 | Load clean data into PostgreSQL | ✅ Done — 29,032 fact rows, audit 245/245 |
+| 10 | Analyse using SQL and Python | ✅ Done — 3 passes, 110/110 checks |
+| 11 | Build dashboards | 🟨 Specification in progress |
+| 12 | Produce business recommendations | ⬜ Not started |
 
-Steps 1–7 are complete and documented in this repository. **Steps 8 onward have not been started.**
+**Steps 1–10 are complete and documented in this repository.** Step 11 is at the specification
+stage: the dashboard spec is written against the validated analysis before any tool is opened.
+Step 12 is deliberately gated — see *Important limitations*.
 
 The sequence is deliberate: the cleaning rules were designed *after* profiling the real files and
 *before* writing transformation code, so the rules respond to defects that actually exist rather than
@@ -223,13 +226,25 @@ Nigeria Business Cost Intelligence/
 │       ├── nbs/                    # food, petrol, diesel, cooking_gas, transport, cpi
 │       ├── nerc/                   # electricity_myto
 │       └── cbn/                    # exchange_rate
+├── data/
+│   ├── processed/                   # 12 cleaned fact CSVs (committed)
+│   └── reference/                   # 5 reference tables (committed)
+├── src/
+│   ├── cleaning/                    # 8 dataset pipelines
+│   ├── database/                    # load, audit, restatement simulation
+│   └── analysis/                    # a01 discovery, a02 verification, a03 decision inputs
+├── sql/                             # 11 build scripts, schemas → grants
+├── outputs/
+│   └── analysis/                    # curated evidence: discovery, verification, decisions
 └── docs/
     ├── acquisition/                # inventory, coverage, verification, audit
     ├── profiling/                  # structure summary, column inventory, data guide
-    └── data_design/                # canonical schemas, cleaning rulebook, decision log
+    ├── data_design/                # canonical schemas, rulebook, decision log, schema design
+    ├── validation/                 # per-dataset validation reports (8)
+    └── analysis/                   # discovery report, business decision analysis report
 ```
 
-Folders for code, SQL, processed data and dashboards will be added as those stages are built.
+Dashboard artefacts will be added under a `dashboards/` folder once the specification is approved.
 
 ### Documentation index
 
@@ -249,6 +264,10 @@ Folders for code, SQL, processed data and dashboards will be added as those stag
 | `docs/data_design/cleaning_rulebook.md` | Evidence-based cleaning and validation rules |
 | `docs/data_design/data_dictionary.csv` | 202 column definitions |
 | `docs/data_design/decision_log.md` | 16 design decisions with supporting evidence |
+| `docs/data_design/postgres_schema_design.md` | Warehouse design: schemas, constraints, mart layer |
+| `docs/validation/*.md` | Per-dataset validation reports, one per source (8) |
+| `docs/analysis/analysis_discovery_report.md` | Discovery + source verification evidence (Revision 4) |
+| `docs/analysis/business_decision_analysis_report.md` | Decision frameworks across six business archetypes |
 
 ---
 
@@ -260,19 +279,30 @@ they are preserved locally instead.
 
 What the repository provides in their place:
 
-| Available now | Planned |
+| Available now | Still outstanding |
 |---|---|
-| Source inventory with official download URLs | Python cleaning code |
-| Provenance records for every file | SQL scripts |
-| SHA-256 hashes for all 342 files | Automated validation logic |
-| Full methodology and profiling evidence | Step-by-step rerun instructions |
-| Cleaning rules and canonical schemas | Environment / dependency specification |
+| Source inventory with official download URLs | Environment / dependency manifest |
+| Provenance records for every file | Dashboard artefacts |
+| SHA-256 hashes for all 342 files | |
+| Full methodology and profiling evidence | |
+| Cleaning rules and canonical schemas | |
+| **Python cleaning code, all 8 datasets** | |
+| **11 SQL build scripts and the warehouse design** | |
+| **Automated validation — 245 audit assertions, 110 analysis checks** | |
+| **Cleaned fact and reference CSVs** | |
 
 Because every file is recorded with its official source URL and its SHA-256 hash, anyone can
 re-download the sources and verify they obtained byte-identical files.
 
-**Full rerun instructions will be added once the cleaning pipeline is implemented.** Publishing
-commands for a pipeline that does not yet exist would be misleading.
+**Rerun order.** Build with `python src/database/load_postgres.py`, then verify with
+`python src/database/audit_database.py` (245 assertions) and
+`python src/database/simulate_restatement.py` (15 checks, rolled back). Reproduce the analysis
+with `a01_discovery.py`, `a02_source_verification.py` and `a03_decision_inputs.py` under
+`src/analysis/`. Every output is byte-reproducible from a clean state — the PostgreSQL layer was
+re-verified by a clean-room rebuild into an empty throwaway database using only the committed
+scripts and tracked CSVs, and it reproduced the primary database exactly.
+
+The project has **no dependency manifest yet**; `psycopg` 3.3.4 and `xlrd` 2.0.2 are required.
 
 ---
 
@@ -286,16 +316,19 @@ The finished repository is intended to include the following. Items marked ⬜ a
 | Cleaning decision log | ✅ Complete |
 | Methodology documentation | ✅ Complete |
 | Source inventory | ✅ Complete |
-| Python / pandas cleaning code | ⬜ Planned |
-| PostgreSQL schema | ⬜ Planned |
-| SQL analysis queries | ⬜ Planned |
-| Automated validation checks | ⬜ Planned |
+| Python / pandas cleaning code | ✅ Complete — 8 pipelines |
+| PostgreSQL schema | ✅ Complete — audited 245/245 |
+| SQL analysis queries | ✅ Complete — 11 build scripts, 28 mart views |
+| Automated validation checks | ✅ Complete — 110/110 analysis, 245/245 audit |
+| Analysis evidence reports | ✅ Complete — discovery + business decision analysis |
+| Reproducibility instructions | ✅ Complete — see *Reproducibility* |
+| Dashboard specification | 🟨 In progress |
+| Excel workbook | ⬜ Planned |
 | Power BI dashboard | ⬜ Planned |
 | Tableau dashboard | ⬜ Planned |
 | IBM Cognos work | ⬜ Planned |
 | Dashboard screenshots | ⬜ Planned |
-| Business recommendations | ⬜ Planned |
-| Reproducibility instructions | ⬜ Planned |
+| Business recommendations | ⬜ Planned — gated on review |
 
 ---
 
