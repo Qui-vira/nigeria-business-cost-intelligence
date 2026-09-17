@@ -136,3 +136,18 @@ outputs/analysis/verification/*.csv
 !outputs/analysis/verification/v3a_lpg_source_trace.csv
 !outputs/analysis/verification/v3c_lpg_distribution.csv
 !outputs/analysis/verification/v4_rank_stability.csv
+
+# ---------------------------------------------------------------------------
+# Generated dashboard extracts
+#
+# src/dashboards/build_excel_dashboard.py regenerates these from the mart layer.
+# The two large extracts are NOT committed: their rows are already embedded
+# inside NBCI_Cost_Dashboard.xlsx, so committing them would store the same data
+# twice. extract_manifest.csv IS committed - it is the provenance record
+# (source object, row counts, generation timestamp).
+#
+# The QA script's working backup of the WPS-authored build is never committed.
+# ---------------------------------------------------------------------------
+outputs/dashboards/extracts/ext_state_cost_panel.csv
+outputs/dashboards/extracts/ext_metric_medians.csv
+outputs/dashboards/*.bak.xlsx
