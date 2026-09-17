@@ -1,0 +1,96 @@
+relationship fact_cost_jurisdiction__dim_jurisdiction_jurisdiction
+	fromColumn: fact_cost.jurisdiction
+	toColumn: dim_jurisdiction.jurisdiction
+
+relationship fact_cost_date__dim_date_date
+	fromColumn: fact_cost.date
+	toColumn: dim_date.date
+
+relationship fact_cost_metric_code__dim_metric_metric_code
+	fromColumn: fact_cost.metric_code
+	toColumn: dim_metric.metric_code
+
+relationship fact_extreme_flag_metric_code__dim_metric_metric_code
+	fromColumn: fact_extreme_flag.metric_code
+	toColumn: dim_metric.metric_code
+
+relationship fact_extreme_flag_observation_month__dim_date_date
+	fromColumn: fact_extreme_flag.observation_month
+	toColumn: dim_date.date
+
+relationship ref_trend_window_metric_code__dim_metric_metric_code
+	fromColumn: ref_trend_window.metric_code
+	toColumn: dim_metric.metric_code
+
+relationship ref_dispersion_metric_code__dim_metric_metric_code
+	fromColumn: ref_dispersion.metric_code
+	toColumn: dim_metric.metric_code
+
+relationship ref_shock_metric_code__dim_metric_metric_code
+	fromColumn: ref_shock.metric_code
+	toColumn: dim_metric.metric_code
+
+relationship ref_rank_stability_metric_code__dim_metric_metric_code
+	fromColumn: ref_rank_stability.metric_code
+	toColumn: dim_metric.metric_code
+
+relationship ref_rank_verdict_metric_code__dim_metric_metric_code
+	fromColumn: ref_rank_verdict.metric_code
+	toColumn: dim_metric.metric_code
+
+relationship ref_flag_level_metric_code__dim_metric_metric_code
+	fromColumn: ref_flag_level.metric_code
+	toColumn: dim_metric.metric_code
+
+relationship ref_location_value_metric_code__dim_metric_metric_code
+	fromColumn: ref_location_value.metric_code
+	toColumn: dim_metric.metric_code
+
+relationship ref_exposure_metric_code__dim_metric_metric_code
+	fromColumn: ref_exposure.metric_code
+	toColumn: dim_metric.metric_code
+
+relationship ref_fare_ratchet_metric_code__dim_metric_metric_code
+	fromColumn: ref_fare_ratchet.metric_code
+	toColumn: dim_metric.metric_code
+
+relationship ref_fare_vs_cpi_metric_code__dim_metric_metric_code
+	fromColumn: ref_fare_vs_cpi.metric_code
+	toColumn: dim_metric.metric_code
+
+relationship ref_north_south_gap_metric_code__dim_metric_metric_code
+	fromColumn: ref_north_south_gap.metric_code
+	toColumn: dim_metric.metric_code
+
+relationship ref_north_south_gap_observation_month__dim_date_date
+	fromColumn: ref_north_south_gap.observation_month
+	toColumn: dim_date.date
+
+relationship ref_north_south_member_state_name__dim_jurisdiction_jurisdiction
+	fromColumn: ref_north_south_member.state_name
+	toColumn: dim_jurisdiction.jurisdiction
+
+relationship ref_mobility_dear_state_name__dim_jurisdiction_jurisdiction
+	fromColumn: ref_mobility_dear.state_name
+	toColumn: dim_jurisdiction.jurisdiction
+
+relationship ref_mobility_cheap_state_name__dim_jurisdiction_jurisdiction
+	fromColumn: ref_mobility_cheap.state_name
+	toColumn: dim_jurisdiction.jurisdiction
+
+relationship ref_selfgen_observation_month__dim_date_date
+	fromColumn: ref_selfgen.observation_month
+	toColumn: dim_date.date
+
+relationship ref_named_gaps_metric_code__dim_metric_metric_code
+	fromColumn: ref_named_gaps.metric_code
+	toColumn: dim_metric.metric_code
+
+relationship ref_archetype_section_archetype__ref_archetype_archetype
+	fromColumn: ref_archetype_section.archetype
+	toColumn: ref_archetype.archetype
+
+relationship ref_finding_section_headline__ref_finding_headline
+	fromColumn: ref_finding_section.headline
+	toColumn: ref_finding.headline
+

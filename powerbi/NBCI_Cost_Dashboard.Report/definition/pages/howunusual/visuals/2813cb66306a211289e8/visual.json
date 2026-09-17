@@ -1,0 +1,163 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
+  "name": "2813cb66306a211289e8",
+  "position": {
+    "x": 24,
+    "y": 244,
+    "z": 50,
+    "width": 620,
+    "height": 310,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "ref_flag_level"
+                    }
+                  },
+                  "Property": "label"
+                }
+              },
+              "queryRef": "ref_flag_level.label",
+              "nativeQueryRef": "label",
+              "displayName": "Cost"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "ref_flag_level"
+                    }
+                  },
+                  "Property": "median_abs_pct"
+                }
+              },
+              "queryRef": "ref_flag_level.median_abs_pct",
+              "nativeQueryRef": "median_abs_pct",
+              "displayName": "Typical monthly move, %"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "ref_flag_level"
+                    }
+                  },
+                  "Property": "elevated_p90_abs_pct"
+                }
+              },
+              "queryRef": "ref_flag_level.elevated_p90_abs_pct",
+              "nativeQueryRef": "elevated_p90_abs_pct",
+              "displayName": "ELEVATED level (p90), %"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "ref_flag_level"
+                    }
+                  },
+                  "Property": "extreme_p95_abs_pct"
+                }
+              },
+              "queryRef": "ref_flag_level.extreme_p95_abs_pct",
+              "nativeQueryRef": "extreme_p95_abs_pct",
+              "displayName": "EXTREME level (p95), %"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'How big a monthly move has to be before it counts as unusual, cost by cost. Each level is set from that cost''s own past, from more than 500 readings'"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#5B5B5B'"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "background": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "border": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "dropShadow": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

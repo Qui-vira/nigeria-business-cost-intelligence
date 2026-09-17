@@ -1,0 +1,143 @@
+/// Jurisdiction x month x metric panel, 8,177 rows. Primary publications only (G10).
+table fact_cost
+
+	/// Median across the 37 jurisdictions, equally weighted. NOT a national average (G15). Returns BLANK if a metric that may not be compared across jurisdictions is in context (G2).
+	measure 'Median Value' =
+			VAR NotComparable =
+			    CALCULATE ( COUNTROWS ( dim_metric ), dim_metric[comparable_across_jurisdictions] = FALSE )
+			RETURN
+			    IF (
+			        NotComparable > 0,
+			        BLANK (),
+			        MEDIANX ( VALUES ( dim_jurisdiction[jurisdiction] ), CALCULATE ( AVERAGE ( fact_cost[value] ) ) )
+			    )
+		formatString: #,0.00
+		displayFolder: 1 Core
+
+	/// Latest month for which the metric in context actually has rows. Series end on different months (G14).
+	measure 'Latest Month' = CALCULATE ( MAX ( fact_cost[date] ) )
+		formatString: yyyy-mm-dd
+		displayFolder: 1 Core
+
+	/// Median across jurisdictions in that metric's own latest month.
+	measure 'Latest Median Value' =
+			VAR L = [Latest Month]
+			RETURN CALCULATE ( [Median Value], dim_date[date] = L )
+		formatString: #,0.00
+		displayFolder: 1 Core
+
+	/// Rows in filter context at the (jurisdiction, month, metric) grain.
+	measure 'Observation Count' = COUNTROWS ( fact_cost )
+		formatString: #,0
+		displayFolder: 1 Core
+
+	/// Distinct jurisdictions with an observation in context. 37 = 36 states and the FCT.
+	measure 'Jurisdiction Count' = DISTINCTCOUNT ( fact_cost[jurisdiction] )
+		formatString: #,0
+		displayFolder: 1 Core
+
+	measure 'Metric Count' = DISTINCTCOUNT ( fact_cost[metric_code] )
+		formatString: #,0
+		displayFolder: 1 Core
+
+	/// Month-over-month change in the cross-jurisdiction median. BLANK where the previous month has no rows.
+	measure 'Value MoM %' =
+			VAR Cur = [Median Value]
+			VAR PrevMonth = CALCULATE ( MAX ( dim_date[date] ), dim_date[date] < MIN ( dim_date[date] ), ALL ( dim_date ) )
+			VAR Prev = CALCULATE ( [Median Value], dim_date[date] = PrevMonth, ALL ( dim_date ) )
+			RETURN IF ( ISBLANK ( Prev ) || Prev = 0, BLANK (), DIVIDE ( Cur - Prev, Prev ) * 100 )
+		formatString: #,0.00\%
+		displayFolder: 2 Change
+
+	/// RULE G11. Returns BLANK when no row exists exactly 12 months earlier, so the line BREAKS rather than bridging a known gap. CPI year-on-year has a genuine hole at 2026-02.
+	measure 'Value YoY %' =
+			VAR CurMonth = MIN ( dim_date[date] )
+			VAR PriorMonth = EDATE ( CurMonth, -12 )
+			VAR Cur = [Median Value]
+			VAR Prior = CALCULATE ( [Median Value], dim_date[date] = PriorMonth, ALL ( dim_date ) )
+			RETURN IF ( ISBLANK ( Prior ) || Prior = 0, BLANK (), DIVIDE ( Cur - Prior, Prior ) * 100 )
+		formatString: #,0.00\%
+		displayFolder: 2 Change
+
+	/// Dearest minus cheapest across the 37 jurisdictions. Showing spread is always allowed; NAMING the jurisdiction is not, unless the metric is rank-stable (G9).
+	measure 'Spread NGN' =
+			VAR Hi = MAXX ( VALUES ( dim_jurisdiction[jurisdiction] ), CALCULATE ( AVERAGE ( fact_cost[value] ) ) )
+			VAR Lo = MINX ( VALUES ( dim_jurisdiction[jurisdiction] ), CALCULATE ( AVERAGE ( fact_cost[value] ) ) )
+			RETURN IF ( ISBLANK ( Hi ) || ISBLANK ( Lo ), BLANK (), Hi - Lo )
+		formatString: #,0.00
+		displayFolder: 3 Dispersion
+
+	measure 'Dearest over Cheapest' =
+			VAR Hi = MAXX ( VALUES ( dim_jurisdiction[jurisdiction] ), CALCULATE ( AVERAGE ( fact_cost[value] ) ) )
+			VAR Lo = MINX ( VALUES ( dim_jurisdiction[jurisdiction] ), CALCULATE ( AVERAGE ( fact_cost[value] ) ) )
+			RETURN IF ( ISBLANK ( Lo ) || Lo = 0, BLANK (), DIVIDE ( Hi, Lo ) )
+		formatString: 0.00\x
+		displayFolder: 3 Dispersion
+
+	/// RULE G9. Names a jurisdiction only for water, okada, intracity bus and intercity bus. For air, diesel, LPG and petrol the monthly order does not persist, so naming one would imply a durability the evidence does not support.
+	measure 'Dearest Jurisdiction' =
+			VAR Stable = SELECTEDVALUE ( dim_metric[rank_stable], FALSE )
+			VAR Hi =
+			    TOPN ( 1, VALUES ( dim_jurisdiction[jurisdiction] ), CALCULATE ( AVERAGE ( fact_cost[value] ) ), DESC )
+			RETURN
+			    IF (
+			        NOT Stable,
+			        "Not named - order unstable over time",
+			        CONCATENATEX ( Hi, dim_jurisdiction[jurisdiction], ", " )
+			    )
+		displayFolder: 3 Dispersion
+
+	/// RULE G9 - see [Dearest Jurisdiction].
+	measure 'Cheapest Jurisdiction' =
+			VAR Stable = SELECTEDVALUE ( dim_metric[rank_stable], FALSE )
+			VAR Lo =
+			    TOPN ( 1, VALUES ( dim_jurisdiction[jurisdiction] ), CALCULATE ( AVERAGE ( fact_cost[value] ) ), ASC )
+			RETURN
+			    IF (
+			        NOT Stable,
+			        "Not named - order unstable over time",
+			        CONCATENATEX ( Lo, dim_jurisdiction[jurisdiction], ", " )
+			    )
+		displayFolder: 3 Dispersion
+
+	/// Water is rank-stable, so a jurisdiction MAY be named (G9).
+	measure 'Dearest Water Jurisdiction' = CALCULATE ( [Dearest Jurisdiction], dim_metric[metric_code] = "TRANSPORT_WATER_NGN_PER_JOURNEY", dim_date[date] = DATE ( 2026, 4, 1 ) )
+		displayFolder: 4 Headline
+
+	/// Petrol is rank-UNSTABLE, so this deliberately refuses to name one (G9). Paired with [Dearest Water Jurisdiction] it shows the rule working in both directions.
+	measure 'Dearest Petrol Jurisdiction' = CALCULATE ( [Dearest Jurisdiction], dim_metric[metric_code] = "PETROL_PRICE_NGN_PER_LITRE", dim_date[date] = DATE ( 2026, 4, 1 ) )
+		displayFolder: 4 Headline
+
+	column date
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		sourceColumn: date
+
+	column jurisdiction
+		dataType: string
+		sourceColumn: jurisdiction
+
+	column metric_code
+		dataType: string
+		sourceColumn: metric_code
+
+	/// HIDDEN DELIBERATELY. Read this through [Median Value] or [Latest Median Value]. Exposing the raw column would allow a CPI index level to be averaged across jurisdictions, which rule G2 forbids.
+	column value
+		dataType: double
+		isHidden
+		formatString: #,0.00
+		sourceColumn: value
+
+	column in_primary_window
+		dataType: boolean
+		sourceColumn: in_primary_window
+
+	partition fact_cost = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\fact_cost.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"date", type date}, {"jurisdiction", type text}, {"metric_code", type text}, {"value", type number}, {"in_primary_window", type logical}}, "en-GB")
+				in
+				    Typed
+

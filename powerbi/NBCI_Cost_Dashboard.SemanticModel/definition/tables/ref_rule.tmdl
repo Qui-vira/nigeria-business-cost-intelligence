@@ -1,0 +1,31 @@
+/// The 15 binding analysis rules, so a visual can display the rule it obeys.
+table ref_rule
+
+	column rule_no
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: rule_no
+
+	column rule_id
+		dataType: string
+		sourceColumn: rule_id
+		sortByColumn: rule_no
+
+	column rule
+		dataType: string
+		sourceColumn: rule
+
+	column why
+		dataType: string
+		sourceColumn: why
+
+	partition ref_rule = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\ref_rule.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"rule_no", Int64.Type}, {"rule_id", type text}, {"rule", type text}, {"why", type text}}, "en-GB")
+				in
+				    Typed
+

@@ -1,0 +1,31 @@
+/// The archetype text in LONG form, one row per (archetype, section). Reshaped this way because a table is the only Power BI visual that wraps a paragraph.
+table ref_archetype_section
+
+	column archetype
+		dataType: string
+		sourceColumn: archetype
+
+	column section_order
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: section_order
+
+	column section
+		dataType: string
+		sourceColumn: section
+		sortByColumn: section_order
+
+	column body
+		dataType: string
+		sourceColumn: body
+
+	partition ref_archetype_section = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\ref_archetype_section.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"archetype", type text}, {"section_order", Int64.Type}, {"section", type text}, {"body", type text}}, "en-GB")
+				in
+				    Typed
+

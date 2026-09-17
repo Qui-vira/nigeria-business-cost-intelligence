@@ -1,0 +1,81 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json",
+  "name": "mobility",
+  "displayName": "Moving people and goods",
+  "displayOption": "FitToPage",
+  "width": 1280,
+  "height": 1000,
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "transport_family",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "dim_metric"
+              }
+            },
+            "Property": "cost_family"
+          }
+        },
+        "type": "Categorical",
+        "filter": {
+          "Version": 2,
+          "From": [
+            {
+              "Name": "f",
+              "Entity": "dim_metric",
+              "Type": 0
+            }
+          ],
+          "Where": [
+            {
+              "Condition": {
+                "In": {
+                  "Expressions": [
+                    {
+                      "Column": {
+                        "Expression": {
+                          "SourceRef": {
+                            "Source": "f"
+                          }
+                        },
+                        "Property": "cost_family"
+                      }
+                    }
+                  ],
+                  "Values": [
+                    [
+                      {
+                        "Literal": {
+                          "Value": "'Transport'"
+                        }
+                      }
+                    ]
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "howCreated": "Auto",
+        "isLockedInViewMode": true,
+        "isHiddenInViewMode": true,
+        "displayName": "Cost family"
+      }
+    ]
+  },
+  "visualInteractions": [
+    {
+      "source": "273ba40e734f7d4ee896",
+      "target": "916340218b85c4100b01",
+      "type": "NoFilter"
+    },
+    {
+      "source": "273ba40e734f7d4ee896",
+      "target": "98de5ac28573ff6b0c9f",
+      "type": "NoFilter"
+    }
+  ]
+}

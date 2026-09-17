@@ -1,0 +1,84 @@
+/// The rule carrier. Holds unit, cost family, local-mobility flag, rank stability and cross-jurisdiction comparability, so G2, G7 and G9 are enforced in the model rather than per visual.
+table dim_metric
+
+	/// The rule that governs how the selected cost may be used.
+	measure 'Selected Metric Note' = SELECTEDVALUE ( dim_metric[usage_note], "Select a single cost to see its usage rule." )
+		displayFolder: 7 Narrative
+
+	/// RULE G9, surfaced on the page so the restriction is visible, not implicit.
+	measure 'Rank Stability Note' =
+			VAR Stable = SELECTEDVALUE ( dim_metric[rank_stable], BLANK () )
+			RETURN
+			    SWITCH (
+			        TRUE (),
+			        ISBLANK ( Stable ), "Select a single cost.",
+			        Stable, "The order holds month to month - a jurisdiction may be named.",
+			        "The order keeps changing - the gap may be shown, but no jurisdiction may be named as cheapest or dearest OVER TIME. Each single month's ranking is still valid (G9)."
+			    )
+		displayFolder: 7 Narrative
+
+	column metric_code
+		dataType: string
+		sourceColumn: metric_code
+
+	column metric
+		dataType: string
+		sourceColumn: metric
+		sortByColumn: cost_family
+
+	column cost_family
+		dataType: string
+		sourceColumn: cost_family
+
+	column unit
+		dataType: string
+		sourceColumn: unit
+
+	column source_dataset
+		dataType: string
+		sourceColumn: source_dataset
+
+	/// Okada, intracity bus and water only. Air and intercity bus are inter-regional services and are never folded into a local-mobility claim (G7).
+	column is_local_mobility
+		dataType: boolean
+		sourceColumn: is_local_mobility
+
+	column is_interregional
+		dataType: boolean
+		sourceColumn: is_interregional
+
+	/// TRUE only for water, okada, intracity bus and intercity bus. For the other five price metrics each single month's ranking is a valid snapshot, but the order does not hold from month to month, so no jurisdiction may be named as the dearest or the cheapest OVER TIME (G9).
+	column rank_stable
+		dataType: boolean
+		sourceColumn: rank_stable
+
+	/// FALSE for CPI index levels. NBS prints the prohibition in the source (G2).
+	column comparable_across_jurisdictions
+		dataType: boolean
+		sourceColumn: comparable_across_jurisdictions
+
+	column is_price_level
+		dataType: boolean
+		sourceColumn: is_price_level
+
+	column series_start
+		dataType: dateTime
+		sourceColumn: series_start
+
+	column series_end
+		dataType: dateTime
+		sourceColumn: series_end
+
+	column usage_note
+		dataType: string
+		sourceColumn: usage_note
+
+	partition dim_metric = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\dim_metric.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"metric_code", type text}, {"metric", type text}, {"cost_family", type text}, {"unit", type text}, {"source_dataset", type text}, {"is_local_mobility", type logical}, {"is_interregional", type logical}, {"rank_stable", type logical}, {"comparable_across_jurisdictions", type logical}, {"is_price_level", type logical}, {"series_start", type date}, {"series_end", type date}, {"usage_note", type text}}, "en-GB")
+				in
+				    Typed
+

@@ -1,0 +1,45 @@
+table ref_exposure
+
+	/// Percentage points of total cost per 1 pp of cost share. Apply your OWN cost share - the dataset holds no company cost structure (G12, G13).
+	measure 'Impact pp per 1pp Share' = SUM ( ref_exposure[total_cost_impact_pp_per_1pp_share] )
+		formatString: 0.0000
+		displayFolder: 5 Signals
+
+	column window
+		dataType: string
+		sourceColumn: window
+
+	column metric_code
+		dataType: string
+		sourceColumn: metric_code
+
+	column label
+		dataType: string
+		sourceColumn: label
+
+	column jurisdictions
+		dataType: int64
+		sourceColumn: jurisdictions
+
+	column median_pct_change
+		dataType: double
+		sourceColumn: median_pct_change
+
+	column total_cost_impact_pp_per_1pp_share
+		dataType: double
+		formatString: 0.0000
+		sourceColumn: total_cost_impact_pp_per_1pp_share
+
+	column note
+		dataType: string
+		sourceColumn: note
+
+	partition ref_exposure = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\ref_exposure.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"window", type text}, {"metric_code", type text}, {"label", type text}, {"jurisdictions", Int64.Type}, {"median_pct_change", type number}, {"total_cost_impact_pp_per_1pp_share", type number}, {"note", type text}}, "en-GB")
+				in
+				    Typed
+

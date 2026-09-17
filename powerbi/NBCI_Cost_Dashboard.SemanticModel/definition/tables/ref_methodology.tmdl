@@ -1,0 +1,45 @@
+/// Methodology and validation facts held as data so they version with the model.
+table ref_methodology
+
+	/// K06/K30. discovery 64/64 + source verification 19/19 + decision inputs 27/27.
+	measure 'Validation Checks Passed' = 110
+		formatString: #,0
+		displayFolder: 6 Methodology
+
+	/// K32. SHA-256 verified unchanged.
+	measure 'Raw Files Verified' = 342
+		formatString: #,0
+		displayFolder: 6 Methodology
+
+	/// K31. Across 12 core fact tables.
+	measure 'Fact Rows in Database' = 29032
+		formatString: #,0
+		displayFolder: 6 Methodology
+
+	/// K33. Grain is (jurisdiction, observation month, metric code).
+	measure 'Panel Grain Duplicates' = 0
+		formatString: #,0
+		displayFolder: 6 Methodology
+
+	column item
+		dataType: string
+		sourceColumn: item
+
+	column value
+		dataType: string
+		formatString: #,0.00
+		sourceColumn: value
+
+	column note
+		dataType: string
+		sourceColumn: note
+
+	partition ref_methodology = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\ref_methodology.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"item", type text}, {"value", type text}, {"note", type text}}, "en-GB")
+				in
+				    Typed
+

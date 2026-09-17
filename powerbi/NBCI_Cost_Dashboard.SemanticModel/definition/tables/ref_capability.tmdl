@@ -1,0 +1,27 @@
+/// WHAT THIS PROJECT CAN AND CANNOT DO TODAY, in two halves. What it delivers now is external cost intelligence, business exposure and guidance on what to investigate. Company financial data, market data, scenario modelling and company-specific profitability decisions are NOT in it. Deliberately has NO relationship to anything - it is the boundary, not data to slice.
+table ref_capability
+
+	column capability_order
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: capability_order
+
+	column direction
+		dataType: string
+		sourceColumn: direction
+
+	column capability
+		dataType: string
+		sourceColumn: capability
+		sortByColumn: capability_order
+
+	partition ref_capability = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\ref_capability.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"capability_order", Int64.Type}, {"direction", type text}, {"capability", type text}}, "en-GB")
+				in
+				    Typed
+

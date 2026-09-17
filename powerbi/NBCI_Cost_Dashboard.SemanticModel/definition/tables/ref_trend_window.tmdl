@@ -1,0 +1,65 @@
+table ref_trend_window
+
+	column metric_code
+		dataType: string
+		sourceColumn: metric_code
+
+	column label
+		dataType: string
+		sourceColumn: label
+
+	column first_month
+		dataType: dateTime
+		sourceColumn: first_month
+
+	column first_median
+		dataType: double
+		sourceColumn: first_median
+
+	column last_month
+		dataType: dateTime
+		sourceColumn: last_month
+
+	column last_median
+		dataType: double
+		sourceColumn: last_median
+
+	column abs_change
+		dataType: double
+		sourceColumn: abs_change
+
+	column pct_change
+		dataType: double
+		formatString: #,0.00\%
+		sourceColumn: pct_change
+
+	column trough_month
+		dataType: dateTime
+		sourceColumn: trough_month
+
+	column trough
+		dataType: double
+		sourceColumn: trough
+
+	column peak_month
+		dataType: dateTime
+		sourceColumn: peak_month
+
+	column peak
+		dataType: double
+		sourceColumn: peak
+
+	column trough_to_last_pct
+		dataType: double
+		formatString: #,0.00\%
+		sourceColumn: trough_to_last_pct
+
+	partition ref_trend_window = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\ref_trend_window.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"metric_code", type text}, {"label", type text}, {"first_month", type date}, {"first_median", type number}, {"last_month", type date}, {"last_median", type number}, {"abs_change", type number}, {"pct_change", type number}, {"trough_month", type date}, {"trough", type number}, {"peak_month", type date}, {"peak", type number}, {"trough_to_last_pct", type number}}, "en-GB")
+				in
+				    Typed
+

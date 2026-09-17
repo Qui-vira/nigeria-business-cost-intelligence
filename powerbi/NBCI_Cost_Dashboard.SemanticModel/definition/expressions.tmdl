@@ -1,0 +1,3 @@
+/// Folder holding the model CSVs. The ONLY machine-dependent setting in this project; change it here if the repository lives elsewhere.
+expression DataFolder = "C:\Projects\Nigeria Business Cost Intelligence\powerbi\data" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+

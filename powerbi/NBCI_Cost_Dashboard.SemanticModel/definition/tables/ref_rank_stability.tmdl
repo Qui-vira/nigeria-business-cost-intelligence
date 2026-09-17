@@ -1,0 +1,35 @@
+table ref_rank_stability
+
+	column metric_code
+		dataType: string
+		sourceColumn: metric_code
+
+	column mean_abs_mom_pct
+		dataType: double
+		sourceColumn: mean_abs_mom_pct
+
+	column mean_cv_pct
+		dataType: double
+		sourceColumn: mean_cv_pct
+
+	column move_to_spread_ratio
+		dataType: double
+		sourceColumn: move_to_spread_ratio
+
+	column stable_for_persistent_ranking
+		dataType: boolean
+		sourceColumn: stable_for_persistent_ranking
+
+	column label
+		dataType: string
+		sourceColumn: label
+
+	partition ref_rank_stability = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\ref_rank_stability.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"metric_code", type text}, {"mean_abs_mom_pct", type number}, {"mean_cv_pct", type number}, {"move_to_spread_ratio", type number}, {"stable_for_persistent_ranking", type logical}, {"label", type text}}, "en-GB")
+				in
+				    Typed
+

@@ -1,0 +1,14 @@
+capability_order,direction,capability
+1,CAN do today,Track selected external business cost pressures
+2,CAN do today,Show how those pressures change over time
+3,CAN do today,Compare locations where the source data supports geographic comparison
+4,CAN do today,Identify which types of business a particular cost pressure is likely to matter more for
+5,CAN do today,Explain why a cost movement may matter to day-to-day operations
+6,CAN do today,"Show what management should monitor, measure, compare or investigate"
+7,CAN do today,Provide evidence for further business analysis
+8,CANNOT do today,Determine whether a specific company is profitable
+9,CANNOT do today,Predict whether a company will lose money
+10,CANNOT do today,Identify the universally best jurisdiction to operate in
+11,CANNOT do today,Claim that a cheaper jurisdiction is a better business location
+12,CANNOT do today,Calculate the effect of a cost change on a specific company's margin
+13,CANNOT do today,Prescribe company-specific actions without financial and market data from that company

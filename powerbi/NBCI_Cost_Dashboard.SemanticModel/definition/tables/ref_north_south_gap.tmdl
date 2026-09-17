@@ -1,0 +1,37 @@
+table ref_north_south_gap
+
+	column metric_code
+		dataType: string
+		sourceColumn: metric_code
+
+	column observation_month
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		sourceColumn: observation_month
+
+	column North
+		dataType: double
+		sourceColumn: North
+
+	column South
+		dataType: double
+		sourceColumn: South
+
+	column north_minus_south_ngn
+		dataType: double
+		sourceColumn: north_minus_south_ngn
+
+	column north_premium_pct
+		dataType: double
+		formatString: #,0.00\%
+		sourceColumn: north_premium_pct
+
+	partition ref_north_south_gap = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\ref_north_south_gap.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"metric_code", type text}, {"observation_month", type date}, {"North", type number}, {"South", type number}, {"north_minus_south_ngn", type number}, {"north_premium_pct", type number}}, "en-GB")
+				in
+				    Typed
+

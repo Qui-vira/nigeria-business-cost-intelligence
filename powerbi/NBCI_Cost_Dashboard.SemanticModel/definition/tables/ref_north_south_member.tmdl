@@ -1,0 +1,23 @@
+table ref_north_south_member
+
+	column state_name
+		dataType: string
+		sourceColumn: state_name
+
+	column zone_name
+		dataType: string
+		sourceColumn: zone_name
+
+	column half
+		dataType: string
+		sourceColumn: half
+
+	partition ref_north_south_member = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\ref_north_south_member.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"state_name", type text}, {"zone_name", type text}, {"half", type text}}, "en-GB")
+				in
+				    Typed
+

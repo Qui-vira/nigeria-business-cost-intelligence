@@ -1,0 +1,6 @@
+metric_code,state_month_obs,unique_jurisdictions,unique_months,of_which_fare_rose,median_petrol_yoy_pct,median_fare_yoy_pct,share_fare_rose_pct,label
+TRANSPORT_AIR_NGN_PER_JOURNEY,81,35,4,81,-13.8067,19.7208,100.0,Air (NGN)
+TRANSPORT_BUS_INTERCITY_NGN_PER_JOURNEY,81,35,4,68,-13.8067,12.1691,84.0,Bus intercity (NGN)
+TRANSPORT_BUS_INTRACITY_NGN_PER_JOURNEY,81,35,4,80,-13.8067,29.7693,98.8,Bus intracity (NGN)
+TRANSPORT_OKADA_NGN_PER_JOURNEY,81,35,4,81,-13.8067,47.3339,100.0,Okada (NGN)
+TRANSPORT_WATER_NGN_PER_JOURNEY,81,35,4,81,-13.8067,34.0,100.0,Water transport (NGN)

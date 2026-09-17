@@ -1,0 +1,16 @@
+rule_no,rule_id,rule,why
+1,G1,Never mix geography grains in one visual,"STATE, ZONE and NATIONAL are separate; summing them double-counts"
+2,G2,Never compare CPI index levels between jurisdictions,NBS prints the prohibition in the source; only change rates are comparable
+3,G3,"Food is ZONE grain only - six zones, never 37 jurisdictions",Hard source ceiling; no state-level food prices exist
+4,G4,NERC tariffs are DisCo grain and a single July 2025 cross-section,"Never mapped to a jurisdiction, never plotted as a time series"
+5,G5,FX is NATIONAL context only,Single national series; never a jurisdiction metric
+6,G6,Transport modes are never combined or averaged,A journey by air and by okada are different products
+7,G7,"Air and intercity bus are inter-regional, not local mobility",83% of air's monthly variation is a common national movement
+8,G8,LPG cylinder sizes are separate series,5 kg and 12.5 kg are different products
+9,G9,"Where the order keeps changing, show the gap but name no jurisdiction as cheapest or dearest over time",Each single month's ranking is a valid snapshot; the order does not hold from month to month
+10,G10,Primary publications only,Mixing publication semantics answers two questions at once
+11,G11,Never interpolate across a known gap,CPI YoY has no 2026-02 rows; every YoY line must break
+12,G12,No composite cost index,Normalisation and weighting have not been defined or approved
+13,G13,"Movement flags are descriptive, not action triggers","Whether a move matters needs cost exposure, margin and pass-through"
+14,G14,Series end on different months,LPG ends 2026-04; fuels and transport 2026-05; CPI 2026-07
+15,G15,Cross-jurisdiction median is not a national statistic,"Equally weighted median of 37 jurisdictions, never 'Nigeria average'"

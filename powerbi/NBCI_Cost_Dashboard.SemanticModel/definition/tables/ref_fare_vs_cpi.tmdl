@@ -1,0 +1,47 @@
+table ref_fare_vs_cpi
+
+	column metric_code
+		dataType: string
+		sourceColumn: metric_code
+
+	column observations
+		dataType: int64
+		sourceColumn: observations
+
+	column jurisdictions
+		dataType: int64
+		sourceColumn: jurisdictions
+
+	column months
+		dataType: int64
+		sourceColumn: months
+
+	column median_fare_yoy
+		dataType: double
+		sourceColumn: median_fare_yoy
+
+	column median_cpi_yoy
+		dataType: double
+		sourceColumn: median_cpi_yoy
+
+	column median_gap_pp
+		dataType: double
+		sourceColumn: median_gap_pp
+
+	column share_fare_above_cpi
+		dataType: double
+		sourceColumn: share_fare_above_cpi
+
+	column label
+		dataType: string
+		sourceColumn: label
+
+	partition ref_fare_vs_cpi = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\ref_fare_vs_cpi.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"metric_code", type text}, {"observations", Int64.Type}, {"jurisdictions", Int64.Type}, {"months", Int64.Type}, {"median_fare_yoy", type number}, {"median_cpi_yoy", type number}, {"median_gap_pp", type number}, {"share_fare_above_cpi", type number}, {"label", type text}}, "en-GB")
+				in
+				    Typed
+

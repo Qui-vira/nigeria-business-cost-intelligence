@@ -1,0 +1,10 @@
+metric_code,label,month,jurisdictions,cheapest_ngn,dearest_ngn,spread_ngn,dearest_over_cheapest,stable_for_persistent_ranking,cheapest_jurisdiction,dearest_jurisdiction
+TRANSPORT_WATER_NGN_PER_JOURNEY,Water transport (NGN),2026-04-01,37,980.88,6777.45,5796.57,6.91,True,Borno,Rivers
+TRANSPORT_OKADA_NGN_PER_JOURNEY,Okada (NGN),2026-04-01,37,730.24,1690.91,960.67,2.32,True,Adamawa,Kaduna
+TRANSPORT_BUS_INTRACITY_NGN_PER_JOURNEY,Bus intracity (NGN),2026-04-01,37,850.98,1803.1,952.13,2.12,True,Abia,Zamfara
+TRANSPORT_BUS_INTERCITY_NGN_PER_JOURNEY,Bus intercity (NGN),2026-04-01,37,7900.1,10998.89,3098.79,1.39,True,Kwara,Abia
+TRANSPORT_AIR_NGN_PER_JOURNEY,Air (NGN),2026-04-01,37,135650.75,183835.21,48184.46,1.36,False,NOT NAMED - order unstable over time,NOT NAMED - order unstable over time
+LPG_REFILL_5KG_NGN,LPG 5kg refill (NGN),2026-04-01,37,7204.76,9745.1,2540.34,1.35,False,NOT NAMED - order unstable over time,NOT NAMED - order unstable over time
+LPG_REFILL_12_5KG_NGN,LPG 12.5kg refill (NGN),2026-04-01,37,19564.36,25596.71,6032.35,1.31,False,NOT NAMED - order unstable over time,NOT NAMED - order unstable over time
+DIESEL_PRICE_NGN_PER_LITRE,Diesel (NGN/l),2026-04-01,37,2180.28,2818.94,638.66,1.29,False,NOT NAMED - order unstable over time,NOT NAMED - order unstable over time
+PETROL_PRICE_NGN_PER_LITRE,Petrol (NGN/l),2026-04-01,37,1403.89,1599.05,195.16,1.14,False,NOT NAMED - order unstable over time,NOT NAMED - order unstable over time

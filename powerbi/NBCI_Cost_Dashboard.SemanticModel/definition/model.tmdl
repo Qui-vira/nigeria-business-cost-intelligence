@@ -1,0 +1,48 @@
+model Model
+	culture: en-GB
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	valueFilterBehavior: independent
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 0
+
+ref table dim_date
+ref table dim_jurisdiction
+ref table dim_metric
+ref table fact_cost
+ref table fact_extreme_flag
+ref table ref_archetype
+ref table ref_archetype_section
+ref table ref_attention
+ref table ref_breakeven
+ref table ref_capability
+ref table ref_coverage
+ref table ref_dispersion
+ref table ref_exposure
+ref table ref_fare_ratchet
+ref table ref_fare_vs_cpi
+ref table ref_finding
+ref table ref_finding_section
+ref table ref_flag_level
+ref table ref_food_zone
+ref table ref_location_value
+ref table ref_methodology
+ref table ref_mobility_cheap
+ref table ref_mobility_dear
+ref table ref_mobility_split
+ref table ref_mode_variance
+ref table ref_named_gaps
+ref table ref_nerc_band
+ref table ref_north_south_gap
+ref table ref_north_south_member
+ref table ref_page_narrative
+ref table ref_rank_stability
+ref table ref_rank_verdict
+ref table ref_rule
+ref table ref_scope
+ref table ref_selfgen
+ref table ref_shock
+ref table ref_trend_window
+

@@ -1,0 +1,5 @@
+part_order,part,examples,in_nbci
+1,Revenue opportunity,"demand, purchasing power, volume, competition",NOT measured here
+2,Operating costs,"nine costs a business buys in, plus inflation rates",PARTLY measured here - this is the NBCI slice
+3,Location advantages and frictions,"infrastructure, supplier access, supply-chain length",NOT measured here
+4,Company economics,"rent, wages, margins, inventory, pass-through ability",NOT measured here

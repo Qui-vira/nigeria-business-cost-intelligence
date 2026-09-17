@@ -1,0 +1,65 @@
+table ref_shock
+
+	/// K01. Median per-jurisdiction change 2025-09 to 2026-05. Evidence: f31_shock_trough_to_latest.csv.
+	measure 'Diesel Trough to Latest %' = CALCULATE ( SUM ( ref_shock[median_pct] ), ref_shock[metric_code] = "DIESEL_PRICE_NGN_PER_LITRE", ALL ( ref_shock ) )
+		formatString: #,0.00\%
+		displayFolder: 4 Headline
+
+	/// K02. Evidence: f31_shock_trough_to_latest.csv.
+	measure 'Petrol Trough to Latest %' = CALCULATE ( SUM ( ref_shock[median_pct] ), ref_shock[metric_code] = "PETROL_PRICE_NGN_PER_LITRE", ALL ( ref_shock ) )
+		formatString: #,0.00\%
+		displayFolder: 4 Headline
+
+	/// Jurisdictions in which the metric rose over the trough-to-latest stretch.
+	measure 'Jurisdictions Rising' = SUM ( ref_shock[states_up] )
+		formatString: #,0
+		displayFolder: 4 Headline
+
+	column metric_code
+		dataType: string
+		sourceColumn: metric_code
+
+	column label
+		dataType: string
+		sourceColumn: label
+
+	column from_month
+		dataType: dateTime
+		sourceColumn: from_month
+
+	column to_month
+		dataType: dateTime
+		sourceColumn: to_month
+
+	column states
+		dataType: int64
+		sourceColumn: states
+
+	column states_up
+		dataType: int64
+		sourceColumn: states_up
+
+	column min_pct
+		dataType: double
+		formatString: #,0.00\%
+		sourceColumn: min_pct
+
+	column median_pct
+		dataType: double
+		formatString: #,0.00\%
+		sourceColumn: median_pct
+
+	column max_pct
+		dataType: double
+		formatString: #,0.00\%
+		sourceColumn: max_pct
+
+	partition ref_shock = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\ref_shock.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"metric_code", type text}, {"label", type text}, {"from_month", type date}, {"to_month", type date}, {"states", Int64.Type}, {"states_up", Int64.Type}, {"min_pct", type number}, {"median_pct", type number}, {"max_pct", type number}}, "en-GB")
+				in
+				    Typed
+

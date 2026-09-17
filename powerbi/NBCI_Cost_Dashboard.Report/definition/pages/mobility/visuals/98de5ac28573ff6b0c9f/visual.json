@@ -1,0 +1,178 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
+  "name": "98de5ac28573ff6b0c9f",
+  "position": {
+    "x": 24,
+    "y": 522,
+    "z": 50,
+    "width": 1232,
+    "height": 254,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "ref_fare_vs_cpi"
+                    }
+                  },
+                  "Property": "label"
+                }
+              },
+              "queryRef": "ref_fare_vs_cpi.label",
+              "nativeQueryRef": "label",
+              "displayName": "Cost"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "ref_fare_vs_cpi"
+                    }
+                  },
+                  "Property": "median_fare_yoy"
+                }
+              },
+              "queryRef": "ref_fare_vs_cpi.median_fare_yoy",
+              "nativeQueryRef": "median_fare_yoy",
+              "displayName": "Fare change YoY, %"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "ref_fare_vs_cpi"
+                    }
+                  },
+                  "Property": "median_cpi_yoy"
+                }
+              },
+              "queryRef": "ref_fare_vs_cpi.median_cpi_yoy",
+              "nativeQueryRef": "median_cpi_yoy",
+              "displayName": "CPI change YoY, %"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "ref_fare_vs_cpi"
+                    }
+                  },
+                  "Property": "median_gap_pp"
+                }
+              },
+              "queryRef": "ref_fare_vs_cpi.median_gap_pp",
+              "nativeQueryRef": "median_gap_pp",
+              "displayName": "Gap, percentage points"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "ref_fare_vs_cpi"
+                    }
+                  },
+                  "Property": "share_fare_above_cpi"
+                }
+              },
+              "queryRef": "ref_fare_vs_cpi.share_fare_above_cpi",
+              "nativeQueryRef": "share_fare_above_cpi",
+              "displayName": "Share where fare beat CPI"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Fares rose far faster than the inflation rate in the news. Fare growth against inflation, matched jurisdiction by jurisdiction and month by month. A transport allowance raised by inflation alone would have fallen behind by this gap. Only 4 months can be compared this way; 2026-02 is missing at source and is left out, never filled in'"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#5B5B5B'"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "background": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "border": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "dropShadow": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

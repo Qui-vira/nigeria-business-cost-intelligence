@@ -1,0 +1,88 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json",
+  "name": "fuelenergy",
+  "displayName": "Fuel and energy",
+  "displayOption": "FitToPage",
+  "width": 1280,
+  "height": 1000,
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "fuel_family",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "dim_metric"
+              }
+            },
+            "Property": "cost_family"
+          }
+        },
+        "type": "Categorical",
+        "filter": {
+          "Version": 2,
+          "From": [
+            {
+              "Name": "f",
+              "Entity": "dim_metric",
+              "Type": 0
+            }
+          ],
+          "Where": [
+            {
+              "Condition": {
+                "In": {
+                  "Expressions": [
+                    {
+                      "Column": {
+                        "Expression": {
+                          "SourceRef": {
+                            "Source": "f"
+                          }
+                        },
+                        "Property": "cost_family"
+                      }
+                    }
+                  ],
+                  "Values": [
+                    [
+                      {
+                        "Literal": {
+                          "Value": "'Fuel'"
+                        }
+                      }
+                    ],
+                    [
+                      {
+                        "Literal": {
+                          "Value": "'LPG'"
+                        }
+                      }
+                    ]
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "howCreated": "Auto",
+        "isLockedInViewMode": true,
+        "isHiddenInViewMode": true,
+        "displayName": "Cost family"
+      }
+    ]
+  },
+  "visualInteractions": [
+    {
+      "source": "e24959511af6e84c016b",
+      "target": "1dda2577e6733eac8cd5",
+      "type": "NoFilter"
+    },
+    {
+      "source": "e24959511af6e84c016b",
+      "target": "1ed923ef126a6e3bcd3b",
+      "type": "NoFilter"
+    }
+  ]
+}

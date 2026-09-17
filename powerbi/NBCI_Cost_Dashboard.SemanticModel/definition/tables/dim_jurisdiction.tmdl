@@ -1,0 +1,29 @@
+/// 37 jurisdictions - 36 states and the FCT.
+table dim_jurisdiction
+
+	/// 36 states and the Federal Capital Territory = 37 jurisdictions. Never '37 states'.
+	column jurisdiction
+		dataType: string
+		sourceColumn: jurisdiction
+
+	column zone
+		dataType: string
+		sourceColumn: zone
+
+	column country_half
+		dataType: string
+		sourceColumn: country_half
+
+	column jurisdiction_type
+		dataType: string
+		sourceColumn: jurisdiction_type
+
+	partition dim_jurisdiction = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\dim_jurisdiction.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"jurisdiction", type text}, {"zone", type text}, {"country_half", type text}, {"jurisdiction_type", type text}}, "en-GB")
+				in
+				    Typed
+

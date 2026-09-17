@@ -1,0 +1,27 @@
+table ref_mobility_dear
+
+	column state_name
+		dataType: string
+		sourceColumn: state_name
+
+	column zone_name
+		dataType: string
+		sourceColumn: zone_name
+
+	column modes_dear
+		dataType: int64
+		sourceColumn: modes_dear
+
+	column modes
+		dataType: string
+		sourceColumn: modes
+
+	partition ref_mobility_dear = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\ref_mobility_dear.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"state_name", type text}, {"zone_name", type text}, {"modes_dear", Int64.Type}, {"modes", type text}}, "en-GB")
+				in
+				    Typed
+

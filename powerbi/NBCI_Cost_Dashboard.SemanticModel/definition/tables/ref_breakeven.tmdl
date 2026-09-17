@@ -1,0 +1,42 @@
+table ref_breakeven
+
+	column service_band
+		dataType: string
+		sourceColumn: service_band
+
+	column tariff_ngn_per_kwh
+		dataType: double
+		formatString: #,0.00
+		sourceColumn: tariff_ngn_per_kwh
+
+	column discos
+		dataType: int64
+		sourceColumn: discos
+
+	column spread
+		dataType: double
+		formatString: #,0.00
+		sourceColumn: spread
+
+	column reference_period
+		dataType: string
+		sourceColumn: reference_period
+
+	column breakeven_diesel_ngn_per_litre_at_3kwh
+		dataType: double
+		formatString: #,0.00
+		sourceColumn: breakeven_diesel_ngn_per_litre_at_3kwh
+
+	column selfgen_ever_below_reference
+		dataType: boolean
+		sourceColumn: selfgen_ever_below_reference
+
+	partition ref_breakeven = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\ref_breakeven.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"service_band", type text}, {"tariff_ngn_per_kwh", type number}, {"discos", Int64.Type}, {"spread", type number}, {"reference_period", type text}, {"breakeven_diesel_ngn_per_litre_at_3kwh", type number}, {"selfgen_ever_below_reference", type logical}}, "en-GB")
+				in
+				    Typed
+

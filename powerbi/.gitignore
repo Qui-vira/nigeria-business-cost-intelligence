@@ -1,0 +1,9 @@
+# Power BI Desktop per-user state and the local data cache.
+# cache.abf holds the loaded data: committing it would store the CSVs twice.
+# editorSettings.json is Desktop's own preference file, written the first time
+# the project is opened. It is not part of the deliverable and differs per user.
+**/.pbi/
+
+# Intermediate build artefacts. model_spec.json regenerates from pbi_model_spec.py.
+build/
+

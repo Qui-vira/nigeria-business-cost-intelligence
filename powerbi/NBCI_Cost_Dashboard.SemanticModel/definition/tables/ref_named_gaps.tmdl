@@ -1,0 +1,23 @@
+table ref_named_gaps
+
+	column metric_code
+		dataType: string
+		sourceColumn: metric_code
+
+	column missing_month
+		dataType: dateTime
+		sourceColumn: missing_month
+
+	column states_missing
+		dataType: int64
+		sourceColumn: states_missing
+
+	partition ref_named_gaps = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\ref_named_gaps.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"metric_code", type text}, {"missing_month", type date}, {"states_missing", Int64.Type}}, "en-GB")
+				in
+				    Typed
+

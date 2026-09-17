@@ -1,0 +1,73 @@
+table ref_flag_level
+
+	/// p90 of absolute month-over-month change, 518 observations. DESCRIPTIVE, not an action trigger (G13).
+	measure 'ELEVATED Level %' = SUM ( ref_flag_level[elevated_p90_abs_pct] )
+		formatString: #,0.00\%
+		displayFolder: 5 Signals
+
+	/// K28. p95 of absolute month-over-month change, 518 observations. DESCRIPTIVE, not an action trigger (G13).
+	measure 'EXTREME Level %' = SUM ( ref_flag_level[extreme_p95_abs_pct] )
+		formatString: #,0.00\%
+		displayFolder: 5 Signals
+
+	/// Diesel p90 of absolute month-over-month change, 518 observations. Descriptive (G13).
+	measure 'Diesel ELEVATED Level %' = CALCULATE ( SUM ( ref_flag_level[elevated_p90_abs_pct] ), ref_flag_level[metric_code] = "DIESEL_PRICE_NGN_PER_LITRE" )
+		formatString: #,0.00\%
+		displayFolder: 5 Signals
+
+	/// K28. Diesel p95. Descriptive, not a trigger (G13).
+	measure 'Diesel EXTREME Level %' = CALCULATE ( SUM ( ref_flag_level[extreme_p95_abs_pct] ), ref_flag_level[metric_code] = "DIESEL_PRICE_NGN_PER_LITRE" )
+		formatString: #,0.00\%
+		displayFolder: 5 Signals
+
+	column metric_code
+		dataType: string
+		sourceColumn: metric_code
+
+	column label
+		dataType: string
+		sourceColumn: label
+
+	column observations
+		dataType: int64
+		sourceColumn: observations
+
+	column median_abs_pct
+		dataType: double
+		formatString: #,0.00\%
+		sourceColumn: median_abs_pct
+
+	column p75_abs_pct
+		dataType: double
+		formatString: #,0.00\%
+		sourceColumn: p75_abs_pct
+
+	column elevated_p90_abs_pct
+		dataType: double
+		formatString: #,0.00\%
+		sourceColumn: elevated_p90_abs_pct
+
+	column extreme_p95_abs_pct
+		dataType: double
+		formatString: #,0.00\%
+		sourceColumn: extreme_p95_abs_pct
+
+	column worst_rise_pct
+		dataType: double
+		formatString: #,0.00\%
+		sourceColumn: worst_rise_pct
+
+	column worst_fall_pct
+		dataType: double
+		formatString: #,0.00\%
+		sourceColumn: worst_fall_pct
+
+	partition ref_flag_level = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\ref_flag_level.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"metric_code", type text}, {"label", type text}, {"observations", Int64.Type}, {"median_abs_pct", type number}, {"p75_abs_pct", type number}, {"elevated_p90_abs_pct", type number}, {"extreme_p95_abs_pct", type number}, {"worst_rise_pct", type number}, {"worst_fall_pct", type number}}, "en-GB")
+				in
+				    Typed
+

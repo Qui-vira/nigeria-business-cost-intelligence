@@ -1,0 +1,43 @@
+table ref_rank_verdict
+
+	column metric_code
+		dataType: string
+		sourceColumn: metric_code
+
+	column mean_abs_rank_change
+		dataType: double
+		sourceColumn: mean_abs_rank_change
+
+	column mean_abs_mom_pct
+		dataType: double
+		sourceColumn: mean_abs_mom_pct
+
+	column mean_cv_pct
+		dataType: double
+		sourceColumn: mean_cv_pct
+
+	column move_to_spread_ratio
+		dataType: double
+		sourceColumn: move_to_spread_ratio
+
+	column rank_churn_pct_of_field
+		dataType: double
+		sourceColumn: rank_churn_pct_of_field
+
+	column label
+		dataType: string
+		sourceColumn: label
+
+	column persistent_rank_use
+		dataType: string
+		sourceColumn: persistent_rank_use
+
+	partition ref_rank_verdict = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\ref_rank_verdict.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"metric_code", type text}, {"mean_abs_rank_change", type number}, {"mean_abs_mom_pct", type number}, {"mean_cv_pct", type number}, {"move_to_spread_ratio", type number}, {"rank_churn_pct_of_field", type number}, {"label", type text}, {"persistent_rank_use", type text}}, "en-GB")
+				in
+				    Typed
+

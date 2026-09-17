@@ -1,0 +1,31 @@
+table ref_coverage
+
+	column dataset
+		dataType: string
+		sourceColumn: dataset
+
+	column first_month
+		dataType: dateTime
+		sourceColumn: first_month
+
+	column last_month
+		dataType: dateTime
+		sourceColumn: last_month
+
+	column months
+		dataType: int64
+		sourceColumn: months
+
+	column rows
+		dataType: int64
+		sourceColumn: rows
+
+	partition ref_coverage = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\ref_coverage.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"dataset", type text}, {"first_month", type date}, {"last_month", type date}, {"months", Int64.Type}, {"rows", Int64.Type}}, "en-GB")
+				in
+				    Typed
+

@@ -1,0 +1,37 @@
+/// The findings in LONG form, one row per (finding, section) - the shape a wrapping table needs.
+table ref_finding_section
+
+	column rank
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: rank
+
+	column headline
+		dataType: string
+		sourceColumn: headline
+
+	column section_order
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: section_order
+
+	column section
+		dataType: string
+		sourceColumn: section
+		sortByColumn: section_order
+
+	column body
+		dataType: string
+		sourceColumn: body
+
+	partition ref_finding_section = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\ref_finding_section.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"rank", Int64.Type}, {"headline", type text}, {"section_order", Int64.Type}, {"section", type text}, {"body", type text}}, "en-GB")
+				in
+				    Typed
+

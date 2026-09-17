@@ -1,0 +1,14 @@
+metric_code,metric,cost_family,unit,source_dataset,is_local_mobility,is_interregional,rank_stable,comparable_across_jurisdictions,is_price_level,series_start,series_end,usage_note
+CPI_ALL_ITEMS_MOM_PCT,CPI all items MoM %,CPI rate,PERCENT,CPI,False,False,False,True,False,2025-02-01,2026-07-01,Change rate. Comparable across jurisdictions.
+CPI_ALL_ITEMS_YOY_PCT,CPI all items YoY %,CPI rate,PERCENT,CPI,False,False,False,True,False,2025-02-01,2026-07-01,Change rate. Comparable across jurisdictions.
+CPI_FOOD_MOM_PCT,CPI food MoM %,CPI rate,PERCENT,CPI,False,False,False,True,False,2025-02-01,2026-07-01,Change rate. Comparable across jurisdictions.
+CPI_FOOD_YOY_PCT,CPI food YoY %,CPI rate,PERCENT,CPI,False,False,False,True,False,2025-02-01,2026-07-01,Change rate. Comparable across jurisdictions.
+DIESEL_PRICE_NGN_PER_LITRE,Diesel (NGN/l),Fuel,NGN per litre,DIESEL,False,False,False,True,True,2025-01-01,2026-05-01,Order is unstable month to month - spread may be shown but no jurisdiction may be named for a persistent decision (G9).
+LPG_REFILL_12_5KG_NGN,LPG 12.5kg refill (NGN),LPG,NGN per refill,LPG,False,False,False,True,True,2025-01-01,2026-04-01,Order is unstable month to month - spread may be shown but no jurisdiction may be named for a persistent decision (G9).
+LPG_REFILL_5KG_NGN,LPG 5kg refill (NGN),LPG,NGN per refill,LPG,False,False,False,True,True,2025-01-01,2026-04-01,Order is unstable month to month - spread may be shown but no jurisdiction may be named for a persistent decision (G9).
+PETROL_PRICE_NGN_PER_LITRE,Petrol (NGN/l),Fuel,NGN per litre,PETROL,False,False,False,True,True,2025-01-01,2026-05-01,Order is unstable month to month - spread may be shown but no jurisdiction may be named for a persistent decision (G9).
+TRANSPORT_AIR_NGN_PER_JOURNEY,Air (NGN),Transport,NGN per journey,TRANSPORT_STATE,False,True,False,True,True,2025-01-01,2026-05-01,Inter-regional service - NOT local mobility (G7).
+TRANSPORT_BUS_INTERCITY_NGN_PER_JOURNEY,Bus intercity (NGN),Transport,NGN per journey,TRANSPORT_STATE,False,True,True,True,True,2025-01-01,2026-05-01,Inter-regional service - NOT local mobility (G7).
+TRANSPORT_BUS_INTRACITY_NGN_PER_JOURNEY,Bus intracity (NGN),Transport,NGN per journey,TRANSPORT_STATE,True,False,True,True,True,2025-01-01,2026-05-01,Order persists - safe for rank-based comparison over time.
+TRANSPORT_OKADA_NGN_PER_JOURNEY,Okada (NGN),Transport,NGN per journey,TRANSPORT_STATE,True,False,True,True,True,2025-01-01,2026-05-01,Order persists - safe for rank-based comparison over time.
+TRANSPORT_WATER_NGN_PER_JOURNEY,Water transport (NGN),Transport,NGN per journey,TRANSPORT_STATE,True,False,True,True,True,2025-01-01,2026-05-01,Order persists - safe for rank-based comparison over time.

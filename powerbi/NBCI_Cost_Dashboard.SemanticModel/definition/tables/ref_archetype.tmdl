@@ -1,0 +1,59 @@
+/// Six business archetypes with their visible exposures, signals, review points, boundaries and the data still needed.
+table ref_archetype
+
+	/// Which NBCI costs matter to the selected archetype.
+	measure 'Archetype Costs' = SELECTEDVALUE ( ref_archetype[costs] )
+		displayFolder: 7 Narrative
+
+	/// The company-specific data required before any actual business decision.
+	measure 'Archetype Data Needed' = SELECTEDVALUE ( ref_archetype[needed] )
+		displayFolder: 7 Narrative
+
+	column order
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: order
+
+	column archetype
+		dataType: string
+		sourceColumn: archetype
+		sortByColumn: order
+
+	column metric_codes
+		dataType: string
+		sourceColumn: metric_codes
+
+	column costs
+		dataType: string
+		sourceColumn: costs
+
+	column signals
+		dataType: string
+		sourceColumn: signals
+
+	column why
+		dataType: string
+		sourceColumn: why
+
+	column review
+		dataType: string
+		sourceColumn: review
+
+	column needed
+		dataType: string
+		sourceColumn: needed
+
+	column boundary
+		dataType: string
+		sourceColumn: boundary
+
+	partition ref_archetype = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\ref_archetype.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"order", Int64.Type}, {"archetype", type text}, {"metric_codes", type text}, {"costs", type text}, {"signals", type text}, {"why", type text}, {"review", type text}, {"needed", type text}, {"boundary", type text}}, "en-GB")
+				in
+				    Typed
+

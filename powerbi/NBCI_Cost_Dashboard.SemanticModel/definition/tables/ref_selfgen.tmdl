@@ -1,0 +1,55 @@
+/// Diesel self-generation cost against a FIXED July 2025 Band A reference tariff of NGN 209.50/kWh. The reference is a cross-section, not a tariff history.
+table ref_selfgen
+
+	/// K29. Diesel NGN/kWh divided by the FIXED July 2025 Band A reference of NGN 209.50/kWh. The reference is a cross-section roughly 10 months older than the diesel series: if the tariff has since risen, the true multiple is smaller (G4).
+	measure 'Self-gen Multiple of Reference' = AVERAGE ( ref_selfgen[multiple_of_reference_tariff] )
+		formatString: 0.00\x
+		displayFolder: 5 Signals
+
+	/// K29. At 2026-05 diesel and 3.0 kWh per litre, against the FIXED July 2025 reference of NGN 209.50/kWh. Evidence: d3.
+	measure 'Self-gen Multiple Latest' = CALCULATE ( SUM ( ref_selfgen[multiple_of_reference_tariff] ), ref_selfgen[observation_month] = DATE ( 2026, 5, 1 ), ref_selfgen[genset_kwh_per_litre] = 3.0 )
+		formatString: 0.00\x
+		displayFolder: 5 Signals
+
+	column observation_month
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		sourceColumn: observation_month
+
+	column diesel_ngn_per_litre
+		dataType: double
+		sourceColumn: diesel_ngn_per_litre
+
+	column genset_kwh_per_litre
+		dataType: double
+		summarizeBy: none
+		sourceColumn: genset_kwh_per_litre
+
+	column self_gen_ngn_per_kwh
+		dataType: double
+		formatString: #,0.00
+		sourceColumn: self_gen_ngn_per_kwh
+
+	column band_a_reference_ngn_per_kwh
+		dataType: double
+		formatString: #,0.00
+		sourceColumn: band_a_reference_ngn_per_kwh
+
+	column reference_period
+		dataType: string
+		sourceColumn: reference_period
+
+	column multiple_of_reference_tariff
+		dataType: double
+		formatString: 0.00\x
+		sourceColumn: multiple_of_reference_tariff
+
+	partition ref_selfgen = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\ref_selfgen.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"observation_month", type date}, {"diesel_ngn_per_litre", type number}, {"genset_kwh_per_litre", type number}, {"self_gen_ngn_per_kwh", type number}, {"band_a_reference_ngn_per_kwh", type number}, {"reference_period", type text}, {"multiple_of_reference_tariff", type number}}, "en-GB")
+				in
+				    Typed
+

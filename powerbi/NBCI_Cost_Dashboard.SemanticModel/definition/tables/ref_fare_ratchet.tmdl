@@ -1,0 +1,53 @@
+table ref_fare_ratchet
+
+	/// K17. Share of jurisdiction-months where the fare rose although petrol was cheaper year-on-year. Passenger fares, not freight rates. No causal claim.
+	measure 'Share Fare Rose %' = SUM ( ref_fare_ratchet[share_fare_rose_pct] )
+		formatString: #,0.0\%
+		displayFolder: 5 Signals
+
+	column metric_code
+		dataType: string
+		sourceColumn: metric_code
+
+	column state_month_obs
+		dataType: int64
+		sourceColumn: state_month_obs
+
+	column unique_jurisdictions
+		dataType: int64
+		sourceColumn: unique_jurisdictions
+
+	column unique_months
+		dataType: int64
+		sourceColumn: unique_months
+
+	column of_which_fare_rose
+		dataType: int64
+		sourceColumn: of_which_fare_rose
+
+	column median_petrol_yoy_pct
+		dataType: double
+		sourceColumn: median_petrol_yoy_pct
+
+	column median_fare_yoy_pct
+		dataType: double
+		sourceColumn: median_fare_yoy_pct
+
+	column share_fare_rose_pct
+		dataType: double
+		formatString: #,0.0\%
+		sourceColumn: share_fare_rose_pct
+
+	column label
+		dataType: string
+		sourceColumn: label
+
+	partition ref_fare_ratchet = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\ref_fare_ratchet.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"metric_code", type text}, {"state_month_obs", Int64.Type}, {"unique_jurisdictions", Int64.Type}, {"unique_months", Int64.Type}, {"of_which_fare_rose", Int64.Type}, {"median_petrol_yoy_pct", type number}, {"median_fare_yoy_pct", type number}, {"share_fare_rose_pct", type number}, {"label", type text}}, "en-GB")
+				in
+				    Typed
+

@@ -1,0 +1,17 @@
+item,value,note
+Validation checks passed,110 of 110,"Three analysis passes: discovery 64/64, source verification 19/19, decision inputs 27/27"
+Raw source files verified,342,SHA-256 verified unchanged; no raw government file is ever modified or committed
+Fact rows in the database,"29,032","Across 12 core fact tables, PostgreSQL 18.3"
+Panel rows in this model,"8,177","From 9,435, less 1,258 CPI INDEX rows excluded under rule G2"
+Panel grain duplicates,0,"Grain is (jurisdiction, observation month, metric code)"
+Jurisdictions,37,36 states and the Federal Capital Territory - never '37 states'
+Costs tracked,13 in this model,9 price metrics plus 4 CPI change rates; 2 CPI index codes excluded (G2)
+Independent database audit,245 of 245,"Re-parses all 17 source CSVs itself - 644,578 field comparisons"
+Restatement simulation,15 of 15,"Rolled back; proves a future republication would be detected, not silently absorbed"
+Source datasets,8,"NBS petrol, diesel, LPG, transport, food, CPI; CBN NFEM FX; NERC MYTO tariffs"
+Primary common window,2025-02 to 2026-04,15 months; the window in which all primary series overlap
+Named gap - CPI year-on-year,2026-02 has no rows,The year-ago column is mislabelled at source; 148 cells excluded rather than imputed
+Named gap - CPI index,2025-04 has no rows,"67 of 74 values assigned to the wrong state at source; flagged, not corrected"
+Publication rule,Primary publications only,First publication of each month; restatement views are out of scope for this build
+What validation proves,Pipeline fidelity,"It does NOT validate the sources themselves. Published source defects are carried and flagged, never silently corrected"
+Map status,No map is built,geoBoundaries ADM1 boundary validation is an unmet build gate - see the Methodology page note

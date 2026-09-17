@@ -1,0 +1,34 @@
+table fact_extreme_flag
+
+	/// K27. Count of jurisdictions above p95 in that month. Evidence: d2_extreme_flags_by_month.csv.
+	measure 'Jurisdictions Flagged EXTREME' = SUM ( fact_extreme_flag[jurisdictions_flagged_extreme] )
+		formatString: #,0
+		displayFolder: 5 Signals
+
+	/// The worst SINGLE metric-month: how synchronised a flag can get. Summing the column across metrics and months instead would answer a question nobody asked.
+	measure 'Peak Jurisdictions Flagged EXTREME' = MAX ( fact_extreme_flag[jurisdictions_flagged_extreme] )
+		formatString: #,0
+		displayFolder: 5 Signals
+
+	column metric_code
+		dataType: string
+		sourceColumn: metric_code
+
+	column observation_month
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		sourceColumn: observation_month
+
+	column jurisdictions_flagged_extreme
+		dataType: int64
+		sourceColumn: jurisdictions_flagged_extreme
+
+	partition fact_extreme_flag = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\fact_extreme_flag.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"metric_code", type text}, {"observation_month", type date}, {"jurisdictions_flagged_extreme", Int64.Type}}, "en-GB")
+				in
+				    Typed
+

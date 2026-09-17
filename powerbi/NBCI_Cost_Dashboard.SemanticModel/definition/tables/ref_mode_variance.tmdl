@@ -1,0 +1,32 @@
+/// Variance decomposition by transport mode. Mode grain, not metric_code - no relationship by design.
+table ref_mode_variance
+
+	column mode
+		dataType: string
+		sourceColumn: mode
+
+	column obs
+		dataType: int64
+		sourceColumn: obs
+
+	column months
+		dataType: int64
+		sourceColumn: months
+
+	column eta_sq_month
+		dataType: double
+		sourceColumn: eta_sq_month
+
+	column mean_abs_mom_pct
+		dataType: double
+		sourceColumn: mean_abs_mom_pct
+
+	partition ref_mode_variance = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\ref_mode_variance.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"mode", type text}, {"obs", Int64.Type}, {"months", Int64.Type}, {"eta_sq_month", type number}, {"mean_abs_mom_pct", type number}}, "en-GB")
+				in
+				    Typed
+

@@ -1,0 +1,63 @@
+/// The six headline findings, each stated as a business question with what was found, why it matters, who should pay attention, what to review and what it cannot prove.
+table ref_finding
+
+	/// How many headline findings the first page carries. Kept small on purpose.
+	measure 'Findings Published' = COUNTROWS ( ref_finding )
+		formatString: #,0
+		displayFolder: 7 Narrative
+
+	/// The business question the selected finding answers.
+	measure 'Finding Question' = SELECTEDVALUE ( ref_finding[question], "Select a finding." )
+		displayFolder: 7 Narrative
+
+	/// The committed evidence file behind the selected finding.
+	measure 'Finding Evidence' = SELECTEDVALUE ( ref_finding[evidence], "" )
+		displayFolder: 7 Narrative
+
+	column rank
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: rank
+
+	column question
+		dataType: string
+		sourceColumn: question
+
+	column headline
+		dataType: string
+		sourceColumn: headline
+		sortByColumn: rank
+
+	column found
+		dataType: string
+		sourceColumn: found
+
+	column matters
+		dataType: string
+		sourceColumn: matters
+
+	column who
+		dataType: string
+		sourceColumn: who
+
+	column review
+		dataType: string
+		sourceColumn: review
+
+	column evidence
+		dataType: string
+		sourceColumn: evidence
+
+	column boundary
+		dataType: string
+		sourceColumn: boundary
+
+	partition ref_finding = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\ref_finding.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"rank", Int64.Type}, {"question", type text}, {"headline", type text}, {"found", type text}, {"matters", type text}, {"who", type text}, {"review", type text}, {"evidence", type text}, {"boundary", type text}}, "en-GB")
+				in
+				    Typed
+

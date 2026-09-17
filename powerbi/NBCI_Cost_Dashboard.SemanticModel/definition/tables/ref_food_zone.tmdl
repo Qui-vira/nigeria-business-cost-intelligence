@@ -1,0 +1,38 @@
+/// ZONE GRAIN - six zones. DELIBERATELY HAS NO RELATIONSHIP to dim_jurisdiction: food has no state-level prices at all (G3).
+table ref_food_zone
+
+	column zone_name
+		dataType: string
+		sourceColumn: zone_name
+
+	column rows
+		dataType: int64
+		sourceColumn: rows
+
+	column items
+		dataType: int64
+		sourceColumn: items
+
+	column months
+		dataType: int64
+		sourceColumn: months
+
+	column mean_premium_pct_vs_national
+		dataType: double
+		formatString: #,0.00\%
+		sourceColumn: mean_premium_pct_vs_national
+
+	column median_premium_pct
+		dataType: double
+		formatString: #,0.00\%
+		sourceColumn: median_premium_pct
+
+	partition ref_food_zone = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\ref_food_zone.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"zone_name", type text}, {"rows", Int64.Type}, {"items", Int64.Type}, {"months", Int64.Type}, {"mean_premium_pct_vs_national", type number}, {"median_premium_pct", type number}}, "en-GB")
+				in
+				    Typed
+

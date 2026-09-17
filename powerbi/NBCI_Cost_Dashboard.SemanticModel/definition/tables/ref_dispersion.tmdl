@@ -1,0 +1,39 @@
+table ref_dispersion
+
+	column metric_code
+		dataType: string
+		sourceColumn: metric_code
+
+	column months
+		dataType: int64
+		sourceColumn: months
+
+	column mean_cv_pct
+		dataType: double
+		sourceColumn: mean_cv_pct
+
+	column min_cv_pct
+		dataType: double
+		sourceColumn: min_cv_pct
+
+	column max_cv_pct
+		dataType: double
+		sourceColumn: max_cv_pct
+
+	column mean_max_over_min
+		dataType: double
+		sourceColumn: mean_max_over_min
+
+	column label
+		dataType: string
+		sourceColumn: label
+
+	partition ref_dispersion = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\ref_dispersion.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"metric_code", type text}, {"months", Int64.Type}, {"mean_cv_pct", type number}, {"min_cv_pct", type number}, {"max_cv_pct", type number}, {"mean_max_over_min", type number}, {"label", type text}}, "en-GB")
+				in
+				    Typed
+

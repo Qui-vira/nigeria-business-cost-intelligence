@@ -1,0 +1,31 @@
+/// WHAT NBCI MEASURES AND WHAT IT DOES NOT. Business attractiveness depends on revenue opportunity, operating costs and location advantages; this dataset covers part of the middle term only. Deliberately has NO relationship to anything - it is the framing, not data to slice.
+table ref_scope
+
+	column part_order
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: part_order
+
+	column part
+		dataType: string
+		sourceColumn: part
+		sortByColumn: part_order
+
+	column examples
+		dataType: string
+		sourceColumn: examples
+
+	column in_nbci
+		dataType: string
+		sourceColumn: in_nbci
+
+	partition ref_scope = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\ref_scope.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"part_order", Int64.Type}, {"part", type text}, {"examples", type text}, {"in_nbci", type text}}, "en-GB")
+				in
+				    Typed
+

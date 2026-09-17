@@ -1,0 +1,15 @@
+table ref_mobility_split
+
+	column state_name
+		dataType: string
+		sourceColumn: state_name
+
+	partition ref_mobility_split = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\ref_mobility_split.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"state_name", type text}}, "en-GB")
+				in
+				    Typed
+

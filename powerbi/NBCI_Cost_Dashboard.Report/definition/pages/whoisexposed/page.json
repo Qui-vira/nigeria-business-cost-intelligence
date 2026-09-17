@@ -1,0 +1,15 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json",
+  "name": "whoisexposed",
+  "displayName": "Who this matters more for",
+  "displayOption": "FitToPage",
+  "width": 1280,
+  "height": 1056,
+  "visualInteractions": [
+    {
+      "source": "3ffffcea7d475aaa2e5c",
+      "target": "532957a53e9edeea0aae",
+      "type": "NoFilter"
+    }
+  ]
+}

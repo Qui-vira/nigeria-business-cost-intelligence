@@ -1,0 +1,53 @@
+/// Signal / what it means / what to review / boundary, one row per page.
+table ref_page_narrative
+
+	/// What the data shows on the selected page.
+	measure 'Page Signal' = SELECTEDVALUE ( ref_page_narrative[signal] )
+		displayFolder: 7 Narrative
+
+	/// The business implication in plain English.
+	measure 'Page What It Means' = SELECTEDVALUE ( ref_page_narrative[meaning] )
+		displayFolder: 7 Narrative
+
+	/// The operating area that deserves attention. Review language only - the dataset cannot tell a company to reprice or relocate.
+	measure 'Page What To Review' = SELECTEDVALUE ( ref_page_narrative[review] )
+		displayFolder: 7 Narrative
+
+	/// What this data cannot tell you.
+	measure 'Page Boundary' = SELECTEDVALUE ( ref_page_narrative[boundary] )
+		displayFolder: 7 Narrative
+
+	column page_order
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: page_order
+
+	column page
+		dataType: string
+		sourceColumn: page
+
+	column signal
+		dataType: string
+		sourceColumn: signal
+
+	column meaning
+		dataType: string
+		sourceColumn: meaning
+
+	column review
+		dataType: string
+		sourceColumn: review
+
+	column boundary
+		dataType: string
+		sourceColumn: boundary
+
+	partition ref_page_narrative = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\ref_page_narrative.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"page_order", Int64.Type}, {"page", type text}, {"signal", type text}, {"meaning", type text}, {"review", type text}, {"boundary", type text}}, "en-GB")
+				in
+				    Typed
+

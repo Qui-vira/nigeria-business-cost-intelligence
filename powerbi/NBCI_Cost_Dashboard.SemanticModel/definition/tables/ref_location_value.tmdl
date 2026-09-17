@@ -1,0 +1,84 @@
+table ref_location_value
+
+	/// K10/K11. Dearest minus cheapest at 2026-04. Evidence: d8_location_value_by_cost.csv.
+	measure 'Spread NGN (evidence)' = SUM ( ref_location_value[spread_ngn] )
+		formatString: #,0.00
+		displayFolder: 4 Headline
+
+	/// K12/K18-K21. Evidence: d8_location_value_by_cost.csv.
+	measure 'Dearest over Cheapest (evidence)' = SUM ( ref_location_value[dearest_over_cheapest] )
+		formatString: 0.00\x
+		displayFolder: 4 Headline
+
+	/// K18. Water transport, dearest over cheapest at 2026-04. Evidence: d8.
+	measure 'Water Location Ratio' = CALCULATE ( SUM ( ref_location_value[dearest_over_cheapest] ), ref_location_value[metric_code] = "TRANSPORT_WATER_NGN_PER_JOURNEY" )
+		formatString: 0.00\x
+		displayFolder: 4 Headline
+
+	/// K21. Petrol, dearest over cheapest at 2026-04. Shown precisely because it is nearly 1. Evidence: d8.
+	measure 'Petrol Location Ratio' = CALCULATE ( SUM ( ref_location_value[dearest_over_cheapest] ), ref_location_value[metric_code] = "PETROL_PRICE_NGN_PER_LITRE" )
+		formatString: 0.00\x
+		displayFolder: 4 Headline
+
+	/// Water transport spread at 2026-04. Evidence: d8.
+	measure 'Water Spread NGN' = CALCULATE ( SUM ( ref_location_value[spread_ngn] ), ref_location_value[metric_code] = "TRANSPORT_WATER_NGN_PER_JOURNEY" )
+		formatString: #,0.00
+		displayFolder: 4 Headline
+
+	column metric_code
+		dataType: string
+		sourceColumn: metric_code
+
+	column label
+		dataType: string
+		sourceColumn: label
+
+	column month
+		dataType: dateTime
+		sourceColumn: month
+
+	column jurisdictions
+		dataType: int64
+		sourceColumn: jurisdictions
+
+	column cheapest_ngn
+		dataType: double
+		formatString: #,0.00
+		sourceColumn: cheapest_ngn
+
+	column dearest_ngn
+		dataType: double
+		formatString: #,0.00
+		sourceColumn: dearest_ngn
+
+	column spread_ngn
+		dataType: double
+		formatString: #,0.00
+		sourceColumn: spread_ngn
+
+	column dearest_over_cheapest
+		dataType: double
+		formatString: 0.00\x
+		sourceColumn: dearest_over_cheapest
+
+	column stable_for_persistent_ranking
+		dataType: boolean
+		sourceColumn: stable_for_persistent_ranking
+
+	column cheapest_jurisdiction
+		dataType: string
+		sourceColumn: cheapest_jurisdiction
+
+	column dearest_jurisdiction
+		dataType: string
+		sourceColumn: dearest_jurisdiction
+
+	partition ref_location_value = m
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\ref_location_value.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"metric_code", type text}, {"label", type text}, {"month", type date}, {"jurisdictions", Int64.Type}, {"cheapest_ngn", type number}, {"dearest_ngn", type number}, {"spread_ngn", type number}, {"dearest_over_cheapest", type number}, {"stable_for_persistent_ranking", type logical}, {"cheapest_jurisdiction", type text}, {"dearest_jurisdiction", type text}}, "en-GB")
+				in
+				    Typed
+

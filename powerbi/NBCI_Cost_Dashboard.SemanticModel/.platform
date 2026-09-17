@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "SemanticModel",
+    "displayName": "NBCI_Cost_Dashboard"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "cdf576cc-b772-cbf5-a312-1062c2ad5c0d"
+  }
+}
